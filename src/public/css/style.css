@@ -39,13 +39,19 @@ body {
 .navbar {
   background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-dark) 100%);
   padding: 0.8rem 0;
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
   z-index: 1000;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
   width: 100%;
   max-width: 100vw;
+}
+
+/* Add padding to body to prevent content from being hidden behind fixed navbar */
+body {
+  padding-top: 80px;
 }
 
 .navbar-content {
@@ -761,6 +767,19 @@ body {
   color: #ccc;
   font-size: 1rem;
   line-height: 1.5;
+}
+
+.feature-text a {
+  color: var(--secondary-blue);
+  text-decoration: none;
+  font-weight: 700;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.feature-text a:hover {
+  color: var(--white);
+  border-bottom-color: var(--white);
 }
 
 /* Reveal Animation Classes */
