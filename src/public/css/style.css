@@ -363,12 +363,39 @@ body {
 
 .shirt-bg-circle {
   position: absolute;
-  width: 350px;
-  height: 350px;
-  background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 71, 171, 0.05));
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle at center, rgba(0, 71, 171, 0.05) 0%, transparent 70%);
   border-radius: 50%;
   z-index: 0;
-  animation: pulse-glow 4s infinite alternate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shirt-bg-circle::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 2px dashed rgba(0, 71, 171, 0.15);
+  border-radius: 45% 55% 70% 30% / 45% 30% 70% 55%;
+  animation: rotate-blob 20s linear infinite;
+}
+
+.shirt-bg-circle::after {
+  content: '';
+  position: absolute;
+  width: 90%;
+  height: 90%;
+  border: 1px solid rgba(0, 71, 171, 0.1);
+  border-radius: 55% 45% 30% 70% / 55% 70% 30% 45%;
+  animation: rotate-blob 15s linear infinite reverse;
+}
+
+@keyframes rotate-blob {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .shirt-art {
@@ -648,55 +675,305 @@ body {
   }
 }
 
+/* Marquee Section */
+.marquee-container {
+  background: var(--primary-blue);
+  color: var(--white);
+  padding: 1.5rem 0;
+  overflow: hidden;
+  position: relative;
+  z-index: 5;
+  box-shadow: 0 4px 20px rgba(0, 71, 171, 0.2);
+  transform: skewY(-2deg);
+  margin-top: -30px;
+  margin-bottom: 30px;
+  border-top: 4px solid var(--secondary-blue);
+  border-bottom: 4px solid var(--secondary-blue);
+}
+
+.marquee-track {
+  display: flex;
+  width: fit-content;
+  animation: scroll 20s linear infinite;
+}
+
+.marquee-content {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  gap: 2rem;
+  padding-right: 2rem;
+}
+
+.marquee-content span {
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 1.1rem;
+  letter-spacing: 1.5px;
+}
+
+.marquee-content .separator {
+  color: var(--secondary-blue);
+  font-size: 1.2rem;
+}
+
+@keyframes scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
 /* Campaign Section */
 .campaign-section {
-  padding: 4rem 0;
-  background-color: var(--bg-color);
+  padding: 6rem 0;
+  background-color: #f8f9fa;
+  background-image: radial-gradient(#e0e0e0 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.campaign-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.section-subtitle {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background-color: rgba(0, 103, 204, 0.1);
+  color: var(--primary-blue);
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.campaign-info h2 {
+  font-size: 2.5rem;
+  color: var(--primary-dark);
+  margin-bottom: 1.5rem;
+  line-height: 1.2;
+}
+
+.campaign-info p {
+  color: #666;
+  font-size: 1.1rem;
+  margin-bottom: 2.5rem;
+  line-height: 1.6;
+}
+
+.campaign-features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.campaign-features li {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #fff;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+  transition: transform 0.3s ease;
+}
+
+.campaign-features li:hover {
+  transform: translateX(10px);
+}
+
+.feature-icon {
+  font-size: 1.5rem;
+  width: 50px;
+  height: 50px;
+  background: #f0f7ff;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feature-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.feature-text strong {
+  color: var(--primary-dark);
+  font-size: 1rem;
+}
+
+.feature-text span {
+  font-size: 0.9rem;
+  color: #777;
+}
+
+.feature-text a {
+  color: var(--primary-blue);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* Campaign Form */
+.campaign-form-wrapper {
+  display: flex;
+  justify-content: center;
 }
 
 .campaign-card {
   background-color: var(--white);
-  padding: 2.5rem;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  max-width: 500px;
-  margin: 0 auto;
+  padding: 3.5rem 3rem;
+  border-radius: 30px;
+  box-shadow: 0 20px 60px -15px rgba(0, 71, 171, 0.15);
+  width: 100%;
+  max-width: 480px;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.campaign-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 30px 70px -15px rgba(0, 71, 171, 0.2);
+}
+
+.card-header {
+  margin-bottom: 3rem;
 }
 
 .card-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+  display: inline-flex;
+  padding: 25px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: 50%;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(0,0,0,0.03);
+  animation: float 6s ease-in-out infinite;
+  color: var(--primary-dark);
 }
 
-.campaign-card h2 {
-  color: var(--primary-blue);
-  margin-bottom: 0.5rem;
+.campaign-card h3 {
+  color: var(--primary-dark);
+  margin-bottom: 1rem;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
 }
 
 .campaign-card p {
-  margin-bottom: 1.5rem;
   color: #666;
+  font-size: 1.05rem;
+  max-width: 300px;
+  margin: 0 auto;
+  line-height: 1.5;
 }
 
-.campaign-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+.input-group {
+  position: relative;
+  margin-bottom: 2rem;
 }
 
 .input-code {
-  padding: 0.8rem;
-  border: 2px solid #ddd;
-  border-radius: var(--radius);
-  font-size: 1rem;
-  text-align: center;
+  width: 100%;
+  padding: 1.2rem 1.2rem 1.2rem 3.5rem;
+  border: 2px solid transparent;
+  background-color: #f5f8fa;
+  border-radius: 16px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--primary-dark);
   text-transform: uppercase;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  letter-spacing: 2px;
+}
+
+.input-code::placeholder {
+  color: #adb5bd;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .input-code:focus {
-  border-color: var(--secondary-blue);
+  border-color: transparent;
+  background-color: #fff;
   outline: none;
+  box-shadow: 0 0 0 5px rgba(0, 71, 171, 0.1);
+  transform: translateY(-2px);
+}
+
+.input-icon {
+  position: absolute;
+  left: 1.2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--primary-blue);
+  font-weight: 900;
+  font-size: 1.4rem;
+  opacity: 0.7;
+  transition: all 0.3s ease;
+}
+
+.input-code:focus + .input-icon {
+  opacity: 1;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.btn-block {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 1.2rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+  border-radius: 16px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, var(--secondary-blue) 0%, #00b4d8 100%);
+  border: none;
+  box-shadow: 0 10px 20px rgba(0, 212, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.btn-block:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px rgba(0, 212, 255, 0.4);
+  filter: brightness(1.05);
+}
+
+.btn-block:active {
+  transform: translateY(-1px);
+}
+
+/* Mobile Adjustments for Campaign */
+@media (max-width: 768px) {
+  .campaign-container {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+    text-align: center;
+  }
+  
+  .campaign-info {
+    order: 2; /* Form first on mobile? Or Text first? Let's keep Text first as intro */
+    order: 1;
+  }
+
+  .campaign-form-wrapper {
+    order: 2;
+  }
+  
+  .campaign-features li {
+    text-align: left;
+  }
 }
 
 /* How It Works */
