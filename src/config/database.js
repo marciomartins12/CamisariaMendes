@@ -10,6 +10,12 @@ const sequelize = new Sequelize(
     dialect: 'mysql',
     logging: false,
   }
-);
+)
+
+sequelize.authenticate().then(() => {
+    console.log("conexão ao banco de dados bem-sucedida")
+}).catch(err => {
+    console.log(`erro ao conectar ao banco de dados. Erro: ${err.message}`)
+})
 
 module.exports = { sequelize, Sequelize };

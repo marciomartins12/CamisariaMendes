@@ -9,7 +9,11 @@ const sessionConfig = {
   resave: false,
   saveUninitialized: false,
   store,
-  cookie: { maxAge: 24 * 60 * 60 * 1000 },
+  cookie: { 
+    maxAge: 24 * 60 * 60 * 1000,
+    secure: process.env.NODE_ENV === 'production', // Secure cookies in production
+    httpOnly: true
+  },
 };
 
 const initializeStore = async () => {
