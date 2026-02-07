@@ -675,51 +675,26 @@ body {
   }
 }
 
-/* Marquee Section */
-.marquee-container {
-  background: var(--primary-blue);
-  color: var(--white);
-  padding: 1.5rem 0;
-  overflow: hidden;
-  position: relative;
-  z-index: 5;
-  box-shadow: 0 4px 20px rgba(0, 71, 171, 0.2);
-  transform: skewY(-2deg);
-  margin-top: -30px;
-  margin-bottom: 30px;
-  border-top: 4px solid var(--secondary-blue);
-  border-bottom: 4px solid var(--secondary-blue);
+/* Wave Divider */
+.custom-shape-divider-bottom-1678901234 {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    overflow: hidden;
+    line-height: 0;
+    transform: rotate(180deg);
 }
 
-.marquee-track {
-  display: flex;
-  width: fit-content;
-  animation: scroll 20s linear infinite;
+.custom-shape-divider-bottom-1678901234 svg {
+    position: relative;
+    display: block;
+    width: calc(100% + 1.3px);
+    height: 60px;
 }
 
-.marquee-content {
-  display: flex;
-  align-items: center;
-  white-space: nowrap;
-  gap: 2rem;
-  padding-right: 2rem;
-}
-
-.marquee-content span {
-  font-weight: 800;
-  text-transform: uppercase;
-  font-size: 1.1rem;
-  letter-spacing: 1.5px;
-}
-
-.marquee-content .separator {
-  color: var(--secondary-blue);
-  font-size: 1.2rem;
-}
-
-@keyframes scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+.custom-shape-divider-bottom-1678901234 .shape-fill {
+    fill: #f8f9fa;
 }
 
 /* Campaign Section */
@@ -826,11 +801,11 @@ body {
 
 .campaign-card {
   background-color: var(--white);
-  padding: 3.5rem 3rem;
-  border-radius: 30px;
-  box-shadow: 0 20px 60px -15px rgba(0, 71, 171, 0.15);
+  padding: 2.5rem 2rem;
+  border-radius: 24px;
+  box-shadow: 0 15px 50px -10px rgba(0, 71, 171, 0.15);
   width: 100%;
-  max-width: 480px;
+  max-width: 400px;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -840,58 +815,58 @@ body {
 
 .campaign-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 30px 70px -15px rgba(0, 71, 171, 0.2);
+  box-shadow: 0 25px 60px -10px rgba(0, 71, 171, 0.2);
 }
 
 .card-header {
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
 }
 
 .card-icon {
-  font-size: 3.5rem;
-  margin-bottom: 1.5rem;
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
   display: inline-flex;
-  padding: 25px;
+  padding: 18px;
   background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
   border-radius: 50%;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(0,0,0,0.03);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(0,0,0,0.03);
   animation: float 6s ease-in-out infinite;
   color: var(--primary-dark);
 }
 
 .campaign-card h3 {
   color: var(--primary-dark);
-  margin-bottom: 1rem;
-  font-size: 2rem;
+  margin-bottom: 0.8rem;
+  font-size: 1.6rem;
   font-weight: 800;
   letter-spacing: -0.5px;
 }
 
 .campaign-card p {
   color: #666;
-  font-size: 1.05rem;
-  max-width: 300px;
+  font-size: 0.95rem;
+  max-width: 280px;
   margin: 0 auto;
   line-height: 1.5;
 }
 
 .input-group {
   position: relative;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .input-code {
   width: 100%;
-  padding: 1.2rem 1.2rem 1.2rem 3.5rem;
+  padding: 1rem 1rem 1rem 3rem;
   border: 2px solid transparent;
   background-color: #f5f8fa;
-  border-radius: 16px;
-  font-size: 1.2rem;
+  border-radius: 12px;
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--primary-dark);
   text-transform: uppercase;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
 }
 
 .input-code::placeholder {
