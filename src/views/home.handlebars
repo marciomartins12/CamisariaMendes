@@ -229,40 +229,130 @@
     </div>
 </section>
 
-<section class="about-section">
-    <div class="container about-content">
-        <div class="about-text">
-            <h2>Sobre a Camisaria Mendes 💙</h2>
-            <p>Nós transformamos ideias em estampas incríveis. Com foco total na qualidade e na satisfação, garantimos
-                que cada camisa seja única e feita especialmente para você.</p>
-        </div>
-        <div class="about-icons">
-            <div class="icon-box">
-                <span>⭐</span>
-                <p>Qualidade</p>
+<section class="about-section" id="sobre">
+    <div class="container">
+        <div class="about-grid">
+            <!-- Left Column: Content -->
+            <div class="about-content-wrapper">
+                <div class="badge-pill">Personalização Total</div>
+                <h2>Sua criatividade,<br>vestida com <span class="highlight-text">qualidade</span>.</h2>
+                <p class="lead-text">
+                    Na Camisaria Mendes, transformamos suas ideias em realidade. Somos especialistas em estampar camisas com a arte que você deseja, garantindo fidelidade e estilo.
+                </p>
+                <p class="description-text">
+                    O processo é simples e direto: você traz a ideia, e nós entregamos o produto pronto. Utilizamos tecnologia de impressão digital avançada para garantir que sua estampa tenha cores vibrantes, alta definição e durabilidade, seja para uso pessoal, eventos ou uniformes.
+                </p>
+                
+                <ul class="about-features-list">
+                    <li>
+                        <div class="check-icon">✓</div>
+                        <span><strong>Impressão HD:</strong> Tecnologia digital que garante cores vivas.</span>
+                    </li>
+                    <li>
+                        <div class="check-icon">✓</div>
+                        <span><strong>Malha Selecionada:</strong> Tecidos ideais para receber sua estampa.</span>
+                    </li>
+                    <li>
+                        <div class="check-icon">✓</div>
+                        <span><strong>Qualquer Quantidade:</strong> De peças únicas a grandes pedidos.</span>
+                    </li>
+                </ul>
+
+                <div class="about-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">5k+</span>
+                        <span class="stat-label">Clientes Satisfeitos</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <span class="stat-number">10k+</span>
+                        <span class="stat-label">Estampas Criadas</span>
+                    </div>
+                </div>
             </div>
-            <div class="icon-box">
-                <span>🎨</span>
-                <p>Personalização</p>
-            </div>
-            <div class="icon-box">
-                <span>🧵</span>
-                <p>Sob demanda</p>
+
+            <!-- Right Column: Visual Composition -->
+            <div class="about-visual-wrapper">
+                <div class="visual-card-back"></div>
+                <div class="visual-card-front">
+                    <div class="visual-icon-large">🎨</div>
+                    <h3>Sua Arte Aqui</h3>
+                    <p>Do arquivo digital direto para o tecido, sem complicação.</p>
+                    <div class="floating-badge badge-top">
+                        <span class="badge-icon">✨</span> Cores Vivas
+                    </div>
+                    <div class="floating-badge badge-bottom">
+                        <span class="badge-icon">🚀</span> Entrega Ágil
+                    </div>
+                </div>
+                <!-- Decoration Elements -->
+                <div class="dot-pattern"></div>
+                <div class="circle-decoration"></div>
             </div>
         </div>
     </div>
 </section>
 
 <footer class="footer" id="contato">
-    <div class="container footer-content">
-        <div class="footer-brand">
-            <h3>Camisaria Mendes</h3>
-            <p>Feito com carinho para você.</p>
+    <!-- Wave Decoration Top -->
+    <div class="custom-shape-divider-top-footer">
+        <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" class="shape-fill"></path>
+        </svg>
+    </div>
+
+    <div class="container">
+        <div class="footer-grid">
+            <!-- Brand Column -->
+            <div class="footer-col brand-col">
+                <div class="footer-logo">
+                    <span>Camisaria</span> Mendes
+                </div>
+                <p class="footer-desc">
+                    Especialistas em transformar sua criatividade em vestuário de alta qualidade. Estamparia digital e personalização para quem exige o melhor.
+                </p>
+                <div class="social-links">
+                    <a href="{{instagramLink}}" target="_blank" class="social-btn instagram" aria-label="Instagram">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="{{whatsappLink}}" target="_blank" class="social-btn whatsapp" aria-label="WhatsApp">
+                        <i class="fab fa-whatsapp"></i>
+                    </a>
+                    <a href="{{emailLink}}" class="social-btn email" aria-label="Email">
+                        <i class="far fa-envelope"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Contact Column -->
+            <div class="footer-col contact-col">
+                <h4>Contato</h4>
+                <ul class="contact-list">
+                    <li>
+                        <a href="{{instagramLink}}" target="_blank">
+                            <span class="icon"><i class="fab fa-instagram"></i></span>
+                            <span>{{instagramUser}}</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{whatsappLink}}" target="_blank">
+                            <span class="icon"><i class="fab fa-whatsapp"></i></span>
+                            <span>{{displayPhone}}</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{emailLink}}">
+                            <span class="icon"><i class="far fa-envelope"></i></span>
+                            <span>{{contactEmail}}</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
-        <div class="footer-contact">
-            <a href="{{whatsappLink}}" target="_blank" class="contact-link" title="WhatsApp">📱 WhatsApp</a>
-            <a href="{{instagramLink}}" target="_blank" class="contact-link" title="Instagram">📸 Instagram</a>
-            <a href="{{emailLink}}" class="contact-link" title="Email">✉️ Email</a>
+
+        <div class="footer-bottom">
+            <p>&copy; 2026 Camisaria Mendes. Todos os direitos reservados.</p>
+            <p class="made-by">Desenvolvido por <a href="https://instagram.com/marciomartins_12" target="_blank" style="color: inherit; text-decoration: none;">@marciomartins_12</a>.</p>
         </div>
     </div>
 </footer>
