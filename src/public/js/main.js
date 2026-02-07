@@ -57,4 +57,27 @@ document.addEventListener('DOMContentLoaded', () => {
             observer.observe(step);
         });
     }
+
+    // Generic Scroll Reveal Animation
+    const revealElements = document.querySelectorAll('.reveal-left, .reveal-right');
+    
+    if (revealElements.length > 0) {
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('reveal-visible');
+                } else {
+                    // Remove class when out of view to re-animate
+                    entry.target.classList.remove('reveal-visible');
+                }
+            });
+        }, {
+            threshold: 0.15, // Trigger when 15% visible
+            rootMargin: '0px 0px -50px 0px'
+        });
+
+        revealElements.forEach(el => {
+            revealObserver.observe(el);
+        });
+    }
 });
