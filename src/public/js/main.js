@@ -32,4 +32,29 @@ document.addEventListener('DOMContentLoaded', () => {
             navMenu.classList.remove('active');
         }
     });
+
+    // Timeline Scroll Animation (Mobile Focus Effect)
+    const timelineSteps = document.querySelectorAll('.timeline-step');
+    
+    if (timelineSteps.length > 0) {
+        const observerOptions = {
+            root: null,
+            rootMargin: '-40% 0px -40% 0px', // Active when element is in the vertical center (middle 20%)
+            threshold: 0
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                } else {
+                    entry.target.classList.remove('active');
+                }
+            });
+        }, observerOptions);
+
+        timelineSteps.forEach(step => {
+            observer.observe(step);
+        });
+    }
 });

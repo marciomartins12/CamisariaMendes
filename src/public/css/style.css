@@ -951,44 +951,290 @@ body {
   }
 }
 
-/* How It Works */
+/* How it Works Section - Minimal Timeline */
 .how-it-works {
-  padding: 4rem 0;
+  padding: 6rem 0;
   background-color: var(--white);
   text-align: center;
+  position: relative;
+  /* overflow: hidden; Removed to allow wave overlap if needed, but safer to keep if svg is inside */
+  overflow: hidden; 
 }
 
-.how-it-works h2 {
+/* Wave Divider Top */
+.custom-shape-divider-top-how-it-works {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    overflow: hidden;
+    line-height: 0;
+}
+
+.custom-shape-divider-top-how-it-works svg {
+    position: relative;
+    display: block;
+    width: calc(100% + 1.3px);
+    height: 50px;
+}
+
+.custom-shape-divider-top-how-it-works .shape-fill {
+    fill: #f8f9fa; /* Color of the previous section to create the "cutout" effect */
+}
+
+/* Restore minimal styles without background patterns */
+.section-header {
+  margin-bottom: 4rem;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  z-index: 1;
+}
+
+.badge-pill {
+  display: inline-block;
+  background-color: var(--white);
   color: var(--primary-blue);
-  margin-bottom: 3rem;
-  font-size: 2rem;
+  padding: 0.5rem 1.2rem;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.02);
 }
 
-.steps-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 2rem;
+.section-header h2 {
+  font-size: 2.5rem;
+  color: var(--primary-dark);
+  margin-bottom: 0.8rem;
+  font-weight: 800;
 }
 
-.step-card {
-  padding: 1.5rem;
-  background-color: var(--bg-color);
-  border-radius: var(--radius);
-  transition: transform 0.2s;
+.section-header p {
+  color: #666;
+  font-size: 1.1rem;
 }
 
-.step-card:hover {
+.process-timeline {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  max-width: 900px; /* Reduced width for compactness */
+  margin: 0 auto;
+  padding: 10px 0;
+  z-index: 1;
+}
+
+.timeline-line {
+  position: absolute;
+  top: 25px; /* Center with marker */
+  left: 50px; /* Start after first marker */
+  right: 50px; /* End before last marker */
+  height: 2px;
+  background: #e9ecef;
+  z-index: 0;
+}
+
+.timeline-step {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 10px;
+}
+
+.step-marker {
+  width: 50px;
+  height: 50px;
+  background: var(--white);
+  border: 2px solid var(--primary-blue);
+  color: var(--primary-blue);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 0 0 8px #f8f9fa; /* Matches bg color to mask line */
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.step-num {
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.timeline-step:hover .step-marker {
+  background-color: var(--primary-blue);
+  color: var(--white);
+  transform: scale(1.1);
+  box-shadow: 0 0 0 12px rgba(0, 71, 171, 0.1);
+}
+
+.step-body {
+  text-align: center;
+  background: transparent; /* No card background, just clean text */
+  padding: 0 0.5rem;
+  transition: transform 0.3s ease;
+}
+
+.timeline-step:hover .step-body {
   transform: translateY(-5px);
 }
 
 .step-icon {
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
+  font-size: 2rem;
+  margin-bottom: 0.8rem;
+  display: inline-block;
 }
 
-.step-card h3 {
-  color: var(--primary-blue);
+.step-body h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
   margin-bottom: 0.5rem;
+  color: var(--primary-dark);
+}
+
+.step-body p {
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.cta-wrapper {
+  margin-top: 4rem;
+  position: relative;
+  display: inline-block;
+  z-index: 1;
+}
+
+/* Updated Blob - More Subtle */
+.cta-decoration-blob {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120%;
+  height: 160%;
+  background: radial-gradient(circle, rgba(0, 180, 216, 0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  z-index: 0;
+  animation: pulse-glow 3s infinite ease-in-out;
+  pointer-events: none;
+}
+
+/* New Modern Button Style */
+.cta-wrapper .btn-lg {
+  padding: 1.2rem 3.5rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  border-radius: 50px; /* Full pill shape */
+  background: linear-gradient(135deg, var(--primary-blue) 0%, #0056b3 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 10px 25px rgba(0, 71, 171, 0.3);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Bouncy effect */
+  position: relative;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.cta-wrapper .btn-lg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to right, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%);
+  transform: skewX(-20deg) translateX(-150%);
+  transition: transform 0.5s;
+  z-index: 1;
+}
+
+.cta-wrapper .btn-lg:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 20px 35px rgba(0, 71, 171, 0.4);
+}
+
+.cta-wrapper .btn-lg:hover::before {
+  transform: skewX(-20deg) translateX(150%);
+}
+
+/* Mobile Responsiveness for Timeline */
+@media (max-width: 768px) {
+  .how-it-works {
+    background-size: 20px 20px; /* Smaller pattern on mobile */
+  }
+
+  .process-timeline {
+    flex-direction: column;
+    align-items: flex-start;
+    padding-left: 20px;
+    max-width: 300px;
+    gap: 2rem;
+  }
+
+  .timeline-line {
+    width: 2px;
+    height: 100%;
+    left: 45px;
+    top: 0;
+    right: auto;
+    background: linear-gradient(to bottom, #e9ecef 0%, #e9ecef 100%);
+  }
+
+  .timeline-step {
+    flex-direction: row;
+    align-items: flex-start;
+    text-align: left;
+    width: 100%;
+    padding: 0;
+    opacity: 0.4; /* Dimmed by default for scroll effect */
+    transform: scale(0.95) translateX(0);
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    filter: blur(1px);
+  }
+
+  /* Active State for Scroll Animation */
+  .timeline-step.active {
+    opacity: 1;
+    transform: scale(1) translateX(10px);
+    filter: blur(0);
+  }
+
+  .timeline-step.active .step-marker {
+    background-color: var(--primary-blue);
+    color: var(--white);
+    box-shadow: 0 0 0 8px rgba(0, 71, 171, 0.15);
+    transform: scale(1.1);
+  }
+
+  .step-marker {
+    margin-right: 1.5rem;
+    margin-bottom: 0;
+    flex-shrink: 0;
+    transition: all 0.4s ease;
+  }
+
+  .step-body {
+    text-align: left;
+    padding-top: 5px;
+  }
+  
+  .step-icon {
+      display: none; /* Hide icon on mobile to save space, keep number */
+  }
 }
 
 /* About Section */
