@@ -1,0 +1,19 @@
+<aside class="admin-sidebar">
+    <div class="sidebar-header">
+        <h3>Menu Admin</h3>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="/admin/dashboard" class="sidebar-link {{#if isDashboard}}active{{/if}}">
+            <i class="fas fa-home"></i> Dashboard
+        </a>
+        <a href="/admin/perfil" class="sidebar-link {{#if isProfile}}active{{/if}}">
+            <i class="fas fa-user-cog"></i> Perfil
+        </a>
+        <a href="/admin/campanhas" class="sidebar-link {{#if isCampaigns}}active{{/if}}">
+            <i class="fas fa-bullhorn"></i> Campanhas
+        </a>
+        <a href="/admin/logout" class="sidebar-link logout">
+            <i class="fas fa-sign-out-alt"></i> Sair
+        </a>
+    </nav>
+</aside>

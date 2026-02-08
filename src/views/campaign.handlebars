@@ -1,0 +1,197 @@
+<div class="campaign-header">
+    <div class="container">
+        <h1>{{campaign.title}}</h1>
+        <p class="lead">{{campaign.description}}</p>
+    </div>
+</div>
+
+<div class="container main-container">
+    <div class="campaign-details-section">
+        {{#if campaign.clientName}}
+        <div class="organizer-info">
+            <span>Organizado por: <strong>{{campaign.clientName}}</strong></span>
+            {{#if campaign.endDate}}
+            <span class="deadline-info">Encerra em: {{formatDate campaign.endDate}}</span>
+            {{/if}}
+        </div>
+        {{/if}}
+    </div>
+
+    <div class="products-grid">
+        {{#if campaign.shirts}}
+            {{#each campaign.shirts}}
+            <div class="product-card">
+                <div class="product-image">
+                    {{#if this.image}}
+                    <img src="{{this.image}}" alt="{{this.name}}">
+                    {{else}}
+                    <div class="no-image-placeholder">
+                        <i class="fas fa-tshirt"></i>
+                        <span>Sem imagem</span>
+                    </div>
+                    {{/if}}
+                </div>
+                <div class="product-info">
+                    <h3>{{this.name}}</h3>
+                    <div class="product-meta">
+                        <span class="product-type">{{this.type}}</span>
+                        <span class="product-color">{{this.color}}</span>
+                    </div>
+                    <div class="product-price">R$ {{this.price}}</div>
+                    <div class="product-sizes">
+                        <strong>Tamanhos:</strong> {{this.sizes}}
+                    </div>
+                    
+                    <button class="btn btn-primary btn-block btn-buy" onclick="openOrderModal('{{this.id}}', '{{this.name}}', '{{this.sizes}}')">
+                        Fazer Pedido
+                    </button>
+                </div>
+            </div>
+            {{/each}}
+        {{else}}
+            <div class="no-products">
+                <p>Nenhuma camisa disponível nesta campanha no momento.</p>
+            </div>
+        {{/if}}
+    </div>
+</div>
+
+<!-- Simple Order Modal (Placeholder for future implementation) -->
+<div id="orderModal" class="modal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; overflow:auto; background-color:rgba(0,0,0,0.5);">
+    <div class="modal-content" style="background-color:#fefefe; margin:15% auto; padding:20px; border:1px solid #888; width:80%; max-width: 500px; border-radius: 8px;">
+        <span class="close" onclick="document.getElementById('orderModal').style.display='none'" style="color:#aaa; float:right; font-size:28px; font-weight:bold; cursor:pointer;">&times;</span>
+        <h2 id="modalShirtName">Fazer Pedido</h2>
+        <p>Funcionalidade de pedido individual em desenvolvimento.</p>
+        <p>Tamanhos disponíveis: <span id="modalShirtSizes"></span></p>
+        <form>
+            <div class="form-group">
+                <label>Seu Nome</label>
+                <input type="text" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Seu Telefone</label>
+                <input type="text" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Tamanho</label>
+                <select class="form-control" id="sizeSelect">
+                    <!-- Options populated via JS -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Quantidade</label>
+                <input type="number" class="form-control" value="1" min="1">
+            </div>
+            <button type="button" class="btn btn-success btn-block" onclick="alert('Pedido registrado! (Simulação)')">Confirmar Pedido</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openOrderModal(id, name, sizes) {
+        document.getElementById('modalShirtName').innerText = name;
+        document.getElementById('modalShirtSizes').innerText = sizes;
+        
+        const sizeSelect = document.getElementById('sizeSelect');
+        sizeSelect.innerHTML = '';
+        const sizeList = sizes.split(',').map(s => s.trim());
+        sizeList.forEach(size => {
+            const option = document.createElement('option');
+            option.value = size;
+            option.innerText = size;
+            sizeSelect.appendChild(option);
+        });
+
+        document.getElementById('orderModal').style.display = 'block';
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        if (event.target == document.getElementById('orderModal')) {
+            document.getElementById('orderModal').style.display = "none";
+        }
+    }
+</script>
+
+<style>
+    .campaign-header {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 4rem 0;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .campaign-details-section {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    .organizer-info span {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #555;
+    }
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 2rem;
+    }
+    .product-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        overflow: hidden;
+        transition: transform 0.3s ease;
+    }
+    .product-card:hover {
+        transform: translateY(-5px);
+    }
+    .product-image {
+        height: 250px;
+        background: #eee;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+    .product-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .no-image-placeholder {
+        color: #ccc;
+        text-align: center;
+    }
+    .no-image-placeholder i {
+        font-size: 3rem;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+    .product-info {
+        padding: 1.5rem;
+    }
+    .product-meta {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+        font-size: 0.9rem;
+        color: #666;
+    }
+    .product-price {
+        font-size: 1.25rem;
+        font-weight: bold;
+        color: var(--primary-color);
+        margin-bottom: 10px;
+    }
+    .product-sizes {
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+        color: #555;
+    }
+    .btn-buy {
+        width: 100%;
+    }
+</style>

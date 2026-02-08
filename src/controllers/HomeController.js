@@ -1,3 +1,5 @@
+const { Campaign, Shirt } = require('../models');
+
 module.exports = {
   index: (req, res) => {
     res.render('home', {
@@ -10,4 +12,82 @@ module.exports = {
       displayPhone: '(98) 98778-0960' // Hardcoded format based on env for now, or use a library if available
     });
   },
+
+  accessCampaign: async (req, res) => {
+    const { codigo } = req.body;
+    
+    try {
+      // Find campaign by access code
+      const campaign = await Campaign.findOne({ where: { accessCode: codigo } });
+      
+      if (!campaign) {
+        return res.render('home', {
+            title: 'Camisaria Mendes',
+            error: 'Código de campanha inválido. Verifique e tente novamente.',
+            displayPhone: '(98) 98778-0960',
+            contactEmail: process.env.CONTACT_EMAIL,
+            instagramUser: `@${process.env.INSTAGRAM_USER}`,
+            whatsappLink: `https://wa.me/${process.env.WHATSAPP_NUMBER}`,
+            instagramLink: `https://instagram.com/${process.env.INSTAGRAM_USER}`,
+            emailLink: `mailto:${process.env.CONTACT_EMAIL}`
+        });
+      }
+
+      if (campaign.status !== 'active') {
+         return res.render('home', {
+            title: 'Camisaria Mendes',
+            error: 'Esta campanha não está ativa no momento.',
+            displayPhone: '(98) 98778-0960',
+            contactEmail: process.env.CONTACT_EMAIL,
+            instagramUser: `@${process.env.INSTAGRAM_USER}`,
+            whatsappLink: `https://wa.me/${process.env.WHATSAPP_NUMBER}`,
+            instagramLink: `https://instagram.com/${process.env.INSTAGRAM_USER}`,
+            emailLink: `mailto:${process.env.CONTACT_EMAIL}`
+         });
+      }
+
+      // Redirect to the campaign page (using code in URL)
+      res.redirect(`/c/${campaign.accessCode}`);
+
+    } catch (error) {
+      console.error(error);
+      res.render('home', {
+          title: 'Camisaria Mendes',
+          error: 'Erro ao processar sua solicitação.',
+          displayPhone: '(98) 98778-0960',
+          contactEmail: process.env.CONTACT_EMAIL,
+          instagramUser: `@${process.env.INSTAGRAM_USER}`,
+          whatsappLink: `https://wa.me/${process.env.WHATSAPP_NUMBER}`,
+          instagramLink: `https://instagram.com/${process.env.INSTAGRAM_USER}`,
+          emailLink: `mailto:${process.env.CONTACT_EMAIL}`
+      });
+    }
+  },
+
+  viewCampaign: async (req, res) => {
+    const { code } = req.params;
+
+    try {
+      const campaign = await Campaign.findOne({ 
+        where: { accessCode: code },
+        include: [{ model: Shirt, as: 'shirts' }]
+      });
+
+      if (!campaign) {
+        return res.redirect('/');
+      }
+
+      // Convert to plain object for Handlebars
+      const campaignPlain = campaign.get({ plain: true });
+
+      res.render('campaign', {
+        title: campaign.title,
+        campaign: campaignPlain,
+        layout: 'main'
+      });
+    } catch (error) {
+      console.error(error);
+      res.redirect('/');
+    }
+  }
 };

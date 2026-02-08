@@ -1,0 +1,124 @@
+<div class="admin-layout">
+    {{> admin-sidebar}}
+
+    <main class="admin-main-content">
+        <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h2>Campanhas</h2>
+                <p>Gerencie as campanhas de marketing</p>
+            </div>
+            <a href="/admin/campanhas/nova" class="btn btn-primary"><i class="fas fa-plus"></i> Nova Campanha</a>
+        </div>
+
+        {{#if success}}
+        <div class="alert alert-success">{{success}}</div>
+        {{/if}}
+
+        <div class="campaigns-list">
+            {{#if campaigns.length}}
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Título</th>
+                            <th>Status</th>
+                            <th>Início</th>
+                            <th>Fim</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each campaigns}}
+                        <tr>
+                            <td>
+                                <strong>{{this.title}}</strong>
+                                <br>
+                                <small class="text-muted">{{this.description}}</small>
+                            </td>
+                            <td>
+                                <span class="badge badge-{{this.status}}">
+                                    {{#if (eq this.status 'active')}}Ativa{{/if}}
+                                    {{#if (eq this.status 'inactive')}}Inativa{{/if}}
+                                    {{#if (eq this.status 'draft')}}Rascunho{{/if}}
+                                </span>
+                            </td>
+                            <td>{{formatDate this.startDate}}</td>
+                            <td>{{formatDate this.endDate}}</td>
+                            <td>
+                                <a href="/admin/campanhas/editar/{{this.id}}" class="btn-icon edit" title="Editar"><i class="fas fa-edit"></i></a>
+                                <form action="/admin/campanhas/deletar/{{this.id}}" method="POST" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta campanha?');">
+                                    <button type="submit" class="btn-icon delete" title="Excluir"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            {{else}}
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fas fa-bullhorn"></i></div>
+                    <h3>Nenhuma campanha encontrada</h3>
+                    <p>Comece criando sua primeira campanha de marketing.</p>
+                    <a href="/admin/campanhas/nova" class="btn btn-primary">Criar Campanha</a>
+                </div>
+            {{/if}}
+        </div>
+    </main>
+</div>
+
+<style>
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    .admin-table th, .admin-table td {
+        padding: 15px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+
+    .admin-table th {
+        background-color: #f8f9fa;
+        color: #555;
+        font-weight: 600;
+    }
+
+    .badge {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .badge-active { background-color: #d4edda; color: #155724; }
+    .badge-inactive { background-color: #f8d7da; color: #721c24; }
+    .badge-draft { background-color: #fff3cd; color: #856404; }
+
+    .btn-icon {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 5px;
+        margin: 0 2px;
+        font-size: 1rem;
+        transition: color 0.3s;
+    }
+
+    .btn-icon.edit { color: #0047AB; }
+    .btn-icon.delete { color: #dc3545; }
+
+    .empty-state {
+        text-align: center;
+        padding: 50px 20px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        margin-top: 20px;
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        color: #ccc;
+        margin-bottom: 20px;
+    }
+</style>

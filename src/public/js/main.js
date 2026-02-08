@@ -80,4 +80,24 @@ document.addEventListener('DOMContentLoaded', () => {
             revealObserver.observe(el);
         });
     }
+
+    // Admin Sidebar Toggle
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const dashboardSidebar = document.querySelector('.dashboard-sidebar');
+    
+    if (sidebarToggle && dashboardSidebar) {
+        sidebarToggle.addEventListener('click', () => {
+            dashboardSidebar.classList.toggle('active');
+        });
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768 && 
+                dashboardSidebar.classList.contains('active') && 
+                !dashboardSidebar.contains(e.target) && 
+                !sidebarToggle.contains(e.target)) {
+                dashboardSidebar.classList.remove('active');
+            }
+        });
+    }
 });
