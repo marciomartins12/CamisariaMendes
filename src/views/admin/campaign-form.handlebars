@@ -1,13 +1,21 @@
 <div class="admin-layout">
+    <!-- Bootstrap JS (Required for Tooltips/Popovers) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     {{> admin-sidebar}}
 
     <main class="admin-main-content">
-        <div class="dashboard-header">
-            <h2>{{#if campaign.id}}Editar Campanha{{else}}Nova Campanha{{/if}}</h2>
-            <p>{{#if campaign.id}}Atualizar informações da campanha{{else}}Criar uma nova campanha de marketing{{/if}}</p>
-        </div>
-
         <div class="form-container">
+            <div class="dashboard-header" style="flex-direction: row; justify-content: space-between; align-items: center;">
+                <div class="header-content">
+                    <h2>{{#if campaign.id}}Editar Campanha{{else}}Nova Campanha{{/if}}</h2>
+                    <p>{{#if campaign.id}}Atualizar informações da campanha{{else}}Criar uma nova campanha de marketing{{/if}}</p>
+                </div>
+                <a href="/admin/campanhas" class="btn btn-outline" style="padding: 0.6rem 1.2rem;">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </a>
+            </div>
+
             <form action="/admin/campanhas/{{#if campaign.id}}editar/{{campaign.id}}{{else}}nova{{/if}}" method="POST" class="admin-form" enctype="application/x-www-form-urlencoded">
                 
                 <!-- Section 1: Campaign Info -->
@@ -18,7 +26,7 @@
                     </div>
                     <div class="form-grid">
                         <div class="form-group full-width">
-                            <label>Nome da Campanha</label>
+                            <label>Nome da Campanha <i class="fas fa-info-circle info-icon" title="Nome visível para identificação da campanha"></i></label>
                             <input type="text" name="title" class="form-control" value="{{campaign.title}}" required placeholder="Ex: Camisa Formandos ADS 2026">
                         </div>
                         
@@ -28,7 +36,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Status</label>
+                            <label>Status <i class="fas fa-info-circle info-icon" title="Controla a visibilidade da campanha"></i></label>
                             <select name="status" class="form-control">
                                 <option value="draft" {{#if (eq campaign.status 'draft')}}selected{{/if}}>Rascunho</option>
                                 <option value="active" {{#if (eq campaign.status 'active')}}selected{{/if}}>Ativa</option>
@@ -46,7 +54,7 @@
 
                         {{#if campaign.accessCode}}
                         <div class="form-group full-width highlight-box">
-                            <label>Código de Acesso (Único)</label>
+                            <label>Código de Acesso (Único) <i class="fas fa-info-circle info-icon" title="Link/Senha para o cliente acessar a loja"></i></label>
                             <div class="code-display">
                                 <span>{{campaign.accessCode}}</span>
                                 <small>Compartilhe este código com o cliente.</small>
@@ -94,7 +102,9 @@
                             <div class="shirt-card">
                                 <div class="shirt-card-header">
                                     <h4><i class="fas fa-tag"></i> Camisa #{{@index}}</h4>
-                                    <!-- Remove button handled by JS usually, or if server-side rendered, simple link -->
+                                    <button type="button" class="btn-remove-shirt" onclick="this.closest('.shirt-card').remove()">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
                                 </div>
                                 <div class="shirt-card-body">
                                     <div class="form-group full-width">
@@ -115,25 +125,50 @@
                                             </select>
                                         </div>
                                         <div class="form-group">
-                                            <label>Preço (R$)</label>
+                                            <label>Preço (R$) <i class="fas fa-info-circle info-icon" title="Valor unitário por camisa"></i></label>
                                             <input type="number" step="0.01" name="shirtPrices" class="form-control" value="{{this.price}}" required>
                                         </div>
                                     </div>
                                     <div class="form-group full-width">
-                                        <label>Tamanhos Disponíveis</label>
-                                        <input type="text" name="shirtSizes" class="form-control" value="{{this.sizes}}" placeholder="Ex: P, M, G, GG, XG">
-                                        <small>Separe por vírgulas</small>
+                                        <label>Tamanhos Disponíveis <i class="fas fa-info-circle info-icon" title="Selecione os tamanhos para este modelo"></i></label>
+                                        <div class="sizes-wrapper">
+                                            <input type="hidden" name="shirtSizes" class="shirt-sizes-input" value="{{this.sizes}}">
+                                            <div class="size-options">
+                                                <button type="button" class="size-chip" data-value="P">P</button>
+                                                <button type="button" class="size-chip" data-value="M">M</button>
+                                                <button type="button" class="size-chip" data-value="G">G</button>
+                                                <button type="button" class="size-chip" data-value="GG">GG</button>
+                                                <button type="button" class="size-chip" data-value="XG">XG</button>
+                                                <button type="button" class="size-chip" data-value="XXG">XXG</button>
+                                            </div>
+                                            <small class="text-muted"><i class="fas fa-mouse-pointer"></i> Selecione os tamanhos disponíveis</small>
+                                        </div>
                                     </div>
                                     <div class="form-group full-width">
-                                        <label>Imagem do Modelo</label>
+                                        <label>Imagens do Modelo <i class="fas fa-info-circle info-icon" title="Formatos: JPG, PNG. Máx: 5MB"></i></label>
                                         <div class="image-upload-wrapper">
-                                            <input type="hidden" name="shirtImages" class="shirt-image-input" value="{{this.image}}">
-                                            <input type="file" accept="image/*" class="form-control shirt-image-file" onchange="convertImageToBase64(this)">
-                                            <div class="image-preview-box">
-                                                {{#if this.image}}
-                                                <img src="{{this.image}}" class="preview-img">
-                                                {{else}}
-                                                <div class="placeholder-text">Nenhuma imagem selecionada</div>
+                                            <input type="hidden" name="shirtImagesJSON" class="shirt-images-json" value='{{#if this.images}}{{json this.images}}{{else}}[]{{/if}}'>
+                                            
+                                            <!-- Hidden file input -->
+                                            <input type="file" accept="image/*" class="form-control shirt-image-file" style="display: none;" onchange="handleImageSelected(this)">
+                                            
+                                            <!-- Custom Button -->
+                                            <div class="upload-trigger" onclick="triggerImageUpload(this)">
+                                                <div class="upload-icon">
+                                                    <i class="fas fa-cloud-upload-alt"></i>
+                                                </div>
+                                                <p class="upload-text">Clique para adicionar imagens</p>
+                                                <p class="upload-hint">JPG ou PNG (Máx 5MB)</p>
+                                            </div>
+
+                                            <div class="image-preview-grid">
+                                                {{#if this.images}}
+                                                    {{#each this.images}}
+                                                    <div class="preview-item">
+                                                        <img src="{{this}}" class="preview-img">
+                                                        <button type="button" class="btn-remove-image" onclick="removeImage(this)">×</button>
+                                                    </div>
+                                                    {{/each}}
                                                 {{/if}}
                                             </div>
                                         </div>
@@ -166,23 +201,43 @@
                                             </select>
                                         </div>
                                         <div class="form-group">
-                                            <label>Preço (R$)</label>
+                                            <label>Preço (R$) <i class="fas fa-info-circle info-icon" title="Valor unitário por camisa"></i></label>
                                             <input type="number" step="0.01" name="shirtPrices" class="form-control" required placeholder="0.00">
                                         </div>
                                     </div>
                                     <div class="form-group full-width">
-                                        <label>Tamanhos Disponíveis</label>
-                                        <input type="text" name="shirtSizes" class="form-control" required placeholder="Ex: P, M, G, GG">
-                                        <small>Separe por vírgulas</small>
+                                        <label>Tamanhos Disponíveis <i class="fas fa-info-circle info-icon" title="Selecione os tamanhos para este modelo"></i></label>
+                                        <div class="sizes-wrapper">
+                                            <input type="hidden" name="shirtSizes" class="shirt-sizes-input" value="P, M, G, GG, XG">
+                                            <div class="size-options">
+                                                <button type="button" class="size-chip" data-value="P">P</button>
+                                                <button type="button" class="size-chip" data-value="M">M</button>
+                                                <button type="button" class="size-chip" data-value="G">G</button>
+                                                <button type="button" class="size-chip" data-value="GG">GG</button>
+                                                <button type="button" class="size-chip" data-value="XG">XG</button>
+                                                <button type="button" class="size-chip" data-value="XXG">XXG</button>
+                                            </div>
+                                            <small class="text-muted"><i class="fas fa-mouse-pointer"></i> Selecione os tamanhos disponíveis</small>
+                                        </div>
                                     </div>
                                     <div class="form-group full-width">
-                                        <label>Imagem do Modelo</label>
+                                        <label>Imagens do Modelo <i class="fas fa-info-circle info-icon" title="Formatos: JPG, PNG. Máx: 5MB"></i></label>
                                         <div class="image-upload-wrapper">
-                                            <input type="hidden" name="shirtImages" class="shirt-image-input">
-                                            <input type="file" accept="image/*" class="form-control shirt-image-file" onchange="convertImageToBase64(this)">
-                                            <div class="image-preview-box">
-                                                <div class="placeholder-text">Pré-visualização da imagem</div>
-                                                <img src="" class="preview-img" style="display: none;">
+                                            <input type="hidden" name="shirtImagesJSON" class="shirt-images-json" value="[]">
+                                            
+                                            <!-- Hidden file input -->
+                                            <input type="file" accept="image/*" class="form-control shirt-image-file" style="display: none;" onchange="handleImageSelected(this)">
+                                            
+                                            <!-- Custom Button -->
+                                            <div class="upload-trigger" onclick="triggerImageUpload(this)">
+                                                <div class="upload-icon">
+                                                    <i class="fas fa-cloud-upload-alt"></i>
+                                                </div>
+                                                <p class="upload-text">Clique para adicionar imagens</p>
+                                                <p class="upload-hint">JPG ou PNG (Máx 5MB)</p>
+                                            </div>
+
+                                            <div class="image-preview-grid">
                                             </div>
                                         </div>
                                     </div>
@@ -197,430 +252,236 @@
                 </div>
 
                 <div class="form-actions-sticky">
-                    <a href="/admin/campanhas" class="btn btn-cancel">Cancelar</a>
-                    <button type="submit" class="btn btn-save">
+                    <a href="/admin/campanhas" class="btn btn-outline">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save"></i> Salvar Campanha
                     </button>
                 </div>
             </form>
         </div>
-
-        <script>
-            function convertImageToBase64(input) {
-                if (input.files && input.files[0]) {
-                    var reader = new FileReader();
-                    reader.onload = function(e) {
-                        var wrapper = input.closest('.image-upload-wrapper');
-                        var hiddenInput = wrapper.querySelector('.shirt-image-input');
-                        var previewBox = wrapper.querySelector('.image-preview-box');
-                        var previewImg = previewBox.querySelector('.preview-img');
-                        var placeholder = previewBox.querySelector('.placeholder-text');
-
-                        hiddenInput.value = e.target.result;
-                        
-                        if (!previewImg) {
-                            previewImg = document.createElement('img');
-                            previewImg.className = 'preview-img';
-                            previewBox.appendChild(previewImg);
-                        }
-
-                        previewImg.src = e.target.result;
-                        previewImg.style.display = 'block';
-                        if (placeholder) placeholder.style.display = 'none';
-                    }
-                    reader.readAsDataURL(input.files[0]);
-                }
-            }
-
-            function addShirt() {
-                const container = document.getElementById('shirts-container');
-                const count = container.children.length + 1;
-                const template = `
-                    <div class="shirt-card fade-in">
-                        <div class="shirt-card-header">
-                            <h4><i class="fas fa-tag"></i> Camisa #${count}</h4>
-                            <button type="button" class="btn-remove-shirt" onclick="this.closest('.shirt-card').remove()">
-                                <i class="fas fa-trash-alt"></i> Remover
-                            </button>
-                        </div>
-                        <div class="shirt-card-body">
-                            <div class="form-group full-width">
-                                <label>Nome do Modelo</label>
-                                <input type="text" name="shirtNames" class="form-control" required>
-                            </div>
-                            <div class="form-grid three-columns">
-                                <div class="form-group">
-                                    <label>Cor</label>
-                                    <input type="text" name="shirtColors" class="form-control">
-                                </div>
-                                <div class="form-group">
-                                    <label>Tipo</label>
-                                    <select name="shirtTypes" class="form-control">
-                                        <option value="Tradicional">Tradicional</option>
-                                        <option value="Oversized">Oversized</option>
-                                        <option value="Babylook">Babylook</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Preço (R$)</label>
-                                    <input type="number" step="0.01" name="shirtPrices" class="form-control" required>
-                                </div>
-                            </div>
-                            <div class="form-group full-width">
-                                <label>Tamanhos Disponíveis</label>
-                                <input type="text" name="shirtSizes" class="form-control" required placeholder="Ex: P, M, G, GG">
-                                <small>Separe por vírgulas</small>
-                            </div>
-                            <div class="form-group full-width">
-                                <label>Imagem do Modelo</label>
-                                <div class="image-upload-wrapper">
-                                    <input type="hidden" name="shirtImages" class="shirt-image-input">
-                                    <input type="file" accept="image/*" class="form-control shirt-image-file" onchange="convertImageToBase64(this)">
-                                    <div class="image-preview-box">
-                                        <div class="placeholder-text">Pré-visualização da imagem</div>
-                                        <img src="" class="preview-img" style="display: none;">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                container.insertAdjacentHTML('beforeend', template);
-            }
-        </script>
-
-        <style>
-            /* Custom Page Styles */
-            .form-container {
-                max-width: 900px;
-                margin: 0 auto;
-                padding-bottom: 80px;
-            }
-
-            .form-section {
-                background: #fff;
-                border-radius: 12px;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-                margin-bottom: 2rem;
-                overflow: hidden;
-                border: 1px solid rgba(0,0,0,0.03);
-            }
-
-            .section-header {
-                padding: 1.5rem;
-                border-bottom: 1px solid #eee;
-                display: flex;
-                align-items: center;
-                gap: 1rem;
-                background: #fcfcfc;
-            }
-
-            .section-header h3 {
-                margin: 0;
-                font-size: 1.25rem;
-                color: #333;
-                font-weight: 700;
-            }
-
-            .icon-wrapper {
-                width: 40px;
-                height: 40px;
-                background: #eef2ff;
-                color: var(--primary-blue);
-                border-radius: 8px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 1.2rem;
-            }
-
-            .form-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 1.5rem;
-                padding: 1.5rem;
-            }
-
-            .form-grid.three-columns {
-                grid-template-columns: 1fr 1fr 1fr;
-            }
-
-            .full-width {
-                grid-column: 1 / -1;
-            }
-
-            .form-group {
-                margin-bottom: 0;
-            }
-
-            .form-group label {
-                display: block;
-                margin-bottom: 0.5rem;
-                font-weight: 600;
-                color: #555;
-                font-size: 0.9rem;
-            }
-
-            .form-control {
-                width: 100%;
-                padding: 0.8rem 1rem;
-                border: 2px solid #eee;
-                border-radius: 8px;
-                font-size: 1rem;
-                transition: all 0.3s ease;
-                font-family: inherit;
-            }
-
-            .form-control:focus {
-                border-color: var(--primary-blue);
-                box-shadow: 0 0 0 3px rgba(0, 71, 171, 0.1);
-                outline: none;
-            }
-
-            .input-prefix {
-                position: relative;
-                display: flex;
-                align-items: center;
-            }
-
-            .input-prefix span {
-                position: absolute;
-                left: 1rem;
-                color: #999;
-                font-weight: bold;
-            }
-
-            .input-prefix input {
-                padding-left: 2.5rem;
-            }
-
-            /* Shirt Cards */
-            .shirt-card {
-                background: #fff;
-                border: 1px solid #e0e6ed;
-                border-radius: 10px;
-                margin-bottom: 1.5rem;
-                transition: all 0.3s ease;
-            }
-
-            .shirt-card:hover {
-                box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-                border-color: var(--secondary-blue);
-            }
-
-            .shirt-card-header {
-                background: #f8f9fa;
-                padding: 1rem 1.5rem;
-                border-bottom: 1px solid #e0e6ed;
-                border-radius: 10px 10px 0 0;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-
-            .shirt-card-header h4 {
-                margin: 0;
-                font-size: 1.1rem;
-                color: #444;
-            }
-
-            .shirt-card-body {
-                padding: 1.5rem;
-            }
-
-            .btn-remove-shirt {
-                background: none;
-                border: none;
-                color: #dc3545;
-                cursor: pointer;
-                font-size: 0.9rem;
-                font-weight: 600;
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                padding: 0.4rem 0.8rem;
-                border-radius: 6px;
-                transition: background 0.2s;
-            }
-
-            .btn-remove-shirt:hover {
-                background: #fff5f5;
-            }
-
-            .btn-add-shirt {
-                width: 100%;
-                padding: 1rem;
-                background: #f0f7ff;
-                color: var(--primary-blue);
-                border: 2px dashed #cce0ff;
-                border-radius: 10px;
-                font-weight: 700;
-                cursor: pointer;
-                transition: all 0.3s;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 0.5rem;
-                margin-top: 1rem;
-            }
-
-            .btn-add-shirt:hover {
-                background: #e0efff;
-                border-color: var(--primary-blue);
-            }
-
-            /* Image Upload */
-            .image-upload-wrapper {
-                border: 2px dashed #ddd;
-                padding: 1.5rem;
-                border-radius: 10px;
-                text-align: center;
-                background: #fafafa;
-                transition: border-color 0.3s;
-            }
-
-            .image-upload-wrapper:hover {
-                border-color: var(--secondary-blue);
-            }
-
-            .shirt-image-file {
-                margin-bottom: 1rem;
-            }
-
-            .image-preview-box {
-                min-height: 100px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: #fff;
-                border-radius: 8px;
-                border: 1px solid #eee;
-                padding: 0.5rem;
-            }
-
-            .preview-img {
-                max-height: 200px;
-                max-width: 100%;
-                object-fit: contain;
-                border-radius: 4px;
-            }
-
-            .placeholder-text {
-                color: #aaa;
-                font-size: 0.9rem;
-                font-style: italic;
-            }
-
-            /* Actions */
-            .form-actions-sticky {
-                position: fixed;
-                bottom: 0;
-                left: 260px; /* Sidebar width */
-                width: calc(100% - 260px);
-                background: #fff;
-                padding: 1rem 2rem;
-                box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
-                display: flex;
-                justify-content: flex-end;
-                gap: 1rem;
-                z-index: 90; /* Below modal overlays if any, but above content */
-            }
-
-            .btn-save {
-                background: var(--primary-blue);
-                color: white;
-                border: none;
-                padding: 0.8rem 2rem;
-                border-radius: 50px;
-                font-weight: 700;
-                font-size: 1rem;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                transition: transform 0.2s;
-            }
-
-            .btn-save:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 5px 15px rgba(0, 71, 171, 0.3);
-            }
-
-            .btn-cancel {
-                padding: 0.8rem 2rem;
-                color: #666;
-                text-decoration: none;
-                font-weight: 600;
-            }
-
-            .btn-cancel:hover {
-                color: #333;
-            }
-
-            /* Highlight Box for Code */
-            .highlight-box {
-                background: #eef2ff;
-                padding: 1.5rem !important;
-                border-radius: 10px;
-                border: 1px solid #cce0ff;
-            }
-
-            .code-display {
-                display: flex;
-                align-items: center;
-                gap: 1rem;
-                margin-top: 0.5rem;
-            }
-
-            .code-display span {
-                font-family: monospace;
-                font-size: 1.5rem;
-                font-weight: 800;
-                color: var(--primary-blue);
-                background: #fff;
-                padding: 0.5rem 1rem;
-                border-radius: 6px;
-                border: 1px dashed var(--primary-blue);
-            }
-
-            /* Responsive */
-            @media (max-width: 900px) {
-                .form-grid.three-columns {
-                    grid-template-columns: 1fr;
-                }
-                
-                .form-actions-sticky {
-                    position: fixed; /* Keep fixed on mobile or make static? User request "sticky" implies fixed usually */
-                    left: 0;
-                    width: 100%;
-                    padding: 1rem;
-                    justify-content: space-between; /* Better for mobile buttons */
-                }
-                
-                .btn-save, .btn-cancel {
-                    flex: 1;
-                    justify-content: center;
-                }
-                
-                .form-container {
-                    padding-bottom: 100px; /* Extra space for sticky footer */
-                }
-            }
-
-            .fade-in {
-                animation: fadeIn 0.5s ease;
-            }
-
-            @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(10px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-        </style>
     </main>
 </div>
 
-<style>
-    .admin-form textarea.form-control {
-        resize: vertical;
+<script>
+    // Global variables
+    let currentUploadWrapper = null;
+
+    // Initialize logic when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        initChips();
+
+        // Handle Form Submission for Loading State
+        const form = document.querySelector('.admin-form');
+        if (form) {
+            form.addEventListener('submit', function() {
+                const btn = form.querySelector('button[type="submit"]');
+                if (btn) {
+                    const originalText = btn.innerHTML;
+                    btn.disabled = true;
+                    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Salvando...`;
+                    
+                    // Optional: Restore button if page doesn't unload quickly (e.g. client-side validation fails)
+                    // But usually for POST redirect it's fine.
+                }
+            });
+        }
+
+        // Event Delegation for Size Chips
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('size-chip')) {
+                e.target.classList.toggle('active');
+                updateSizesInput(e.target.parentElement);
+            }
+        });
+    });
+
+    // 1. Trigger File Selection
+    function triggerImageUpload(btn) {
+        const wrapper = btn.closest('.image-upload-wrapper');
+        const input = wrapper.querySelector('.shirt-image-file');
+        input.click();
     }
-</style>
+
+    // 2. Handle File Selection
+    function handleImageSelected(input) {
+        if (input.files && input.files.length > 0) {
+            currentUploadWrapper = input.closest('.image-upload-wrapper');
+            const file = input.files[0];
+
+            // Validation (Optional but recommended)
+            if (file.size > 5 * 1024 * 1024) { // 5MB
+                alert('A imagem deve ter no máximo 5MB.');
+                input.value = ''; // Reset input
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64 = e.target.result;
+                
+                // Add to Preview Grid
+                addPreviewImage(base64);
+
+                // Update Hidden Input JSON
+                updateImagesJson(currentUploadWrapper, base64, 'add');
+                
+                // Reset input to allow adding same file again if deleted
+                input.value = ''; 
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // Helper: Add Preview Image
+    function addPreviewImage(base64) {
+        const previewGrid = currentUploadWrapper.querySelector('.image-preview-grid');
+        
+        // Remove placeholder if it exists
+        const placeholder = previewGrid.querySelector('.placeholder-text');
+        if (placeholder) placeholder.remove();
+
+        const item = document.createElement('div');
+        item.className = 'preview-item';
+        item.innerHTML = `
+            <img src="${base64}" class="preview-img">
+            <button type="button" class="btn-remove-image" onclick="removeImage(this)">×</button>
+        `;
+        previewGrid.appendChild(item);
+    }
+
+    // Helper: Remove Image
+    function removeImage(btn) {
+        const item = btn.closest('.preview-item');
+        const wrapper = btn.closest('.image-upload-wrapper');
+        const grid = wrapper.querySelector('.image-preview-grid');
+        
+        // Find index to remove from JSON
+        const allItems = Array.from(grid.querySelectorAll('.preview-item'));
+        const index = allItems.indexOf(item);
+
+        if (index > -1) {
+            updateImagesJson(wrapper, null, 'remove', index);
+            item.remove();
+        }
+    }
+
+    // Helper: Update JSON Input
+    function updateImagesJson(wrapper, data, action, index = -1) {
+        const jsonInput = wrapper.querySelector('.shirt-images-json');
+        let images = [];
+        try {
+            images = JSON.parse(jsonInput.value || '[]');
+        } catch (e) {
+            images = [];
+        }
+
+        if (action === 'add') {
+            images.push(data);
+        } else if (action === 'remove' && index > -1) {
+            images.splice(index, 1);
+        }
+
+        jsonInput.value = JSON.stringify(images);
+    }
+
+    // Add New Shirt Card Logic
+    function addShirt() {
+        const container = document.getElementById('shirts-container');
+        const count = container.querySelectorAll('.shirt-card').length + 1;
+        
+        const template = `
+        <div class="shirt-card">
+            <div class="shirt-card-header">
+                <h4><i class="fas fa-tag"></i> Camisa #${count}</h4>
+                <button type="button" class="btn-remove-shirt" onclick="this.closest('.shirt-card').remove()">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            <div class="shirt-card-body">
+                <div class="form-group full-width">
+                    <label>Nome do Modelo</label>
+                    <input type="text" name="shirtNames" class="form-control" required placeholder="Ex: Camisa Nova">
+                </div>
+                <div class="form-grid three-columns">
+                    <div class="form-group">
+                        <label>Cor</label>
+                        <input type="text" name="shirtColors" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo</label>
+                        <select name="shirtTypes" class="form-control">
+                            <option value="Tradicional">Tradicional</option>
+                            <option value="Oversized">Oversized</option>
+                            <option value="Babylook">Babylook</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Preço (R$) <i class="fas fa-info-circle info-icon" title="Valor unitário por camisa"></i></label>
+                        <input type="number" step="0.01" name="shirtPrices" class="form-control" required placeholder="0.00">
+                    </div>
+                </div>
+                <div class="form-group full-width">
+                    <label>Tamanhos Disponíveis <i class="fas fa-info-circle info-icon" title="Selecione os tamanhos para este modelo"></i></label>
+                    <div class="sizes-wrapper">
+                        <input type="hidden" name="shirtSizes" class="shirt-sizes-input" value="P, M, G, GG, XG">
+                        <div class="size-options">
+                            <button type="button" class="size-chip" data-value="P">P</button>
+                            <button type="button" class="size-chip" data-value="M">M</button>
+                            <button type="button" class="size-chip" data-value="G">G</button>
+                            <button type="button" class="size-chip" data-value="GG">GG</button>
+                            <button type="button" class="size-chip" data-value="XG">XG</button>
+                            <button type="button" class="size-chip" data-value="XXG">XXG</button>
+                        </div>
+                        <small class="text-muted"><i class="fas fa-mouse-pointer"></i> Selecione os tamanhos disponíveis</small>
+                    </div>
+                </div>
+                <div class="form-group full-width">
+                    <label>Imagens do Modelo <i class="fas fa-info-circle info-icon" title="Formatos: JPG, PNG. Máx: 5MB"></i></label>
+                    <div class="image-upload-wrapper">
+                        <input type="hidden" name="shirtImagesJSON" class="shirt-images-json" value="[]">
+                        <input type="file" accept="image/*" class="form-control shirt-image-file" style="display: none;" onchange="handleImageSelected(this)">
+                        <div class="upload-trigger" onclick="triggerImageUpload(this)">
+                            <div class="upload-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <p class="upload-text">Clique para adicionar imagens</p>
+                            <p class="upload-hint">JPG ou PNG (Máx 5MB)</p>
+                        </div>
+                        <div class="image-preview-grid">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        `;
+        
+        container.insertAdjacentHTML('beforeend', template);
+        initChips();
+    }
+
+    function updateSizesInput(container) {
+        const chips = container.querySelectorAll('.size-chip.active');
+        const values = Array.from(chips).map(c => c.dataset.value);
+        const input = container.closest('.sizes-wrapper').querySelector('.shirt-sizes-input');
+        input.value = values.join(', ');
+    }
+
+    function initChips() {
+        document.querySelectorAll('.sizes-wrapper').forEach(wrapper => {
+            const input = wrapper.querySelector('.shirt-sizes-input');
+            const chips = wrapper.querySelectorAll('.size-chip');
+            if (input.value) {
+                const currentSizes = input.value.split(',').map(s => s.trim());
+                chips.forEach(chip => {
+                    if (currentSizes.includes(chip.dataset.value)) {
+                        chip.classList.add('active');
+                    } else {
+                        chip.classList.remove('active');
+                    }
+                });
+            }
+        });
+    }
+</script>
+
+<!-- Cropper Modal Removed -->

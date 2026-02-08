@@ -11,6 +11,10 @@ const Shirt = sequelize.define('Shirt', {
     type: DataTypes.STRING,
     allowNull: false
   },
+  color: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   price: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false

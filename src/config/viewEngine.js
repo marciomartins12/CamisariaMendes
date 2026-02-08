@@ -13,6 +13,13 @@ module.exports = (app) => {
         formatDate: (date) => {
           if (!date) return '';
           return new Date(date).toLocaleDateString('pt-BR');
+        },
+        json: (context) => {
+          return JSON.stringify(context).replace(/'/g, "&#39;");
+        },
+        split: (str, separator) => {
+          if (typeof str !== 'string') return [];
+          return str.split(separator);
         }
       }
     })

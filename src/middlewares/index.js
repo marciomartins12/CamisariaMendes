@@ -21,6 +21,13 @@ module.exports = async (app) => {
     res.locals.instagramUser = `@${process.env.INSTAGRAM_USER}`;
     res.locals.displayPhone = '(98) 98778-0960'; // You might want to format this dynamically later
     res.locals.admin = req.session.admin; // Make admin user available in all views
+    
+    // Flash messages
+    const success = req.flash('success');
+    const error = req.flash('error');
+    res.locals.success = success.length > 0 ? success[0] : null;
+    res.locals.error = error.length > 0 ? error[0] : null;
+
     next();
   });
 };

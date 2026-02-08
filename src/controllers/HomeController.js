@@ -14,7 +14,7 @@ module.exports = {
   },
 
   accessCampaign: async (req, res) => {
-    const { codigo } = req.body;
+    const codigo = req.body.codigo ? req.body.codigo.toUpperCase().trim() : '';
     
     try {
       // Find campaign by access code
@@ -65,9 +65,15 @@ module.exports = {
   },
 
   viewCampaign: async (req, res) => {
-    const { code } = req.params;
+    const code = req.params.code ? req.params.code.toUpperCase().trim() : '';
 
     try {
+      // 1. Check if user is logged in
+      if (!req.session.user) {
+        return res.redirect(`/auth/login?code=${code}`);
+      }
+
+      // 2. Find campaign
       const campaign = await Campaign.findOne({ 
         where: { accessCode: code },
         include: [{ model: Shirt, as: 'shirts' }]
@@ -77,12 +83,28 @@ module.exports = {
         return res.redirect('/');
       }
 
+      if (campaign.status !== 'active') {
+          return res.render('home', {
+              title: 'Camisaria Mendes',
+              error: 'Esta campanha não está ativa no momento.',
+              // ... existing locals ...
+              whatsappLink: `https://wa.me/${process.env.WHATSAPP_NUMBER}`,
+              instagramLink: `https://instagram.com/${process.env.INSTAGRAM_USER}`,
+              emailLink: `mailto:${process.env.CONTACT_EMAIL}`,
+              contactEmail: process.env.CONTACT_EMAIL,
+              instagramUser: `@${process.env.INSTAGRAM_USER}`,
+              displayPhone: '(98) 98778-0960'
+          });
+      }
+
       // Convert to plain object for Handlebars
       const campaignPlain = campaign.get({ plain: true });
 
-      res.render('campaign', {
+      // 3. Render Store Page (instead of generic campaign page)
+      res.render('shop/store', {
         title: campaign.title,
         campaign: campaignPlain,
+        user: req.session.user,
         layout: 'main'
       });
     } catch (error) {

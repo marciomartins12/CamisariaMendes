@@ -22,8 +22,8 @@
             {{#each campaign.shirts}}
             <div class="product-card">
                 <div class="product-image">
-                    {{#if this.image}}
-                    <img src="{{this.image}}" alt="{{this.name}}">
+                    {{#if this.images.[0]}}
+                    <img src="{{this.images.[0]}}" alt="{{this.name}}">
                     {{else}}
                     <div class="no-image-placeholder">
                         <i class="fas fa-tshirt"></i>

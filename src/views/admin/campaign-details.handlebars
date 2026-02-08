@@ -1,0 +1,338 @@
+<div class="admin-layout">
+    {{> admin-sidebar}}
+
+    <main class="admin-main-content">
+        <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h2>Detalhes da Campanha</h2>
+                <p>Visão geral e exportação de dados</p>
+            </div>
+            <div class="header-actions">
+                <a href="/admin/campanhas" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Voltar</a>
+                <a href="/admin/campanhas/editar/{{campaign.id}}" class="btn btn-primary"><i class="fas fa-edit"></i> Editar</a>
+            </div>
+        </div>
+
+        {{#if success}}
+        <div class="alert alert-success">{{success}}</div>
+        {{/if}}
+
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Campaign Info -->
+                <div class="details-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-info-circle"></i> Informações Gerais</h3>
+                    </div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Título</label>
+                            <p>{{campaign.title}}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Status</label>
+                            <span class="badge badge-{{campaign.status}}">
+                                {{#if (eq campaign.status 'active')}}Ativa{{/if}}
+                                {{#if (eq campaign.status 'inactive')}}Inativa{{/if}}
+                                {{#if (eq campaign.status 'draft')}}Rascunho{{/if}}
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <label>Código de Acesso</label>
+                            <p class="access-code">{{campaign.accessCode}} <button class="btn-copy" onclick="copyToClipboard('{{campaign.accessCode}}')" title="Copiar"><i class="far fa-copy"></i></button></p>
+                        </div>
+                        <div class="info-item">
+                            <label>Período</label>
+                            <p>{{formatDate campaign.startDate}} até {{formatDate campaign.endDate}}</p>
+                        </div>
+                    </div>
+                    <div class="info-full">
+                        <label>Descrição</label>
+                        <p>{{campaign.description}}</p>
+                    </div>
+                </div>
+
+                <!-- Products -->
+                <div class="details-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-tshirt"></i> Produtos ({{campaign.shirts.length}})</h3>
+                    </div>
+                    <div class="products-list">
+                        {{#each campaign.shirts}}
+                        <div class="product-card">
+                            <div class="product-header">
+                                <h4>{{this.name}}</h4>
+                                <span class="product-price">R$ {{this.price}}</span>
+                            </div>
+                            <div class="product-details">
+                                <p><strong>Tipo:</strong> {{this.type}}</p>
+                                <p><strong>Cor:</strong> {{this.color}}</p>
+                                <p><strong>Tamanhos:</strong> 
+                                    {{#each (split this.sizes ',')}}
+                                    <span class="size-badge">{{this}}</span>
+                                    {{/each}}
+                                </p>
+                            </div>
+                        </div>
+                        {{/each}}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <!-- Client Info -->
+                <div class="details-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-user-tie"></i> Cliente</h3>
+                    </div>
+                    <div class="client-info">
+                        <p><strong>Nome:</strong> {{campaign.clientName}}</p>
+                        <p><strong>Telefone:</strong> {{campaign.clientPhone}}</p>
+                        <p><strong>Instagram:</strong> {{campaign.clientInstagram}}</p>
+                    </div>
+                </div>
+
+                <!-- Actions / Exports -->
+                <div class="details-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-file-export"></i> Exportar Dados</h3>
+                    </div>
+                    <div class="export-actions">
+                        <a href="/admin/campanhas/{{campaign.id}}/exportar-pedidos" class="btn-export orders">
+                            <div class="icon"><i class="fas fa-file-invoice-dollar"></i></div>
+                            <div class="text">
+                                <strong>Exportar Pedidos</strong>
+                                <span>Lista completa de pedidos (CSV)</span>
+                            </div>
+                        </a>
+                        <a href="/admin/campanhas/{{campaign.id}}/exportar-relatorio" class="btn-export report">
+                            <div class="icon"><i class="fas fa-chart-pie"></i></div>
+                            <div class="text">
+                                <strong>Relatório de Produtos</strong>
+                                <span>Tamanhos e Tipos por Produto (CSV)</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        alert('Código copiado!');
+    });
+}
+</script>
+
+<style>
+    .details-section {
+        background: #fff;
+        padding: 1.25rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        margin-bottom: 1.5rem;
+        border: 1px solid #eee;
+    }
+
+    .section-header {
+        margin-bottom: 1rem;
+        padding-bottom: 0.8rem;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .section-header h3 {
+        margin: 0;
+        font-size: 1rem;
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .info-item label, .info-full label {
+        display: block;
+        font-size: 0.75rem;
+        color: #888;
+        margin-bottom: 0.3rem;
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .info-item p, .info-full p {
+        margin: 0;
+        font-size: 0.95rem;
+        color: #333;
+        font-weight: 500;
+    }
+
+    .access-code {
+        font-family: monospace;
+        background: #f8f9fa;
+        padding: 5px 10px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid #e9ecef;
+    }
+
+    .btn-copy {
+        background: none;
+        border: none;
+        color: #6c757d;
+        cursor: pointer;
+        padding: 0;
+        font-size: 0.9rem;
+        transition: color 0.2s;
+    }
+
+    .btn-copy:hover {
+        color: #007bff;
+    }
+
+    .products-list {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .product-card {
+        border: 1px solid #eee;
+        border-radius: 8px;
+        padding: 1rem;
+        transition: transform 0.2s;
+    }
+
+    .product-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .product-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .product-header h4 {
+        margin: 0;
+        font-size: 1rem;
+        color: #333;
+    }
+
+    .product-price {
+        font-weight: 700;
+        color: #28a745;
+    }
+
+    .product-details p {
+        margin: 0.2rem 0;
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+    .size-badge {
+        display: inline-block;
+        background: #e9ecef;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        margin-right: 4px;
+        color: #495057;
+    }
+
+    .export-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .btn-export {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 1rem;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.3s;
+        border: 1px solid transparent;
+    }
+
+    .btn-export.orders {
+        background: #e3f2fd;
+        color: #0d47a1;
+    }
+
+    .btn-export.orders:hover {
+        background: #bbdefb;
+        transform: translateY(-2px);
+    }
+
+    .btn-export.report {
+        background: #f3e5f5;
+        color: #4a148c;
+    }
+
+    .btn-export.report:hover {
+        background: #e1bee7;
+        transform: translateY(-2px);
+    }
+
+    .btn-export .icon {
+        font-size: 1.5rem;
+    }
+
+    .btn-export .text {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .btn-export .text strong {
+        font-size: 0.95rem;
+    }
+
+    .btn-export .text span {
+        font-size: 0.8rem;
+        opacity: 0.8;
+    }
+
+    .row {
+        display: flex;
+        flex-wrap: wrap;
+        margin: -15px;
+    }
+
+    .col-md-8 {
+        width: 66.666%;
+        padding: 15px;
+    }
+
+    .col-md-4 {
+        width: 33.333%;
+        padding: 15px;
+    }
+
+    @media (max-width: 768px) {
+        .col-md-8, .col-md-4 {
+            width: 100%;
+        }
+        
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

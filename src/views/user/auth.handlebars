@@ -1,0 +1,197 @@
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h2>Bem-vindo!</h2>
+            <p>Identifique-se para acessar a campanha</p>
+        </div>
+
+        <div class="auth-tabs">
+            <button class="tab-btn {{#if (eq activeTab 'register')}}{{else}}active{{/if}}" onclick="switchTab('login')">Entrar</button>
+            <button class="tab-btn {{#if (eq activeTab 'register')}}active{{/if}}" onclick="switchTab('register')">Cadastrar</button>
+        </div>
+
+        <div class="auth-content">
+            <!-- Login Form -->
+            <form id="login-form" action="/auth/login" method="POST" class="auth-form {{#if (eq activeTab 'register')}}hidden{{/if}}">
+                {{#if campaignCode}}
+                <input type="hidden" name="campaignCode" value="{{campaignCode}}">
+                {{/if}}
+                
+                {{#if error}}
+                {{#if (eq activeTab 'login')}}
+                <div class="alert alert-danger">{{error}}</div>
+                {{else}}
+                 {{#unless activeTab}}<div class="alert alert-danger">{{error}}</div>{{/unless}}
+                {{/if}}
+                {{/if}}
+
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" name="email" class="form-control" required placeholder="seu@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" name="password" class="form-control" required placeholder="Sua senha">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Acessar</button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="register-form" action="/auth/register" method="POST" class="auth-form {{#if (eq activeTab 'register')}}{{else}}hidden{{/if}}">
+                {{#if campaignCode}}
+                <input type="hidden" name="campaignCode" value="{{campaignCode}}">
+                {{/if}}
+
+                {{#if error}}
+                {{#if (eq activeTab 'register')}}
+                <div class="alert alert-danger">{{error}}</div>
+                {{/if}}
+                {{/if}}
+
+                <div class="form-group">
+                    <label>Nome Completo</label>
+                    <input type="text" name="name" class="form-control" required placeholder="Seu nome" value="{{oldData.name}}">
+                </div>
+                <div class="form-group">
+                    <label>Telefone / WhatsApp</label>
+                    <input type="text" name="phone" class="form-control" placeholder="(00) 00000-0000" value="{{oldData.phone}}">
+                </div>
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" name="email" class="form-control" required placeholder="seu@email.com" value="{{oldData.email}}">
+                </div>
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" name="password" class="form-control" required placeholder="Crie uma senha">
+                </div>
+                <div class="form-group">
+                    <label>Confirmar Senha</label>
+                    <input type="password" name="confirmPassword" class="form-control" required placeholder="Repita a senha">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Criar Conta</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function switchTab(tab) {
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const tabs = document.querySelectorAll('.tab-btn');
+
+        if (tab === 'login') {
+            loginForm.classList.remove('hidden');
+            registerForm.classList.add('hidden');
+            tabs[0].classList.add('active');
+            tabs[1].classList.remove('active');
+        } else {
+            loginForm.classList.add('hidden');
+            registerForm.classList.remove('hidden');
+            tabs[0].classList.remove('active');
+            tabs[1].classList.add('active');
+        }
+    }
+</script>
+
+<style>
+    .auth-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 80vh;
+        padding: 2rem;
+        background: #f8f9fa;
+    }
+
+    .auth-card {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        width: 100%;
+        max-width: 450px;
+        overflow: hidden;
+    }
+
+    .auth-header {
+        background: var(--primary-color, #1a1a1a);
+        color: #fff;
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .auth-header h2 {
+        margin: 0;
+        font-size: 1.5rem;
+    }
+
+    .auth-header p {
+        margin: 0.5rem 0 0;
+        opacity: 0.8;
+        font-size: 0.9rem;
+    }
+
+    .auth-tabs {
+        display: flex;
+        border-bottom: 1px solid #eee;
+    }
+
+    .tab-btn {
+        flex: 1;
+        padding: 1rem;
+        background: none;
+        border: none;
+        font-weight: 600;
+        color: #666;
+        cursor: pointer;
+        transition: all 0.3s;
+        border-bottom: 3px solid transparent;
+    }
+
+    .tab-btn.active {
+        color: var(--primary-color, #1a1a1a);
+        border-bottom-color: var(--primary-color, #1a1a1a);
+        background: #fcfcfc;
+    }
+
+    .auth-content {
+        padding: 2rem;
+    }
+
+    .auth-form {
+        animation: fadeIn 0.3s ease;
+    }
+
+    .auth-form.hidden {
+        display: none;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: #333;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.8rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 1rem;
+    }
+
+    .btn-block {
+        width: 100%;
+        margin-top: 1rem;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>

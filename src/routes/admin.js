@@ -1,7 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
-const { Admin, Campaign, Shirt } = require('../models');
+const { Admin, Campaign, Shirt, sequelize } = require('../models');
+
+// Middleware to mark as admin area for all routes in this file
+router.use((req, res, next) => {
+    res.locals.isAdminArea = true;
+    next();
+});
 
 // Helper to generate unique access code
 const generateAccessCode = async () => {
@@ -194,6 +200,7 @@ router.get('/campanhas/nova', requireAdmin, (req, res) => {
 });
 
 router.post('/campanhas/nova', requireAdmin, async (req, res) => {
+    const t = await sequelize.transaction();
     try {
         const { 
             title, description, clientName, clientPhone, clientInstagram, 
@@ -223,31 +230,39 @@ router.post('/campanhas/nova', requireAdmin, async (req, res) => {
             status,
             startDate: startDate || null,
             endDate: endDate || null
-        });
+        }, { transaction: t });
 
         // Create shirts
         if (names.length > 0) {
-            const shirtsData = names.map((name, index) => ({
-                name,
-                color: colors[index] || '',
-                type: types[index] || 'Tradicional',
-                price: prices[index] || 0,
-                sizes: sizes[index] || '',
-                images: JSON.parse(imagesJSON[index] || '[]'), // JSON Array of Base64 strings
-                campaignId: newCampaign.id
-            }));
+            const shirtsData = names.map((name, index) => {
+                let images = [];
+                try {
+                    images = JSON.parse(imagesJSON[index] || '[]');
+                } catch (e) {
+                    console.error('Error parsing images JSON:', e);
+                    images = [];
+                }
 
-            await Shirt.bulkCreate(shirtsData);
+                return {
+                    name,
+                    color: colors[index] || '',
+                    type: types[index] || 'Tradicional',
+                    price: prices[index] || 0,
+                    sizes: sizes[index] || '',
+                    images: images,
+                    campaignId: newCampaign.id
+                };
+            });
+
+            await Shirt.bulkCreate(shirtsData, { transaction: t });
         }
         
-        res.render('admin/campaigns', {
-            title: 'Gerenciar Campanhas',
-            layout: 'main',
-            isCampaigns: true,
-            success: `Campanha criada com sucesso! Código de acesso: ${accessCode}`,
-            campaigns: (await Campaign.findAll({ order: [['createdAt', 'DESC']] })).map(c => c.get({ plain: true }))
-        });
+        await t.commit();
+
+        req.flash('success', `Campanha criada com sucesso! Código de acesso: ${accessCode}`);
+        res.redirect('/admin/campanhas');
     } catch (error) {
+        await t.rollback();
         console.error(error);
         res.render('admin/campaign-form', {
             title: 'Nova Campanha',
@@ -259,9 +274,95 @@ router.post('/campanhas/nova', requireAdmin, async (req, res) => {
     }
 });
 
-router.get('/campanhas/editar/:id', requireAdmin, async (req, res) => {
+// Campaign Details
+router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
+    try {
+        const campaign = await Campaign.findByPk(req.params.id, {
+            include: [{ model: Shirt, as: 'shirts' }]
+        });
+        
+        if (!campaign) {
+            return res.redirect('/admin/campanhas');
+        }
+
+        res.render('admin/campaign-details', {
+            title: 'Detalhes da Campanha',
+            layout: 'main',
+            isCampaigns: true,
+            campaign: campaign.get({ plain: true })
+        });
+    } catch (error) {
+        console.error(error);
+        res.redirect('/admin/campanhas');
+    }
+});
+
+// Export Orders (CSV)
+router.get('/campanhas/:id/exportar-pedidos', requireAdmin, async (req, res) => {
     try {
         const campaign = await Campaign.findByPk(req.params.id);
+        if (!campaign) return res.redirect('/admin/campanhas');
+
+        // Note: Order model does not exist yet. Returning template CSV.
+        const headers = ['Data', 'Nome do Cliente', 'Telefone', 'Produto', 'Tipo', 'Tamanho', 'Preço', 'Status'];
+        let csvContent = headers.join(';') + '\n';
+        
+        // Mock data or empty
+        // csvContent += `2023-10-27;João Silva;11999999999;Camiseta A;Tradicional;M;50.00;Pago\n`;
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename=pedidos-${campaign.accessCode}.csv`);
+        res.send(csvContent);
+    } catch (error) {
+        console.error(error);
+        res.redirect('/admin/campanhas');
+    }
+});
+
+// Export Product Report (CSV)
+router.get('/campanhas/:id/exportar-relatorio', requireAdmin, async (req, res) => {
+    try {
+        const campaign = await Campaign.findByPk(req.params.id, {
+            include: [{ model: Shirt, as: 'shirts' }]
+        });
+        
+        if (!campaign) return res.redirect('/admin/campanhas');
+
+        const headers = ['Produto', 'Tipo', 'Cor', 'Preço', 'Tamanhos'];
+        let csvContent = headers.join(';') + '\n';
+
+        campaign.shirts.forEach(shirt => {
+            // Clean sizes if they are JSON or string
+            let sizes = shirt.sizes;
+            if (Array.isArray(sizes)) sizes = sizes.join(',');
+            
+            // Escape semicolons if any
+            const row = [
+                shirt.name,
+                shirt.type,
+                shirt.color,
+                shirt.price.toString().replace('.', ','),
+                sizes
+            ].map(field => `"${field}"`).join(';');
+            
+            csvContent += row + '\n';
+        });
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename=produtos-${campaign.accessCode}.csv`);
+        res.send(csvContent);
+    } catch (error) {
+        console.error(error);
+        res.redirect('/admin/campanhas');
+    }
+});
+
+router.get('/campanhas/editar/:id', requireAdmin, async (req, res) => {
+    try {
+        const campaign = await Campaign.findByPk(req.params.id, {
+            include: [{ model: Shirt, as: 'shirts' }]
+        });
+        
         if (!campaign) {
             return res.redirect('/admin/campanhas');
         }
@@ -278,33 +379,36 @@ router.get('/campanhas/editar/:id', requireAdmin, async (req, res) => {
 });
 
 router.post('/campanhas/editar/:id', requireAdmin, async (req, res) => {
+    const t = await sequelize.transaction();
     try {
+        const { id } = req.params;
         const { 
-            title, description, status, startDate, endDate,
-            clientName, clientPhone, clientInstagram,
+            title, description, clientName, clientPhone, clientInstagram, 
+            status, startDate, endDate,
             shirtNames, shirtColors, shirtTypes, shirtPrices, shirtSizes, shirtImagesJSON 
         } = req.body;
-        
-        const campaign = await Campaign.findByPk(req.params.id);
+
+        const campaign = await Campaign.findByPk(id);
         
         if (!campaign) {
+            await t.rollback();
             return res.redirect('/admin/campanhas');
         }
 
-        campaign.title = title;
-        campaign.description = description;
-        campaign.status = status;
-        campaign.clientName = clientName;
-        campaign.clientPhone = clientPhone;
-        campaign.clientInstagram = clientInstagram;
-        campaign.startDate = startDate || null;
-        campaign.endDate = endDate || null;
-        
-        await campaign.save();
+        // Update Campaign
+        await campaign.update({
+            title,
+            description,
+            clientName,
+            clientPhone,
+            clientInstagram,
+            status,
+            startDate: startDate || null,
+            endDate: endDate || null
+        }, { transaction: t });
 
         // Update shirts: Strategy -> Delete all and Re-create
-        // This is simple but effective given we don't have orders yet
-        await Shirt.destroy({ where: { campaignId: campaign.id } });
+        await Shirt.destroy({ where: { campaignId: campaign.id }, transaction: t });
 
         const ensureArray = (item) => Array.isArray(item) ? item : (item ? [item] : []);
         
@@ -315,35 +419,48 @@ router.post('/campanhas/editar/:id', requireAdmin, async (req, res) => {
         const sizes = ensureArray(shirtSizes);
         const imagesJSON = ensureArray(shirtImagesJSON);
 
+        console.log(`Updating campaign ${id}. Found ${names.length} shirts to save.`);
+
         if (names.length > 0) {
-            const shirtsData = names.map((name, index) => ({
-                name,
-                color: colors[index] || '',
-                type: types[index] || 'Tradicional',
-                price: prices[index] || 0,
-                sizes: sizes[index] || '',
-                images: JSON.parse(imagesJSON[index] || '[]'),
-                campaignId: campaign.id
-            }));
+            const shirtsData = names.map((name, index) => {
+                let images = [];
+                try {
+                    images = JSON.parse(imagesJSON[index] || '[]');
+                } catch (e) {
+                    console.error('Error parsing images JSON for shirt index ' + index, e);
+                    images = [];
+                }
+                
+                return {
+                    name,
+                    color: colors[index] || '',
+                    type: types[index] || 'Tradicional',
+                    price: prices[index] || 0,
+                    sizes: sizes[index] || '',
+                    images: images,
+                    campaignId: campaign.id
+                };
+            });
 
-            await Shirt.bulkCreate(shirtsData);
+            await Shirt.bulkCreate(shirtsData, { transaction: t });
+            console.log(`Successfully saved ${shirtsData.length} shirts for campaign ${id}.`);
+        } else {
+            console.log(`No shirts to save for campaign ${id}.`);
         }
+        
+        await t.commit();
 
-        res.render('admin/campaigns', {
-            title: 'Gerenciar Campanhas',
-            layout: 'main',
-            isCampaigns: true,
-            success: 'Campanha atualizada com sucesso!',
-            campaigns: (await Campaign.findAll({ order: [['createdAt', 'DESC']] })).map(c => c.get({ plain: true }))
-        });
+        req.flash('success', 'Campanha atualizada com sucesso!');
+        res.redirect('/admin/campanhas');
     } catch (error) {
+        await t.rollback();
         console.error(error);
         res.render('admin/campaign-form', {
             title: 'Editar Campanha',
             layout: 'main',
             isCampaigns: true,
             error: 'Erro ao atualizar campanha.',
-            campaign: { ...req.body, id: req.params.id }
+            campaign: { id: req.params.id, ...req.body }
         });
     }
 });
@@ -351,6 +468,7 @@ router.post('/campanhas/editar/:id', requireAdmin, async (req, res) => {
 router.post('/campanhas/deletar/:id', requireAdmin, async (req, res) => {
     try {
         await Campaign.destroy({ where: { id: req.params.id } });
+        req.flash('success', 'Campanha excluída com sucesso.');
         res.redirect('/admin/campanhas');
     } catch (error) {
         console.error(error);

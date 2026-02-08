@@ -1,0 +1,338 @@
+{{!-- Store Header --}}
+<div class="store-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="store-title">{{campaign.title}}</h1>
+                <p class="store-subtitle">{{campaign.description}}</p>
+            </div>
+            <div class="user-controls">
+                <span class="mr-3">Olá, {{user.name}}</span>
+                <a href="/auth/logout" class="btn btn-outline-light btn-sm">Sair</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-5">
+    <div class="row">
+        {{#each campaign.shirts}}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="product-card">
+                <div class="product-image">
+                    {{#if this.imageUrl}}
+                    <img src="{{this.imageUrl}}" alt="{{this.name}}">
+                    {{else}}
+                    <div class="placeholder-image">Sem Imagem</div>
+                    {{/if}}
+                </div>
+                <div class="product-info">
+                    <h3 class="product-title">{{this.name}}</h3>
+                    <p class="product-type">{{this.type}} - {{this.color}}</p>
+                    <div class="product-price">R$ {{this.price}}</div>
+                    
+                    <div class="product-actions mt-3">
+                        <div class="form-group mb-2">
+                            <label>Tamanho:</label>
+                            <select class="form-control size-select" id="size-{{this.id}}">
+                                <option value="">Selecione...</option>
+                                {{#each (split this.sizes ',')}}
+                                <option value="{{this}}">{{this}}</option>
+                                {{/each}}
+                            </select>
+                        </div>
+                        <button class="btn btn-primary btn-block add-to-cart-btn" 
+                                onclick="addToCart({{this.id}}, '{{this.name}}', {{this.price}}, '{{this.imageUrl}}')"
+                                disabled>
+                            Adicionar ao Carrinho
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{else}}
+        <div class="col-12 text-center">
+            <p>Nenhum produto disponível nesta campanha.</p>
+        </div>
+        {{/each}}
+    </div>
+</div>
+
+{{!-- Floating Cart Button --}}
+<div id="floating-cart" class="floating-cart hidden" onclick="toggleCart()">
+    <i class="fas fa-shopping-bag"></i>
+    <span class="badge badge-danger cart-count">0</span>
+</div>
+
+{{!-- Cart Sidebar/Modal --}}
+<div id="cart-sidebar" class="cart-sidebar">
+    <div class="cart-header">
+        <h3>Seu Carrinho</h3>
+        <button class="close-btn" onclick="toggleCart()">&times;</button>
+    </div>
+    <div class="cart-items" id="cart-items">
+        <!-- Items will be injected here -->
+        <p class="empty-msg">Seu carrinho está vazio.</p>
+    </div>
+    <div class="cart-footer">
+        <div class="cart-total">
+            <span>Total:</span>
+            <span id="cart-total-value">R$ 0,00</span>
+        </div>
+        <button class="btn btn-success btn-block" onclick="checkout()">Finalizar Pedido</button>
+    </div>
+</div>
+
+<style>
+    .store-header {
+        background: var(--primary-color, #1a1a1a);
+        color: #fff;
+        padding: 3rem 0;
+        margin-top: -1.5rem; /* Offset main container padding if necessary */
+    }
+    
+    .store-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    
+    .store-subtitle {
+        opacity: 0.8;
+        margin: 0.5rem 0 0;
+    }
+
+    .product-card {
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        transition: transform 0.3s;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .product-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .product-image {
+        height: 250px;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .product-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .product-info {
+        padding: 1.5rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .product-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0 0 0.5rem;
+    }
+
+    .product-type {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    .product-price {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-color, #1a1a1a);
+        margin-top: auto;
+    }
+
+    .floating-cart {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: var(--primary-color, #1a1a1a);
+        color: #fff;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        cursor: pointer;
+        z-index: 1000;
+        transition: transform 0.3s;
+    }
+
+    .floating-cart:hover {
+        transform: scale(1.1);
+    }
+
+    .cart-count {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        font-size: 0.8rem;
+    }
+
+    .cart-sidebar {
+        position: fixed;
+        top: 0;
+        right: -400px;
+        width: 350px;
+        height: 100vh;
+        background: #fff;
+        box-shadow: -5px 0 30px rgba(0,0,0,0.1);
+        z-index: 1001;
+        transition: right 0.3s ease;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .cart-sidebar.open {
+        right: 0;
+    }
+
+    .cart-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .cart-items {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.5rem;
+    }
+
+    .cart-item {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .cart-item img {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+
+    .cart-footer {
+        padding: 1.5rem;
+        border-top: 1px solid #eee;
+        background: #f9f9f9;
+    }
+
+    .cart-total {
+        display: flex;
+        justify-content: space-between;
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .hidden { display: none; }
+</style>
+
+<script>
+    // Simple Cart Logic using LocalStorage
+    let cart = JSON.parse(localStorage.getItem('cart_{{campaign.id}}')) || [];
+
+    function updateCartUI() {
+        const count = cart.reduce((acc, item) => acc + item.quantity, 0);
+        document.querySelector('.cart-count').innerText = count;
+        
+        const cartBtn = document.getElementById('floating-cart');
+        if (count > 0) cartBtn.classList.remove('hidden');
+        else cartBtn.classList.add('hidden');
+
+        const itemsContainer = document.getElementById('cart-items');
+        if (cart.length === 0) {
+            itemsContainer.innerHTML = '<p class="empty-msg">Seu carrinho está vazio.</p>';
+        } else {
+            itemsContainer.innerHTML = cart.map((item, index) => `
+                <div class="cart-item">
+                    <img src="${item.image || 'https://via.placeholder.com/60'}" alt="${item.name}">
+                    <div style="flex:1">
+                        <h6 style="margin:0; font-size: 0.95rem;">${item.name}</h6>
+                        <small class="text-muted">Tam: ${item.size}</small>
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            <span style="font-weight:600">R$ ${item.price}</span>
+                            <button class="btn btn-sm btn-link text-danger p-0" onclick="removeFromCart(${index})">remover</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        const total = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+        document.getElementById('cart-total-value').innerText = 'R$ ' + total.toFixed(2).replace('.', ',');
+    }
+
+    function addToCart(id, name, price, image) {
+        const sizeSelect = document.getElementById(`size-${id}`);
+        const size = sizeSelect.value;
+        
+        if (!size) {
+            alert('Por favor, selecione um tamanho.');
+            return;
+        }
+
+        cart.push({ id, name, price, image, size, quantity: 1 });
+        localStorage.setItem('cart_{{campaign.id}}', JSON.stringify(cart));
+        updateCartUI();
+        toggleCart(true); // Open cart
+    }
+
+    function removeFromCart(index) {
+        cart.splice(index, 1);
+        localStorage.setItem('cart_{{campaign.id}}', JSON.stringify(cart));
+        updateCartUI();
+    }
+
+    function toggleCart(forceOpen = null) {
+        const sidebar = document.getElementById('cart-sidebar');
+        if (forceOpen === true) {
+            sidebar.classList.add('open');
+        } else if (forceOpen === false) {
+            sidebar.classList.remove('open');
+        } else {
+            sidebar.classList.toggle('open');
+        }
+    }
+
+    function checkout() {
+        // Here we would send the cart data to the backend
+        alert('Funcionalidade de finalizar pedido será implementada em breve!');
+        // window.location.href = '/checkout';
+    }
+
+    // Enable buttons when size selected
+    document.querySelectorAll('.size-select').forEach(select => {
+        select.addEventListener('change', (e) => {
+            const btn = e.target.closest('.product-actions').querySelector('.add-to-cart-btn');
+            btn.disabled = !e.target.value;
+        });
+    });
+
+    // Init
+    updateCartUI();
+</script>
