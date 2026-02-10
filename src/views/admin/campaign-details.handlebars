@@ -2,14 +2,20 @@
     {{> admin-sidebar}}
 
     <main class="admin-main-content">
-        <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h2>Detalhes da Campanha</h2>
-                <p>Visão geral e exportação de dados</p>
+        <!-- Compact Header -->
+        <div class="dashboard-header-compact">
+            <div class="header-title">
+                <h2>{{campaign.title}}</h2>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="/admin/campanhas">Campanhas</a></li>
+                    <li class="breadcrumb-item active">Detalhes</li>
+                </ul>
             </div>
             <div class="header-actions">
-                <a href="/admin/campanhas" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Voltar</a>
-                <a href="/admin/campanhas/editar/{{campaign.id}}" class="btn btn-primary"><i class="fas fa-edit"></i> Editar</a>
+                <a href="/admin/campanhas/editar/{{campaign.id}}" class="btn btn-primary">
+                    <i class="fas fa-edit"></i> Editar Campanha
+                </a>
             </div>
         </div>
 
@@ -17,101 +23,226 @@
         <div class="alert alert-success">{{success}}</div>
         {{/if}}
 
-        <div class="row">
-            <div class="col-md-8">
-                <!-- Campaign Info -->
-                <div class="details-section">
-                    <div class="section-header">
+        <!-- Campaign Stats Row -->
+        <div class="details-stats-grid">
+            <div class="detail-stat-card">
+                <div class="stat-icon-wrapper blue">
+                    <i class="fas fa-tshirt"></i>
+                </div>
+                <div class="stat-content">
+                    <h4>Produtos</h4>
+                    <div class="value">{{campaign.shirts.length}}</div>
+                </div>
+            </div>
+            <div class="detail-stat-card">
+                <div class="stat-icon-wrapper green">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div class="stat-content">
+                    <h4>Pedidos</h4>
+                    <div class="value">0</div> <!-- Placeholder -->
+                </div>
+            </div>
+            <div class="detail-stat-card">
+                <div class="stat-icon-wrapper purple">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="stat-content">
+                    <h4>Arrecadado</h4>
+                    <div class="value">R$ 0,00</div> <!-- Placeholder -->
+                </div>
+            </div>
+            <div class="detail-stat-card">
+                <div class="stat-icon-wrapper orange">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <h4>Dias Restantes</h4>
+                    <div class="value">{{campaign.daysRemaining}}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="details-grid-layout">
+            <!-- Left Column: General Info & Products -->
+            <div class="left-col">
+                <!-- General Info Card -->
+                <div class="details-card">
+                    <div class="card-header">
                         <h3><i class="fas fa-info-circle"></i> Informações Gerais</h3>
+                        <span class="badge badge-{{campaign.status}}">
+                            {{#if (eq campaign.status 'active')}}Ativa{{/if}}
+                            {{#if (eq campaign.status 'inactive')}}Inativa{{/if}}
+                            {{#if (eq campaign.status 'draft')}}Rascunho{{/if}}
+                        </span>
                     </div>
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <label>Título</label>
-                            <p>{{campaign.title}}</p>
+                    <div class="card-body">
+                        <div class="details-data-grid">
+                            <!-- Description -->
+                            <div class="data-item full-width">
+                                <div class="data-icon purple">
+                                    <i class="fas fa-align-left"></i>
+                                </div>
+                                <div class="data-content">
+                                    <span class="data-label">Descrição</span>
+                                    <span class="data-value">{{campaign.description}}</span>
+                                </div>
+                            </div>
+
+                            <!-- Date -->
+                            <div class="data-item">
+                                <div class="data-icon blue">
+                                    <i class="far fa-calendar-alt"></i>
+                                </div>
+                                <div class="data-content">
+                                    <span class="data-label">Período</span>
+                                    <span class="data-value">{{formatDate campaign.startDate}} - {{formatDate campaign.endDate}}</span>
+                                </div>
+                            </div>
+
+                            <!-- Created At -->
+                            <div class="data-item">
+                                <div class="data-icon orange">
+                                    <i class="far fa-clock"></i>
+                                </div>
+                                <div class="data-content">
+                                    <span class="data-label">Criada em</span>
+                                    <span class="data-value">{{formatDate campaign.createdAt}}</span>
+                                </div>
+                            </div>
+
+                            <!-- Access Code -->
+                            <div class="data-item full-width">
+                                <div class="data-icon green">
+                                    <i class="fas fa-key"></i>
+                                </div>
+                                <div class="data-content">
+                                    <span class="data-label">Código de Acesso</span>
+                                    <div class="data-value" style="display: flex; align-items: center; gap: 10px;">
+                                        <code style="background: #f1f5f9; padding: 4px 10px; border-radius: 8px; border: 1px solid #e2e8f0; font-family: monospace; color: #475569; font-weight: 700; font-size: 1.1rem;">{{campaign.accessCode}}</code>
+                                        <button class="copy-btn" onclick="copyToClipboard('{{campaign.accessCode}}')" title="Copiar Código">
+                                            <i class="far fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="info-item">
-                            <label>Status</label>
-                            <span class="badge badge-{{campaign.status}}">
-                                {{#if (eq campaign.status 'active')}}Ativa{{/if}}
-                                {{#if (eq campaign.status 'inactive')}}Inativa{{/if}}
-                                {{#if (eq campaign.status 'draft')}}Rascunho{{/if}}
-                            </span>
-                        </div>
-                        <div class="info-item">
-                            <label>Código de Acesso</label>
-                            <p class="access-code">{{campaign.accessCode}} <button class="btn-copy" onclick="copyToClipboard('{{campaign.accessCode}}')" title="Copiar"><i class="far fa-copy"></i></button></p>
-                        </div>
-                        <div class="info-item">
-                            <label>Período</label>
-                            <p>{{formatDate campaign.startDate}} até {{formatDate campaign.endDate}}</p>
-                        </div>
-                    </div>
-                    <div class="info-full">
-                        <label>Descrição</label>
-                        <p>{{campaign.description}}</p>
                     </div>
                 </div>
 
-                <!-- Products -->
-                <div class="details-section">
-                    <div class="section-header">
-                        <h3><i class="fas fa-tshirt"></i> Produtos ({{campaign.shirts.length}})</h3>
+                <!-- Products Card -->
+                <div class="details-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-tshirt"></i> Produtos Disponíveis</h3>
                     </div>
-                    <div class="products-list">
-                        {{#each campaign.shirts}}
-                        <div class="product-card">
-                            <div class="product-header">
-                                <h4>{{this.name}}</h4>
-                                <span class="product-price">R$ {{this.price}}</span>
+                    <div class="card-body">
+                        <div class="products-grid-mini">
+                            {{#each campaign.shirts}}
+                            <div class="mini-product-card">
+                                <div class="mini-product-image-wrapper">
+                                    {{#if this.images.[0]}}
+                                        <img src="{{this.images.[0]}}" alt="{{this.name}}" class="mini-product-image">
+                                    {{else}}
+                                        <div class="mini-product-placeholder">
+                                            <i class="fas fa-tshirt"></i>
+                                        </div>
+                                    {{/if}}
+                                    <div class="product-price-badge">
+                                        R$ {{this.price}}
+                                    </div>
+                                </div>
+                                
+                                <div class="mini-product-details">
+                                    <h4 class="mini-product-title" title="{{this.name}}">{{this.name}}</h4>
+                                    
+                                    <div class="mini-product-specs">
+                                        <div class="spec-item">
+                                            <i class="fas fa-tag"></i> <span>{{this.type}}</span>
+                                        </div>
+                                        <div class="spec-item">
+                                            <i class="fas fa-palette"></i> <span>{{this.color}}</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="mini-product-sizes">
+                                        {{#each (split this.sizes ',')}}
+                                        <span class="size-pill">{{this}}</span>
+                                        {{/each}}
+                                    </div>
+                                </div>
                             </div>
-                            <div class="product-details">
-                                <p><strong>Tipo:</strong> {{this.type}}</p>
-                                <p><strong>Cor:</strong> {{this.color}}</p>
-                                <p><strong>Tamanhos:</strong> 
-                                    {{#each (split this.sizes ',')}}
-                                    <span class="size-badge">{{this}}</span>
-                                    {{/each}}
-                                </p>
-                            </div>
+                            {{/each}}
                         </div>
-                        {{/each}}
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-4">
-                <!-- Client Info -->
-                <div class="details-section">
-                    <div class="section-header">
-                        <h3><i class="fas fa-user-tie"></i> Cliente</h3>
+            <!-- Right Column: Client & Actions -->
+            <div class="right-col">
+                <!-- Client Info Card -->
+                <div class="details-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-user-tie"></i> Dados do Cliente</h3>
                     </div>
-                    <div class="client-info">
-                        <p><strong>Nome:</strong> {{campaign.clientName}}</p>
-                        <p><strong>Telefone:</strong> {{campaign.clientPhone}}</p>
-                        <p><strong>Instagram:</strong> {{campaign.clientInstagram}}</p>
+                    <div class="card-body">
+                        <div class="details-data-grid" style="grid-template-columns: 1fr;">
+                            <div class="data-item">
+                                <div class="data-icon blue">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="data-content">
+                                    <span class="data-label">Nome</span>
+                                    <span class="data-value">{{campaign.clientName}}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="data-item">
+                                <div class="data-icon green">
+                                    <i class="fas fa-phone"></i>
+                                </div>
+                                <div class="data-content">
+                                    <span class="data-label">Telefone</span>
+                                    <span class="data-value">{{campaign.clientPhone}}</span>
+                                </div>
+                            </div>
+
+                            <div class="data-item">
+                                <div class="data-icon pink">
+                                    <i class="fab fa-instagram"></i>
+                                </div>
+                                <div class="data-content">
+                                    <span class="data-label">Instagram</span>
+                                    <span class="data-value">
+                                        {{#if campaign.clientInstagram}}
+                                        <a href="https://instagram.com/{{campaign.clientInstagram}}" target="_blank" style="color: #d62976; text-decoration: none; font-weight: 600; display: flex; align-items: center; gap: 5px;">
+                                            @{{campaign.clientInstagram}} <i class="fas fa-external-link-alt" style="font-size: 0.7rem;"></i>
+                                        </a>
+                                        {{else}}
+                                        <span style="color: #94a3b8;">Não informado</span>
+                                        {{/if}}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Actions / Exports -->
-                <div class="details-section">
-                    <div class="section-header">
-                        <h3><i class="fas fa-file-export"></i> Exportar Dados</h3>
+                <!-- Quick Actions / Export -->
+                <div class="details-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-bolt"></i> Ações Rápidas</h3>
                     </div>
-                    <div class="export-actions">
-                        <a href="/admin/campanhas/{{campaign.id}}/exportar-pedidos" class="btn-export orders">
-                            <div class="icon"><i class="fas fa-file-invoice-dollar"></i></div>
-                            <div class="text">
-                                <strong>Exportar Pedidos</strong>
-                                <span>Lista completa de pedidos (CSV)</span>
-                            </div>
-                        </a>
-                        <a href="/admin/campanhas/{{campaign.id}}/exportar-relatorio" class="btn-export report">
-                            <div class="icon"><i class="fas fa-chart-pie"></i></div>
-                            <div class="text">
-                                <strong>Relatório de Produtos</strong>
-                                <span>Tamanhos e Tipos por Produto (CSV)</span>
-                            </div>
-                        </a>
+                    <div class="card-body">
+                        <div class="quick-actions-grid">
+                            <button class="action-tile-btn excel">
+                                <i class="fas fa-file-excel"></i>
+                                <span>Exportar Pedidos</span>
+                            </button>
+                            <button class="action-tile-btn share">
+                                <i class="fas fa-share-alt"></i>
+                                <span>Compartilhar Link</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -122,217 +253,8 @@
 <script>
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {
+        // Could add a toast notification here
         alert('Código copiado!');
     });
 }
 </script>
-
-<style>
-    .details-section {
-        background: #fff;
-        padding: 1.25rem;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        margin-bottom: 1.5rem;
-        border: 1px solid #eee;
-    }
-
-    .section-header {
-        margin-bottom: 1rem;
-        padding-bottom: 0.8rem;
-        border-bottom: 1px solid #f0f0f0;
-    }
-
-    .section-header h3 {
-        margin: 0;
-        font-size: 1rem;
-        color: #333;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-weight: 600;
-    }
-
-    .info-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
-        margin-bottom: 1rem;
-    }
-
-    .info-item label, .info-full label {
-        display: block;
-        font-size: 0.75rem;
-        color: #888;
-        margin-bottom: 0.3rem;
-        text-transform: uppercase;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-    }
-
-    .info-item p, .info-full p {
-        margin: 0;
-        font-size: 0.95rem;
-        color: #333;
-        font-weight: 500;
-    }
-
-    .access-code {
-        font-family: monospace;
-        background: #f8f9fa;
-        padding: 5px 10px;
-        border-radius: 6px;
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        border: 1px solid #e9ecef;
-    }
-
-    .btn-copy {
-        background: none;
-        border: none;
-        color: #6c757d;
-        cursor: pointer;
-        padding: 0;
-        font-size: 0.9rem;
-        transition: color 0.2s;
-    }
-
-    .btn-copy:hover {
-        color: #007bff;
-    }
-
-    .products-list {
-        display: grid;
-        gap: 1rem;
-    }
-
-    .product-card {
-        border: 1px solid #eee;
-        border-radius: 8px;
-        padding: 1rem;
-        transition: transform 0.2s;
-    }
-
-    .product-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    }
-
-    .product-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-    }
-
-    .product-header h4 {
-        margin: 0;
-        font-size: 1rem;
-        color: #333;
-    }
-
-    .product-price {
-        font-weight: 700;
-        color: #28a745;
-    }
-
-    .product-details p {
-        margin: 0.2rem 0;
-        font-size: 0.9rem;
-        color: #666;
-    }
-
-    .size-badge {
-        display: inline-block;
-        background: #e9ecef;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-size: 0.8rem;
-        margin-right: 4px;
-        color: #495057;
-    }
-
-    .export-actions {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .btn-export {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        padding: 1rem;
-        border-radius: 8px;
-        text-decoration: none;
-        transition: all 0.3s;
-        border: 1px solid transparent;
-    }
-
-    .btn-export.orders {
-        background: #e3f2fd;
-        color: #0d47a1;
-    }
-
-    .btn-export.orders:hover {
-        background: #bbdefb;
-        transform: translateY(-2px);
-    }
-
-    .btn-export.report {
-        background: #f3e5f5;
-        color: #4a148c;
-    }
-
-    .btn-export.report:hover {
-        background: #e1bee7;
-        transform: translateY(-2px);
-    }
-
-    .btn-export .icon {
-        font-size: 1.5rem;
-    }
-
-    .btn-export .text {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .btn-export .text strong {
-        font-size: 0.95rem;
-    }
-
-    .btn-export .text span {
-        font-size: 0.8rem;
-        opacity: 0.8;
-    }
-
-    .row {
-        display: flex;
-        flex-wrap: wrap;
-        margin: -15px;
-    }
-
-    .col-md-8 {
-        width: 66.666%;
-        padding: 15px;
-    }
-
-    .col-md-4 {
-        width: 33.333%;
-        padding: 15px;
-    }
-
-    @media (max-width: 768px) {
-        .col-md-8, .col-md-4 {
-            width: 100%;
-        }
-        
-        .info-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-</style>

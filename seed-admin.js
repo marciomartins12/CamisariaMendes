@@ -7,9 +7,9 @@ async function seedAdmin() {
   try {
     await sequelize.sync({ force: false }); // Don't drop tables if they exist, but creating Admin table if not
 
-    const adminUser = process.env.ADMIN_USER || 'admin';
-    const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
-    const adminEmail = process.env.CONTACT_EMAIL || 'admin@camisariamendes.com';
+    const adminUser = process.env.ADMIN_USER;
+    const adminPass = process.env.ADMIN_PASSWORD;
+    const adminEmail = process.env.CONTACT_EMAIL;
 
     const adminExists = await Admin.findOne({ where: { username: adminUser } });
 

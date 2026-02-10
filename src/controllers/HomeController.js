@@ -105,6 +105,9 @@ module.exports = {
         title: campaign.title,
         campaign: campaignPlain,
         user: req.session.user,
+        // whatsappNumber is now handled by middleware globally as whatsappLink or similar, 
+        // but if store.handlebars specifically needs the raw number:
+        whatsappNumber: process.env.WHATSAPP_NUMBER, 
         layout: 'main'
       });
     } catch (error) {

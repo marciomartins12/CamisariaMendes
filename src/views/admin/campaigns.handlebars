@@ -2,10 +2,15 @@
     {{> admin-sidebar}}
 
     <main class="admin-main-content">
-        <div class="dashboard-header">
-            <div>
-                <h2>Campanhas</h2>
-                <p>Gerencie as campanhas de marketing</p>
+        <div class="dashboard-header-compact">
+            <div class="header-title">
+                <h2>Gerenciar Campanhas</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Campanhas</li>
+                    </ol>
+                </nav>
             </div>
             <a href="/admin/campanhas/nova" class="btn btn-primary"><i class="fas fa-plus"></i> Nova Campanha</a>
         </div>
@@ -16,26 +21,39 @@
 
         <div class="campaigns-container">
             <div class="search-bar-wrapper">
-                <i class="fas fa-search search-icon"></i>
-                <input type="text" id="campaignSearch" class="search-input" placeholder="Buscar campanhas por título, status ou data..." onkeyup="filterCampaigns()">
+                <div class="search-input-group">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="campaignSearch" class="search-input" placeholder="Buscar por título, cliente..." onkeyup="filterCampaigns()">
+                </div>
+                <div class="filter-group">
+                    <select id="statusFilter" class="filter-select" onchange="filterCampaigns()">
+                        <option value="">Todos os Status</option>
+                        <option value="active">Ativas</option>
+                        <option value="inactive">Inativas</option>
+                        <option value="draft">Rascunhos</option>
+                    </select>
+                </div>
             </div>
 
             <div class="campaigns-list">
                 {{#if campaigns.length}}
+                <div class="table-responsive">
                     <table class="admin-table" id="campaignsTable">
                         <thead>
                             <tr>
-                                <th>Título</th>
+                                <th>Campanha</th>
                                 <th>Cliente</th>
+                                <th>Produtos</th>
+                                <th>Pedidos</th>
+                                <th>Arrecadado</th>
                                 <th>Status</th>
-                                <th>Início</th>
-                                <th>Fim</th>
+                                <th>Período</th>
                                 <th style="text-align: right;">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
                             {{#each campaigns}}
-                            <tr>
+                            <tr data-status="{{this.status}}">
                                 <td>
                                     <div class="campaign-title-cell">
                                         <strong>{{this.title}}</strong>
@@ -49,14 +67,27 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="badge badge-{{this.status}}">
+                                    <span class="stat-value">{{this.productCount}}</span>
+                                </td>
+                                <td>
+                                    <span class="stat-value">{{this.totalOrders}}</span>
+                                </td>
+                                <td>
+                                    <span class="stat-value">R$ {{this.totalRevenue}},00</span>
+                                </td>
+                                <td>
+                                    <button class="badge badge-{{this.status}} btn-status" onclick="toggleStatus({{this.id}}, '{{this.status}}')" title="Clique para alterar status">
                                         {{#if (eq this.status 'active')}}Ativa{{/if}}
                                         {{#if (eq this.status 'inactive')}}Inativa{{/if}}
                                         {{#if (eq this.status 'draft')}}Rascunho{{/if}}
-                                    </span>
+                                    </button>
                                 </td>
-                                <td>{{formatDate this.startDate}}</td>
-                                <td>{{formatDate this.endDate}}</td>
+                                <td>
+                                    <div class="date-cell">
+                                        <small>Início: {{formatDate this.startDate}}</small>
+                                        <small>Fim: {{formatDate this.endDate}}</small>
+                                    </div>
+                                </td>
                                 <td style="text-align: right;">
                                     <div class="action-buttons">
                                         <a href="/admin/campanhas/detalhes/{{this.id}}" class="btn-icon details" title="Detalhes"><i class="fas fa-eye"></i></a>
@@ -70,6 +101,7 @@
                             {{/each}}
                         </tbody>
                     </table>
+                </div>
                 {{else}}
                     <div class="empty-state">
                         <div class="empty-icon"><i class="fas fa-bullhorn"></i></div>
@@ -84,208 +116,67 @@
 </div>
 
 <script>
+function toggleStatus(id, currentStatus) {
+    let confirmMsg = '';
+    if (currentStatus === 'active') {
+        confirmMsg = 'Deseja realmente desativar esta campanha?';
+    } else {
+        confirmMsg = 'Deseja ativar esta campanha?';
+    }
+
+    if (confirm(confirmMsg)) {
+        fetch(`/admin/campanhas/toggle-status/${id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erro: ' + data.message);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Erro ao comunicar com o servidor.');
+        });
+    }
+}
+
 function filterCampaigns() {
     const input = document.getElementById('campaignSearch');
-    const filter = input.value.toLowerCase();
+    const filterText = input.value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
     const table = document.getElementById('campaignsTable');
+    
+    if (!table) return;
+    
     const tr = table.getElementsByTagName('tr');
 
     for (let i = 1; i < tr.length; i++) {
-        const titleCell = tr[i].getElementsByTagName('td')[0];
-        const clientCell = tr[i].getElementsByTagName('td')[1];
-        const statusCell = tr[i].getElementsByTagName('td')[2];
-        const dateStartCell = tr[i].getElementsByTagName('td')[3];
+        const row = tr[i];
+        const titleCell = row.getElementsByTagName('td')[0];
+        const clientCell = row.getElementsByTagName('td')[1];
+        const rowStatus = row.getAttribute('data-status');
         
-        if (titleCell || clientCell || statusCell) {
+        if (titleCell || clientCell) {
             const titleText = titleCell.textContent || titleCell.innerText;
             const clientText = clientCell.textContent || clientCell.innerText;
-            const statusText = statusCell.textContent || statusCell.innerText;
-            const dateText = dateStartCell.textContent || dateStartCell.innerText;
+            
+            const matchesText = titleText.toLowerCase().indexOf(filterText) > -1 || 
+                                clientText.toLowerCase().indexOf(filterText) > -1;
+            
+            const matchesStatus = statusFilter === '' || rowStatus === statusFilter;
 
-            if (titleText.toLowerCase().indexOf(filter) > -1 || 
-                clientText.toLowerCase().indexOf(filter) > -1 ||
-                statusText.toLowerCase().indexOf(filter) > -1 ||
-                dateText.toLowerCase().indexOf(filter) > -1) {
-                tr[i].style.display = "";
+            if (matchesText && matchesStatus) {
+                row.style.display = "";
             } else {
-                tr[i].style.display = "none";
+                row.style.display = "none";
             }
         }
     }
 }
 </script>
-
-<style>
-    /* Header Adjustment */
-    .dashboard-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 2rem;
-    }
-
-    /* Container Card */
-    .campaigns-container {
-        background: #fff;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        padding: 1.5rem;
-        border: 1px solid #f0f2f5;
-    }
-
-    /* Search Bar */
-    .search-bar-wrapper {
-        position: relative;
-        margin-bottom: 1.5rem;
-        max-width: 400px;
-    }
-
-    .search-input {
-        width: 100%;
-        padding: 0.8rem 1rem 0.8rem 2.8rem;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        transition: all 0.3s ease;
-        background: #f8fafc;
-        color: #334155;
-    }
-
-    .search-input:focus {
-        outline: none;
-        border-color: #3498db;
-        background: #fff;
-        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-    }
-
-    .search-icon {
-        position: absolute;
-        left: 1rem;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #94a3b8;
-    }
-
-    /* Table Styles */
-    .admin-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-    }
-
-    .admin-table th {
-        background-color: #f8fafc;
-        color: #64748b;
-        font-weight: 600;
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        padding: 1rem 1.5rem;
-        border-bottom: 2px solid #e2e8f0;
-    }
-
-    .admin-table td {
-        padding: 1.2rem 1.5rem;
-        vertical-align: middle;
-        border-bottom: 1px solid #f1f5f9;
-        color: #334155;
-        font-size: 0.95rem;
-    }
-
-    .admin-table tr:last-child td {
-        border-bottom: none;
-    }
-
-    .admin-table tr:hover td {
-        background-color: #f8fafc;
-    }
-
-    /* Column Specifics */
-    .campaign-title-cell {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .campaign-title-cell strong {
-        color: #1e293b;
-        font-size: 1rem;
-        margin-bottom: 0.2rem;
-    }
-
-    .campaign-title-cell small {
-        color: #94a3b8;
-        font-size: 0.85rem;
-        max-width: 300px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .client-cell {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .client-cell strong {
-        color: #334155;
-        font-size: 0.95rem;
-    }
-
-    .client-cell small {
-        color: #64748b;
-        font-size: 0.8rem;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-
-    /* Badges */
-    .badge {
-        padding: 0.4rem 0.8rem;
-        border-radius: 6px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .badge-active { background-color: #dcfce7; color: #166534; }
-    .badge-inactive { background-color: #fee2e2; color: #991b1b; }
-    .badge-draft { background-color: #fef3c7; color: #92400e; }
-
-    /* Actions */
-    .action-buttons {
-        display: flex;
-        justify-content: flex-end;
-        gap: 0.5rem;
-    }
-
-    .btn-icon {
-        width: 32px;
-        height: 32px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 6px;
-        transition: all 0.2s;
-        background: transparent;
-    }
-
-    .btn-icon:hover {
-        background: #f1f5f9;
-    }
-
-    .btn-icon.edit { color: #3b82f6; }
-    .btn-icon.details { color: #0ea5e9; }
-    .btn-icon.delete { color: #ef4444; }
-
-    .btn-icon.edit:hover { background: #eff6ff; }
-    .btn-icon.details:hover { background: #e0f2fe; }
-    .btn-icon.delete:hover { background: #fef2f2; }
-
-    .empty-state {
-        text-align: center;
-        padding: 4rem 2rem;
-    }
-
-</style>

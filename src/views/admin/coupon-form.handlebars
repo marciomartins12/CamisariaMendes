@@ -1,0 +1,84 @@
+<div class="admin-layout">
+    {{> admin-sidebar}}
+
+    <main class="admin-main-content">
+        <div class="form-container">
+            <div class="dashboard-header" style="flex-direction: row; justify-content: space-between; align-items: center;">
+                <div class="header-content">
+                    <h2>{{#if coupon.id}}Editar Cupom{{else}}Novo Cupom{{/if}}</h2>
+                    <p>{{#if coupon.id}}Atualizar informações do cupom{{else}}Criar um novo cupom de desconto{{/if}}</p>
+                </div>
+                <a href="/admin/cupons" class="btn btn-outline" style="padding: 0.6rem 1.2rem;">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </a>
+            </div>
+
+            {{#if error}}
+            <div class="alert alert-danger">{{error}}</div>
+            {{/if}}
+
+            <form action="/admin/cupons/{{#if coupon.id}}editar/{{coupon.id}}{{else}}novo{{/if}}" method="POST" class="admin-form">
+                
+                <div class="form-section">
+                    <div class="section-header">
+                        <div class="icon-wrapper"><i class="fas fa-ticket-alt"></i></div>
+                        <h3>Dados do Cupom</h3>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Código do Cupom <i class="fas fa-info-circle info-icon" title="Código único que o usuário irá digitar"></i></label>
+                            <input type="text" name="code" class="form-control" value="{{coupon.code}}" required placeholder="Ex: PROMO10" style="text-transform: uppercase;">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select name="status" class="form-control">
+                                <option value="active" {{#if (eq coupon.status 'active')}}selected{{/if}}>Ativo</option>
+                                <option value="inactive" {{#if (eq coupon.status 'inactive')}}selected{{/if}}>Inativo</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Tipo de Desconto</label>
+                            <select name="discountType" class="form-control" id="discountTypeSelect">
+                                <option value="fixed" {{#if (eq coupon.discountType 'fixed')}}selected{{/if}}>Valor Fixo (R$)</option>
+                                <option value="percentage" {{#if (eq coupon.discountType 'percentage')}}selected{{/if}}>Porcentagem (%)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Valor do Desconto</label>
+                            <div class="input-prefix">
+                                <span id="currencySymbol">R$</span>
+                                <input type="number" name="discountValue" class="form-control" value="{{coupon.discountValue}}" required step="0.01" min="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a href="/admin/cupons" class="btn btn-outline">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Salvar Cupom</button>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const typeSelect = document.getElementById('discountTypeSelect');
+    const currencySymbol = document.getElementById('currencySymbol');
+
+    function updateSymbol() {
+        if (typeSelect.value === 'percentage') {
+            currencySymbol.textContent = '%';
+        } else {
+            currencySymbol.textContent = 'R$';
+        }
+    }
+
+    typeSelect.addEventListener('change', updateSymbol);
+    updateSymbol(); // Init
+});
+</script>

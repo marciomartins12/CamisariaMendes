@@ -1,0 +1,142 @@
+<div class="admin-layout">
+    {{> admin-sidebar}}
+
+    <main class="admin-main-content">
+        <div class="dashboard-header-compact">
+            <div class="header-title">
+                <h2>Gerenciar Cupons</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Cupons</li>
+                    </ol>
+                </nav>
+            </div>
+            <a href="/admin/cupons/novo" class="btn btn-primary"><i class="fas fa-plus"></i> Novo Cupom</a>
+        </div>
+
+        {{#if success}}
+        <div class="alert alert-success">{{success}}</div>
+        {{/if}}
+        {{#if error}}
+        <div class="alert alert-danger">{{error}}</div>
+        {{/if}}
+
+        <div class="campaigns-container">
+            <div class="search-bar-wrapper">
+                <div class="search-input-group">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="couponSearch" class="search-input" placeholder="Buscar por código..." onkeyup="filterCoupons()">
+                </div>
+            </div>
+
+            <div class="campaigns-list">
+                {{#if coupons.length}}
+                <div class="table-responsive">
+                    <table class="admin-table" id="couponsTable">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Tipo</th>
+                                <th>Valor</th>
+                                <th>Usos</th>
+                                <th>Status</th>
+                                <th>Criado em</th>
+                                <th style="text-align: right;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#each coupons}}
+                            <tr data-status="{{this.status}}">
+                                <td>
+                                    <strong>{{this.code}}</strong>
+                                </td>
+                                <td>
+                                    {{#if (eq this.discountType 'percentage')}}Porcentagem{{else}}Valor Fixo{{/if}}
+                                </td>
+                                <td>
+                                    {{#if (eq this.discountType 'percentage')}}
+                                        {{this.discountValue}}%
+                                    {{else}}
+                                        R$ {{this.discountValue}}
+                                    {{/if}}
+                                </td>
+                                <td>
+                                    {{this.usageCount}}
+                                </td>
+                                <td>
+                                    <button class="badge badge-{{this.status}} btn-status" onclick="toggleCouponStatus({{this.id}})" title="Clique para alterar status">
+                                        {{#if (eq this.status 'active')}}Ativo{{else}}Inativo{{/if}}
+                                    </button>
+                                </td>
+                                <td>
+                                    {{formatDate this.createdAt}}
+                                </td>
+                                <td style="text-align: right;">
+                                    <div class="action-buttons">
+                                        <a href="/admin/cupons/editar/{{this.id}}" class="btn-icon edit" title="Editar"><i class="fas fa-edit"></i></a>
+                                        <form action="/admin/cupons/deletar/{{this.id}}" method="POST" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir este cupom?');">
+                                            <button type="submit" class="btn-icon delete" title="Excluir"><i class="fas fa-trash"></i></button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {{/each}}
+                        </tbody>
+                    </table>
+                </div>
+                {{else}}
+                <div class="empty-state">
+                    <i class="fas fa-ticket-alt"></i>
+                    <p>Nenhum cupom encontrado.</p>
+                </div>
+                {{/if}}
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+function filterCoupons() {
+    const input = document.getElementById('couponSearch');
+    const filter = input.value.toUpperCase();
+    const table = document.getElementById('couponsTable');
+    if (!table) return;
+    const tr = table.getElementsByTagName('tr');
+
+    for (let i = 1; i < tr.length; i++) {
+        const td = tr[i].getElementsByTagName('td')[0];
+        if (td) {
+            const txtValue = td.textContent || td.innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                tr[i].style.display = "";
+            } else {
+                tr[i].style.display = "none";
+            }
+        }
+    }
+}
+
+async function toggleCouponStatus(id) {
+    if (!confirm('Deseja alterar o status deste cupom?')) return;
+    
+    try {
+        const response = await fetch(`/admin/cupons/toggle-status/${id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Erro ao alterar status');
+        }
+    } catch (error) {
+        console.error(error);
+        alert('Erro ao processar requisição');
+    }
+}
+</script>

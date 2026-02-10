@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
-const { Admin, Campaign, Shirt, sequelize } = require('../models');
+const { Admin, Campaign, Shirt, Coupon, sequelize } = require('../models');
 
 // Middleware to mark as admin area for all routes in this file
 router.use((req, res, next) => {
@@ -170,9 +170,19 @@ router.post('/perfil', requireAdmin, async (req, res) => {
 // === Campaign Routes ===
 router.get('/campanhas', requireAdmin, async (req, res) => {
     try {
-        const campaigns = await Campaign.findAll({ order: [['createdAt', 'DESC']] });
-        // Convert to plain objects for Handlebars
-        const campaignsPlain = campaigns.map(c => c.get({ plain: true }));
+        const campaigns = await Campaign.findAll({ 
+            include: [{ model: Shirt, as: 'shirts' }],
+            order: [['createdAt', 'DESC']] 
+        });
+        
+        // Convert to plain objects and add stats
+        const campaignsPlain = campaigns.map(c => {
+            const plain = c.get({ plain: true });
+            plain.productCount = plain.shirts ? plain.shirts.length : 0;
+            plain.totalRevenue = 0; // Placeholder until Order model exists
+            plain.totalOrders = 0; // Placeholder until Order model exists
+            return plain;
+        });
 
         res.render('admin/campaigns', {
             title: 'Gerenciar Campanhas',
@@ -188,6 +198,25 @@ router.get('/campanhas', requireAdmin, async (req, res) => {
             isCampaigns: true,
             error: 'Erro ao carregar campanhas.'
         });
+    }
+});
+
+// Toggle Campaign Status
+router.post('/campanhas/toggle-status/:id', requireAdmin, async (req, res) => {
+    try {
+        const campaign = await Campaign.findByPk(req.params.id);
+        if (!campaign) {
+            return res.status(404).json({ success: false, message: 'Campanha não encontrada' });
+        }
+
+        // Toggle logic: active -> inactive, anything else -> active
+        const newStatus = campaign.status === 'active' ? 'inactive' : 'active';
+        
+        await campaign.update({ status: newStatus });
+        res.json({ success: true, newStatus, message: `Status alterado para ${newStatus === 'active' ? 'Ativa' : 'Inativa'}` });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Erro ao alterar status' });
     }
 });
 
@@ -285,11 +314,33 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
             return res.redirect('/admin/campanhas');
         }
 
+        const campaignPlain = campaign.get({ plain: true });
+        
+        // Ensure images are parsed (safeguard for nested associations)
+        if (campaignPlain.shirts) {
+            campaignPlain.shirts.forEach(shirt => {
+                if (typeof shirt.images === 'string') {
+                    try {
+                        shirt.images = JSON.parse(shirt.images);
+                    } catch (e) {
+                        shirt.images = [];
+                    }
+                }
+            });
+        }
+
+        // Calculate days remaining
+        const now = new Date();
+        const endDate = new Date(campaignPlain.endDate);
+        const timeDiff = endDate.getTime() - now.getTime();
+        const daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
+        campaignPlain.daysRemaining = daysRemaining > 0 ? daysRemaining : 0;
+
         res.render('admin/campaign-details', {
             title: 'Detalhes da Campanha',
             layout: 'main',
             isCampaigns: true,
-            campaign: campaign.get({ plain: true })
+            campaign: campaignPlain
         });
     } catch (error) {
         console.error(error);
@@ -482,6 +533,177 @@ router.get('/', (req, res) => {
         res.redirect('/admin/dashboard');
     } else {
         res.redirect('/admin/login');
+    }
+});
+
+// === Coupon Routes ===
+router.get('/cupons', requireAdmin, async (req, res) => {
+    try {
+        const coupons = await Coupon.findAll({ order: [['createdAt', 'DESC']] });
+        res.render('admin/coupons', {
+            title: 'Gerenciar Cupons',
+            layout: 'main',
+            isCoupons: true,
+            coupons: coupons.map(c => c.get({ plain: true }))
+        });
+    } catch (error) {
+        console.error(error);
+        res.render('admin/coupons', {
+            title: 'Gerenciar Cupons',
+            layout: 'main',
+            isCoupons: true,
+            error: 'Erro ao carregar cupons.'
+        });
+    }
+});
+
+router.get('/cupons/novo', requireAdmin, (req, res) => {
+    res.render('admin/coupon-form', {
+        title: 'Novo Cupom',
+        layout: 'main',
+        isCoupons: true
+    });
+});
+
+router.post('/cupons/novo', requireAdmin, async (req, res) => {
+    try {
+        console.log('Recebendo dados para novo cupom:', req.body);
+        const { code, discountType, discountValue, status } = req.body;
+        
+        if (!code || !discountType || !discountValue) {
+            return res.render('admin/coupon-form', {
+                title: 'Novo Cupom',
+                layout: 'main',
+                isCoupons: true,
+                error: 'Preencha todos os campos obrigatórios.',
+                coupon: req.body
+            });
+        }
+
+        const existingCoupon = await Coupon.findOne({ where: { code: code.toUpperCase() } });
+        if (existingCoupon) {
+            return res.render('admin/coupon-form', {
+                title: 'Novo Cupom',
+                layout: 'main',
+                isCoupons: true,
+                error: 'Já existe um cupom com este código.',
+                coupon: req.body
+            });
+        }
+
+        await Coupon.create({
+            code,
+            discountType,
+            discountValue: parseFloat(discountValue), // Ensure it's a number
+            status: status || 'active'
+        });
+
+        req.flash('success', 'Cupom criado com sucesso!');
+        res.redirect('/admin/cupons');
+    } catch (error) {
+        console.error('Erro ao criar cupom:', error);
+        res.render('admin/coupon-form', {
+            title: 'Novo Cupom',
+            layout: 'main',
+            isCoupons: true,
+            error: 'Erro ao criar cupom: ' + error.message,
+            coupon: req.body
+        });
+    }
+});
+
+router.get('/cupons/editar/:id', requireAdmin, async (req, res) => {
+    try {
+        const coupon = await Coupon.findByPk(req.params.id);
+        if (!coupon) return res.redirect('/admin/cupons');
+
+        res.render('admin/coupon-form', {
+            title: 'Editar Cupom',
+            layout: 'main',
+            isCoupons: true,
+            coupon: coupon.get({ plain: true })
+        });
+    } catch (error) {
+        console.error(error);
+        res.redirect('/admin/cupons');
+    }
+});
+
+router.post('/cupons/editar/:id', requireAdmin, async (req, res) => {
+    try {
+        const { code, discountType, discountValue, status } = req.body;
+        const coupon = await Coupon.findByPk(req.params.id);
+        
+        if (!coupon) return res.redirect('/admin/cupons');
+
+        if (!code || !discountType || !discountValue) {
+             return res.render('admin/coupon-form', {
+                title: 'Editar Cupom',
+                layout: 'main',
+                isCoupons: true,
+                error: 'Preencha todos os campos obrigatórios.',
+                coupon: { id: req.params.id, ...req.body }
+            });
+        }
+
+        // Check unique code if changed
+        if (code.toUpperCase() !== coupon.code) {
+             const existingCoupon = await Coupon.findOne({ where: { code: code.toUpperCase() } });
+             if (existingCoupon) {
+                return res.render('admin/coupon-form', {
+                    title: 'Editar Cupom',
+                    layout: 'main',
+                    isCoupons: true,
+                    error: 'Já existe um cupom com este código.',
+                    coupon: { id: req.params.id, ...req.body }
+                });
+             }
+        }
+
+        await coupon.update({
+            code,
+            discountType,
+            discountValue: parseFloat(discountValue),
+            status: status || 'active'
+        });
+
+        req.flash('success', 'Cupom atualizado com sucesso!');
+        res.redirect('/admin/cupons');
+    } catch (error) {
+        console.error('Erro ao atualizar cupom:', error);
+        res.render('admin/coupon-form', {
+            title: 'Editar Cupom',
+            layout: 'main',
+            isCoupons: true,
+            error: 'Erro ao atualizar cupom: ' + error.message,
+            coupon: { id: req.params.id, ...req.body }
+        });
+    }
+});
+
+router.post('/cupons/toggle-status/:id', requireAdmin, async (req, res) => {
+    try {
+        const coupon = await Coupon.findByPk(req.params.id);
+        if (!coupon) return res.status(404).json({ success: false });
+
+        const newStatus = coupon.status === 'active' ? 'inactive' : 'active';
+        await coupon.update({ status: newStatus });
+        
+        res.json({ success: true, newStatus });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false });
+    }
+});
+
+router.post('/cupons/deletar/:id', requireAdmin, async (req, res) => {
+    try {
+        await Coupon.destroy({ where: { id: req.params.id } });
+        req.flash('success', 'Cupom excluído com sucesso.');
+        res.redirect('/admin/cupons');
+    } catch (error) {
+        console.error(error);
+        res.redirect('/admin/cupons');
     }
 });
 

@@ -4,7 +4,7 @@ const models = require('../models');
 async function syncDatabase() {
   try {
     await sequelize.authenticate();
-    console.log('Database connection has been established successfully.');
+    console.log('conectado ao banco de dados.');
     
     // Sync all models
     // force: false ensures we don't drop existing tables unless necessary

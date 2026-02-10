@@ -1,0 +1,221 @@
+<div class="app-container" style="max-width: 800px; margin: 0 auto; padding: 20px;">
+    <header style="margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 20px;">
+        <h1 style="font-size: 1.8rem; margin: 0;">Finalizar Compra</h1>
+        <a href="javascript:history.back()" style="color: #666; text-decoration: none; font-size: 0.9rem;">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </header>
+
+    <div class="checkout-grid" style="display: grid; grid-template-columns: 1fr; gap: 30px;">
+        
+        <!-- Order Summary (Left/Top) -->
+        <div class="summary-card" style="background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #eee;">
+            <h3 style="margin-top: 0;">Resumo do Pedido</h3>
+            <div id="checkout-items">
+                <!-- Items injected by JS -->
+                <p style="color: #999;">Carregando itens...</p>
+            </div>
+            
+            <div style="border-top: 1px solid #eee; margin-top: 20px; padding-top: 15px;">
+                <div class="row-between">
+                    <span>Subtotal</span>
+                    <span id="summary-subtotal">R$ 0,00</span>
+                </div>
+                <div class="row-between" id="summary-discount-row" style="color: #4caf50; display: none;">
+                    <span>Desconto</span>
+                    <span id="summary-discount">- R$ 0,00</span>
+                </div>
+                <div class="row-between" style="font-weight: 700; font-size: 1.2rem; margin-top: 10px;">
+                    <span>Total</span>
+                    <span id="summary-total">R$ 0,00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Form (Right/Bottom) -->
+        <div class="form-card" style="background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #eee;">
+            <h3 style="margin-top: 0;">Seus Dados</h3>
+            
+            {{#unless user}}
+            <div style="background: #e3f2fd; padding: 10px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem;">
+                <i class="fas fa-info-circle"></i> 
+                <a href="/auth/login?redirect=/checkout" style="font-weight: 600; text-decoration: none;">Faça login</a> para salvar este pedido no seu histórico.
+            </div>
+            {{/unless}}
+
+            <form id="checkout-form" onsubmit="processPayment(event)">
+                <div class="form-group">
+                    <label>Nome Completo</label>
+                    <input type="text" id="payerName" required value="{{user.name}}" class="form-input" placeholder="Ex: João da Silva">
+                </div>
+                
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" id="payerEmail" required value="{{user.email}}" class="form-input" placeholder="Ex: joao@email.com">
+                </div>
+
+                <div class="form-group">
+                    <label>Telefone / WhatsApp</label>
+                    <input type="tel" id="payerPhone" required value="{{user.phone}}" class="form-input" placeholder="Ex: 11999999999">
+                </div>
+
+                <button type="submit" class="btn-pay">
+                    Ir para Pagamento (Mercado Pago) <i class="fas fa-lock"></i>
+                </button>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .row-between { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.9rem; }
+    .form-input { 
+        width: 100%; 
+        padding: 12px; 
+        border: 1px solid #ddd; 
+        border-radius: 8px; 
+        font-size: 1rem;
+    }
+    .btn-pay {
+        width: 100%;
+        padding: 15px;
+        background: #009ee3; /* Mercado Pago Blue */
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        cursor: pointer;
+        margin-top: 10px;
+        transition: background 0.2s;
+    }
+    .btn-pay:hover { background: #0081b8; }
+    
+    @media (min-width: 768px) {
+        .checkout-grid { grid-template-columns: 1fr 1fr; align-items: start; }
+    }
+</style>
+
+<script>
+    // Load Cart from LocalStorage
+    let cart = [];
+    let appliedCoupon = null;
+
+    function initCheckout() {
+        const storedCart = localStorage.getItem('camisaria_cart');
+        const storedCoupon = localStorage.getItem('camisaria_coupon');
+
+        if (storedCart) {
+            cart = JSON.parse(storedCart);
+        }
+        
+        if (storedCoupon) {
+            appliedCoupon = JSON.parse(storedCoupon);
+        }
+
+        if (cart.length === 0) {
+            document.getElementById('checkout-items').innerHTML = '<p>Sua sacola está vazia.</p>';
+            document.querySelector('.btn-pay').disabled = true;
+            document.querySelector('.btn-pay').style.opacity = 0.5;
+            return;
+        }
+
+        renderItems();
+        updateTotals();
+    }
+
+    function renderItems() {
+        const container = document.getElementById('checkout-items');
+        container.innerHTML = cart.map(item => `
+            <div style="display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid #f9f9f9; padding-bottom: 10px;">
+                <img src="${item.image || 'https://via.placeholder.com/50'}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                <div style="flex: 1;">
+                    <div style="font-weight: 500;">${item.name}</div>
+                    <div style="font-size: 0.85rem; color: #666;">
+                        ${item.qty}x Tam: ${item.size}
+                    </div>
+                </div>
+                <div style="font-weight: 600;">
+                    ${(item.price * item.qty).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function updateTotals() {
+        const subtotal = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+        
+        let discount = 0;
+        if (appliedCoupon) {
+            if (appliedCoupon.discountType === 'percentage') {
+                discount = subtotal * (appliedCoupon.discountValue / 100);
+            } else {
+                discount = appliedCoupon.discountValue;
+            }
+            if (discount > subtotal) discount = subtotal;
+        }
+
+        const total = subtotal - discount;
+
+        document.getElementById('summary-subtotal').innerText = subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        document.getElementById('summary-total').innerText = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        if (discount > 0) {
+            document.getElementById('summary-discount-row').style.display = 'flex';
+            document.getElementById('summary-discount').innerText = `- ${discount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+        }
+    }
+
+    async function processPayment(e) {
+        e.preventDefault();
+        
+        const btn = document.querySelector('.btn-pay');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+        btn.disabled = true;
+
+        const payerName = document.getElementById('payerName').value;
+        const payerEmail = document.getElementById('payerEmail').value;
+        const payerPhone = document.getElementById('payerPhone').value;
+
+        try {
+            const response = await fetch('/api/create-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    items: cart,
+                    payer: {
+                        name: payerName,
+                        email: payerEmail,
+                        phone: payerPhone
+                    },
+                    couponCode: appliedCoupon ? appliedCoupon.code : null
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.init_point) {
+                // Clear cart after successful init (optional, maybe better to clear on success page)
+                // localStorage.removeItem('camisaria_cart');
+                // localStorage.removeItem('camisaria_coupon');
+                
+                window.location.href = data.init_point;
+            } else {
+                alert('Erro ao iniciar pagamento. Tente novamente.');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Erro de conexão.');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', initCheckout);
+</script>

@@ -2,97 +2,92 @@
     {{> admin-sidebar}}
 
     <main class="admin-main-content">
-        <div class="dashboard-header">
-            <h2>Meu Perfil</h2>
-            <p>Gerencie suas informações de acesso</p>
-        </div>
+        <header class="page-header">
+            <div class="header-content">
+                <h1>Meu Perfil</h1>
+                <p>Gerencie suas informações pessoais e de segurança</p>
+            </div>
+        </header>
 
-        <div class="profile-container">
+        <div class="profile-grid">
             {{#if success}}
-            <div class="alert alert-success">
-                {{success}}
+            <div class="alert alert-success full-width">
+                <i class="fas fa-check-circle"></i> {{success}}
             </div>
             {{/if}}
 
             {{#if error}}
-            <div class="alert alert-danger">
-                {{error}}
+            <div class="alert alert-danger full-width">
+                <i class="fas fa-exclamation-circle"></i> {{error}}
             </div>
             {{/if}}
 
-            <form action="/admin/perfil" method="POST" class="admin-form">
-                <div class="form-group">
-                    <label>Nome de Usuário</label>
-                    <input type="text" name="username" class="form-control" value="{{admin.username}}" readonly style="background-color: #f8f9fa;">
-                    <small class="text-muted">O nome de usuário não pode ser alterado.</small>
+            <form action="/admin/perfil" method="POST" class="profile-form-container">
+                <!-- Cartão de Informações -->
+                <div class="details-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-user-circle"></i> Informações Pessoais</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="profile-avatar-section">
+                            <div class="avatar-circle">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="avatar-info">
+                                <h4>{{admin.username}}</h4>
+                                <span class="badge badge-primary">{{admin.role}}</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Nome de Usuário</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-user"></i>
+                                <input type="text" name="username" class="form-control" value="{{admin.username}}" readonly disabled>
+                            </div>
+                            <small class="form-text text-muted">O nome de usuário não pode ser alterado.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Email</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-envelope"></i>
+                                <input type="email" name="email" class="form-control" value="{{admin.email}}" required>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" name="email" class="form-control" value="{{admin.email}}" required>
-                </div>
+                <!-- Cartão de Segurança -->
+                <div class="details-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-lock"></i> Segurança</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>Nova Senha</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-key"></i>
+                                <input type="password" name="password" class="form-control" placeholder="Deixe em branco para manter a atual">
+                            </div>
+                        </div>
 
-                <div class="form-group">
-                    <label>Nova Senha</label>
-                    <input type="password" name="password" class="form-control" placeholder="Deixe em branco para manter a atual">
-                </div>
+                        <div class="form-group">
+                            <label>Confirmar Nova Senha</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-check-double"></i>
+                                <input type="password" name="confirmPassword" class="form-control" placeholder="Confirme a nova senha">
+                            </div>
+                        </div>
 
-                <div class="form-group">
-                    <label>Confirmar Nova Senha</label>
-                    <input type="password" name="confirmPassword" class="form-control" placeholder="Confirme a nova senha">
+                        <div class="form-actions" style="margin-top: 2rem;">
+                            <button type="submit" class="btn-primary-action">
+                                <i class="fas fa-save"></i> Salvar Alterações
+                            </button>
+                        </div>
+                    </div>
                 </div>
-
-                <button type="submit" class="btn btn-primary">Salvar Alterações</button>
             </form>
         </div>
     </main>
 </div>
-
-<style>
-    .profile-container {
-        max-width: 600px;
-    }
-    
-    .admin-form .form-group {
-        margin-bottom: 20px;
-    }
-    
-    .admin-form label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 600;
-        color: #333;
-    }
-    
-    .admin-form .form-control {
-        width: 100%;
-        padding: 10px 15px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        font-size: 1rem;
-    }
-    
-    .admin-form .form-control:focus {
-        border-color: #0047AB;
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(0, 71, 171, 0.1);
-    }
-    
-    .alert {
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-    }
-    
-    .alert-success {
-        background-color: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
-    }
-    
-    .alert-danger {
-        background-color: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-    }
-</style>

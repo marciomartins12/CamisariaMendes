@@ -1,7 +1,10 @@
 <div class="auth-container">
     <div class="auth-card">
         <div class="auth-header">
-            <h2>Bem-vindo!</h2>
+            <div class="auth-header-icon">
+                <i class="fas fa-shirt"></i>
+            </div>
+            <h2>Camisaria Mendes</h2>
             <p>Identifique-se para acessar a campanha</p>
         </div>
 
@@ -19,21 +22,29 @@
                 
                 {{#if error}}
                 {{#if (eq activeTab 'login')}}
-                <div class="alert alert-danger">{{error}}</div>
+                <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> {{error}}</div>
                 {{else}}
-                 {{#unless activeTab}}<div class="alert alert-danger">{{error}}</div>{{/unless}}
+                 {{#unless activeTab}}<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> {{error}}</div>{{/unless}}
                 {{/if}}
                 {{/if}}
 
                 <div class="form-group">
                     <label>E-mail</label>
-                    <input type="email" name="email" class="form-control" required placeholder="seu@email.com">
+                    <div class="input-group">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" name="email" class="form-control" required placeholder="seu@email.com">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Senha</label>
-                    <input type="password" name="password" class="form-control" required placeholder="Sua senha">
+                    <div class="input-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" name="password" class="form-control" required placeholder="Sua senha">
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block">Acessar</button>
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-sign-in-alt"></i> Acessar
+                </button>
             </form>
 
             <!-- Register Form -->
@@ -44,31 +55,48 @@
 
                 {{#if error}}
                 {{#if (eq activeTab 'register')}}
-                <div class="alert alert-danger">{{error}}</div>
+                <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> {{error}}</div>
                 {{/if}}
                 {{/if}}
 
                 <div class="form-group">
                     <label>Nome Completo</label>
-                    <input type="text" name="name" class="form-control" required placeholder="Seu nome" value="{{oldData.name}}">
+                    <div class="input-group">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" name="name" class="form-control" required placeholder="Seu nome" value="{{oldData.name}}">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Telefone / WhatsApp</label>
-                    <input type="text" name="phone" class="form-control" placeholder="(00) 00000-0000" value="{{oldData.phone}}">
+                    <div class="input-group">
+                        <i class="fab fa-whatsapp input-icon"></i>
+                        <input type="text" name="phone" class="form-control" placeholder="(00) 00000-0000" value="{{oldData.phone}}">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>E-mail</label>
-                    <input type="email" name="email" class="form-control" required placeholder="seu@email.com" value="{{oldData.email}}">
+                    <div class="input-group">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" name="email" class="form-control" required placeholder="seu@email.com" value="{{oldData.email}}">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Senha</label>
-                    <input type="password" name="password" class="form-control" required placeholder="Crie uma senha">
+                    <div class="input-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" name="password" class="form-control" required placeholder="Crie uma senha">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Confirmar Senha</label>
-                    <input type="password" name="confirmPassword" class="form-control" required placeholder="Repita a senha">
+                    <div class="input-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" name="confirmPassword" class="form-control" required placeholder="Repita a senha">
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block">Criar Conta</button>
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-user-plus"></i> Criar Conta
+                </button>
             </form>
         </div>
     </div>
@@ -99,59 +127,125 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        min-height: 80vh;
+        min-height: calc(100vh - 70px); /* Subtract header height */
         padding: 2rem;
-        background: #f8f9fa;
-    }
-
-    .auth-card {
-        background: #fff;
-        border-radius: 16px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        width: 100%;
-        max-width: 450px;
+        background: radial-gradient(circle at top right, #f0f9ff, #f8f9fa);
+        position: relative;
         overflow: hidden;
     }
 
+    /* Decorative background blobs */
+    .auth-container::before,
+    .auth-container::after {
+        content: '';
+        position: absolute;
+        border-radius: 50%;
+        z-index: 0;
+    }
+
+    .auth-container::before {
+        width: 300px;
+        height: 300px;
+        background: linear-gradient(135deg, rgba(0, 71, 171, 0.1), rgba(0, 212, 255, 0.1));
+        top: -50px;
+        right: -50px;
+    }
+
+    .auth-container::after {
+        width: 200px;
+        height: 200px;
+        background: linear-gradient(135deg, rgba(0, 46, 112, 0.05), rgba(0, 71, 171, 0.05));
+        bottom: -20px;
+        left: -20px;
+    }
+
+    .auth-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 24px;
+        box-shadow: 0 20px 40px rgba(0, 46, 112, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.5);
+        width: 100%;
+        max-width: 420px;
+        overflow: hidden;
+        position: relative;
+        z-index: 1;
+        transition: transform 0.3s ease;
+    }
+
     .auth-header {
-        background: var(--primary-color, #1a1a1a);
-        color: #fff;
-        padding: 2rem;
+        background: transparent;
+        color: var(--primary-dark, #002e70);
+        padding: 2.5rem 2rem 1.5rem;
         text-align: center;
+    }
+
+    .auth-header-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, var(--primary-blue, #0047AB), var(--primary-dark, #002e70));
+        color: white;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        margin: 0 auto 1.5rem;
+        box-shadow: 0 10px 20px rgba(0, 71, 171, 0.2);
+        transform: rotate(-5deg);
+        transition: transform 0.3s ease;
+    }
+
+    .auth-card:hover .auth-header-icon {
+        transform: rotate(0deg) scale(1.05);
     }
 
     .auth-header h2 {
         margin: 0;
-        font-size: 1.5rem;
+        font-size: 1.8rem;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        background: linear-gradient(135deg, var(--primary-dark, #002e70), var(--primary-blue, #0047AB));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-family: 'Montserrat', sans-serif;
     }
 
     .auth-header p {
         margin: 0.5rem 0 0;
-        opacity: 0.8;
-        font-size: 0.9rem;
+        color: #64748b;
+        font-size: 0.95rem;
+        font-weight: 500;
     }
 
     .auth-tabs {
         display: flex;
-        border-bottom: 1px solid #eee;
+        background: #f1f5f9;
+        margin: 0 2rem;
+        padding: 0.4rem;
+        border-radius: 12px;
+        border: none;
+        position: relative;
     }
 
     .tab-btn {
         flex: 1;
-        padding: 1rem;
-        background: none;
+        padding: 0.8rem;
+        background: transparent;
         border: none;
-        font-weight: 600;
-        color: #666;
+        font-weight: 700;
+        color: #64748b;
         cursor: pointer;
-        transition: all 0.3s;
-        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        z-index: 1;
     }
 
     .tab-btn.active {
-        color: var(--primary-color, #1a1a1a);
-        border-bottom-color: var(--primary-color, #1a1a1a);
-        background: #fcfcfc;
+        color: var(--primary-blue, #0047AB);
+        background: white;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        border-bottom: none;
     }
 
     .auth-content {
@@ -159,7 +253,7 @@
     }
 
     .auth-form {
-        animation: fadeIn 0.3s ease;
+        animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .auth-form.hidden {
@@ -167,31 +261,168 @@
     }
 
     .form-group {
-        margin-bottom: 1rem;
+        margin-bottom: 1.25rem;
     }
 
     .form-group label {
         display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
-        color: #333;
+        margin-bottom: 0.6rem;
+        font-weight: 700;
+        color: #334155;
+        font-size: 0.9rem;
+        margin-left: 0.5rem;
+    }
+
+    .input-group {
+        position: relative;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 1.2rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        font-size: 1.1rem;
+        transition: color 0.3s;
+        z-index: 2;
+    }
+
+    .input-group:focus-within .input-icon {
+        color: var(--primary-blue, #0047AB);
     }
 
     .form-control {
         width: 100%;
-        padding: 0.8rem;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        font-size: 1rem;
+        padding: 1rem 1rem 1rem 3.2rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 16px;
+        background-color: #f8fafc;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        color: #1e293b;
+        font-weight: 600;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary-blue, #0047AB);
+        background-color: #fff;
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(0, 71, 171, 0.1);
+    }
+
+    .form-control::placeholder {
+        color: #cbd5e1;
+        font-weight: 500;
     }
 
     .btn-block {
         width: 100%;
-        margin-top: 1rem;
+        margin-top: 1.5rem;
+        padding: 1.1rem;
+        font-size: 1.1rem;
+        font-weight: 800;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.8rem;
+        background: linear-gradient(135deg, var(--primary-blue, #0047AB), var(--primary-dark, #002e70));
+        border: none;
+        color: white;
+        box-shadow: 0 10px 20px rgba(0, 71, 171, 0.25);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
     }
 
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
+    .btn-block::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(rgba(255,255,255,0.1), rgba(255,255,255,0));
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .btn-block:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 25px rgba(0, 71, 171, 0.35);
+    }
+
+    .btn-block:hover::before {
+        opacity: 1;
+    }
+
+    .btn-block:active {
+        transform: translateY(1px);
+        box-shadow: 0 5px 10px rgba(0, 71, 171, 0.2);
+    }
+
+    .alert {
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+    }
+
+    .alert-danger {
+        background: #fef2f2;
+        color: #ef4444;
+        border: 1px solid #fee2e2;
+    }
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Mobile Optimizations */
+    @media (max-width: 480px) {
+        .auth-container {
+            padding: 0;
+            background: #fff;
+            align-items: flex-start;
+        }
+        
+        .auth-card {
+            box-shadow: none;
+            border-radius: 0;
+            max-width: 100%;
+            height: 100vh; /* Full height on mobile */
+            overflow-y: auto;
+            background: #fff;
+        }
+
+        .auth-header {
+            padding-top: 3rem;
+            padding-bottom: 1rem;
+        }
+        
+        .auth-header-icon {
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+        }
+
+        .auth-content {
+            padding: 1.5rem;
+        }
+        
+        .auth-tabs {
+            margin: 0 1.5rem;
+        }
+
+        .form-control {
+            background: #f8fafc;
+        }
     }
 </style>
