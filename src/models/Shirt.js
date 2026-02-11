@@ -32,7 +32,7 @@ const Shirt = sequelize.define('Shirt', {
   images: { 
     type: DataTypes.TEXT('long'), 
     allowNull: true,
-    defaultValue: '[]',
+    // Removed defaultValue: '[]' because MySQL TEXT/BLOB/JSON columns cannot have default values
     get() {
       const rawValue = this.getDataValue('images');
       if (!rawValue) return [];
