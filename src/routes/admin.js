@@ -57,15 +57,7 @@ router.post('/login', async (req, res) => {
                     email: admin.email,
                     role: admin.role
                 };
-                
-                // Força o salvamento da sessão antes de redirecionar para garantir persistência
-                return req.session.save((err) => {
-                    if (err) {
-                        console.error('Erro ao salvar sessão:', err);
-                        return res.render('admin/login', { error: 'Erro ao iniciar sessão' });
-                    }
-                    return res.redirect('/admin/dashboard');
-                });
+                return res.redirect('/admin/dashboard');
             }
         }
         
