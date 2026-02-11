@@ -7,6 +7,10 @@ const helmet = require('helmet');
 const compression = require('compression');
 
 const app = express();
+// Enable trust proxy for Nginx/Heroku/Reverse Proxy
+// This allows req.protocol to be 'https' even if node is running on http
+app.set('trust proxy', 1);
+
 const PORT = process.env.PORT || 3000;
 
 // Security & Performance
