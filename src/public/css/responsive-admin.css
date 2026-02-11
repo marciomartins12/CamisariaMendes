@@ -53,12 +53,17 @@
         border-radius: 8px;
         text-align: center;
         flex: 1;
+        border: none !important;
+        outline: none !important;
     }
 
     .sidebar-link i {
         font-size: 1.2rem;
         margin-bottom: 2px;
         width: auto;
+        padding: 5px 15px;
+        border-radius: 20px;
+        transition: all 0.3s ease;
     }
     
     .sidebar-link:hover {
@@ -69,6 +74,16 @@
     .sidebar-link.active {
         background-color: transparent;
         color: var(--primary-blue);
+        font-weight: 700;
+        border: none !important;
+        outline: none !important;
+    }
+
+    .sidebar-link.active i {
+        background-color: var(--primary-blue);
+        color: #fff;
+        box-shadow: none;
+        transform: none;
     }
     
     .sidebar-link.logout {
