@@ -82,21 +82,40 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Admin Sidebar Toggle
-    const sidebarToggle = document.getElementById('sidebarToggle');
-    const dashboardSidebar = document.querySelector('.dashboard-sidebar');
-    
-    if (sidebarToggle && dashboardSidebar) {
-        sidebarToggle.addEventListener('click', () => {
-            dashboardSidebar.classList.toggle('active');
+    const adminSidebar = document.querySelector('.admin-sidebar');
+    const adminToggleBtn = document.getElementById('adminSidebarToggle');
+
+    if (adminToggleBtn && adminSidebar) {
+        adminToggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            adminSidebar.classList.toggle('active');
+            
+            // Toggle icon
+            const icon = adminToggleBtn.querySelector('i');
+            if (icon) {
+                if (adminSidebar.classList.contains('active')) {
+                    icon.classList.remove('fa-chevron-right');
+                    icon.classList.add('fa-chevron-left');
+                } else {
+                    icon.classList.remove('fa-chevron-left');
+                    icon.classList.add('fa-chevron-right');
+                }
+            }
         });
 
         // Close sidebar when clicking outside on mobile
         document.addEventListener('click', (e) => {
             if (window.innerWidth <= 768 && 
-                dashboardSidebar.classList.contains('active') && 
-                !dashboardSidebar.contains(e.target) && 
-                !sidebarToggle.contains(e.target)) {
-                dashboardSidebar.classList.remove('active');
+                adminSidebar.classList.contains('active') && 
+                !adminSidebar.contains(e.target) && 
+                !adminToggleBtn.contains(e.target)) {
+                
+                adminSidebar.classList.remove('active');
+                const icon = adminToggleBtn.querySelector('i');
+                if (icon) {
+                    icon.classList.remove('fa-chevron-left');
+                    icon.classList.add('fa-chevron-right');
+                }
             }
         });
     }
