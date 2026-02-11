@@ -116,6 +116,7 @@ const PaymentController = {
                         failure: `${baseUrl}/payment/failure`,
                         pending: `${baseUrl}/payment/pending`
                     },
+                    notification_url: `${baseUrl}/api/webhook`,
                     auto_return: "approved",
                     binary_mode: true, 
                     statement_descriptor: "CAMISARIAMENDES",
@@ -257,6 +258,7 @@ const PaymentController = {
                         failure: `${baseUrl}/payment/failure`,
                         pending: `${baseUrl}/payment/pending`
                     },
+                    notification_url: `${baseUrl}/api/webhook`,
                     auto_return: "approved",
                     binary_mode: true,
                     statement_descriptor: "CAMISARIAMENDES",
