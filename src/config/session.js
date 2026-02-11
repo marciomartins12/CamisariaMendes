@@ -11,7 +11,7 @@ const sessionConfig = {
   store,
   cookie: { 
     maxAge: 24 * 60 * 60 * 1000,
-    secure: process.env.NODE_ENV === 'production', // Secure cookies in production
+    secure: process.env.NODE_ENV === 'production', // Secure cookies in production (HTTPS ativo)
     httpOnly: true
   },
 };
