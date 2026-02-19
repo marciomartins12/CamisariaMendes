@@ -40,27 +40,34 @@
         <div class="campaign-info">
             <span class="section-subtitle reveal-left">Área Restrita</span>
             <h2 class="reveal-left delay-100">Acesse sua <span class="highlight-text">Campanha</span></h2>
-            <p class="reveal-left delay-200">Uma campanha é o seu espaço exclusivo para gerenciar pedidos personalizados em grupo. Seja para sua empresa, evento, família ou apenas um projeto pessoal, aqui você centraliza as escolhas de modelos, tamanhos e pagamentos de forma simples e organizada.</p>
+            <p class="reveal-left delay-200">Uma campanha é o seu espaço exclusivo para gerenciar pedidos do seu grupo. Aqui, por meio do seu código de acesso, estão centralizadas as escolhas de corte, tamanhos e pagamento de forma simples e organizada.</p>
             
             <ul class="campaign-features">
                 <li class="reveal-left delay-300">
                     <div class="feature-icon">🤝</div>
                     <div class="feature-text">
-                        <strong>Para Todos</strong>
-                        <span>Qualquer pessoa pode criar uma campanha para seu grupo.</span>
+                        <strong>Campanha em grupo</strong>
+                        <span>Obtenha seu código de acesso com o líder da campanha.</span>
                     </div>
                 </li>
                 <li class="reveal-left delay-400">
                     <div class="feature-icon">📊</div>
                     <div class="feature-text">
-                        <strong>Organização Total</strong>
-                        <span>Controle pedidos e prazos sem dor de cabeça.</span>
+                        <strong>Visualize seus pedidos</strong>
+                        <span>
+                            Veja seu histórico em 
+                            {{#if user}}
+                                <a href="/meus-pedidos">Meus Pedidos</a>.
+                            {{else}}
+                                <a href="/auth/login">Meus Pedidos</a>.
+                            {{/if}}
+                        </span>
                     </div>
                 </li>
                 <li class="reveal-left delay-500">
                     <div class="feature-icon">🚀</div>
                     <div class="feature-text">
-                        <strong>Quer criar a sua?</strong>
+                        <strong>Ainda não tem um pedido?</strong>
                         <span><a href="#contato">Fale conosco</a> e inicie sua campanha agora.</span>
                     </div>
                 </li>
@@ -177,7 +184,7 @@
                 <div class="step-body">
                     <div class="step-icon">🔐</div>
                     <h3>Acesse</h3>
-                    <p>Use seu código exclusivo para ver o catálogo.</p>
+                    <p>Use o código fornecido pelo líder da campanha.</p>
                 </div>
             </div>
 
@@ -213,7 +220,7 @@
                 <div class="step-body">
                     <div class="step-icon">📦</div>
                     <h3>Receba</h3>
-                    <p>Produzimos e entregamos para você.</p>
+                    <p>Aguarde o prazo final da sua campanha.</p>
                 </div>
             </div>
         </div>
