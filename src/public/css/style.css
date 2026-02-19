@@ -431,7 +431,7 @@ body {
   background-blend-mode: overlay;
   /* opacity: 0.95; Removed to fix color mismatch with wave */
   /* overflow: hidden; Removed by user to fix white border */
-  padding: 2rem 0; /* Add padding to prevent cut-off on small screens */
+  padding: 2rem 0 0; /* Remove bottom padding to eliminate gap above wave */
   width: 100%;
   max-width: 100vw;
 }
@@ -780,7 +780,7 @@ body {
 
 .custom-shape-divider-bottom-1678901234 {
     position: absolute;
-    bottom: -2px; /* Increased overlap to prevent gap */
+    bottom: -2px; /* Slight overlap to avoid anti-aliasing gap */
     left: 0;
     width: 100%;
     overflow: hidden;
@@ -806,6 +806,7 @@ body {
 .campaign-section {
   padding: 8rem 0;
   background-color: #002e70; /* Explicit hex */
+  margin-top: -1px; /* Overlap by 1px to remove seam with wave */
   position: relative;
   color: var(--white);
   overflow: hidden;
@@ -1102,28 +1103,29 @@ body {
   background-color: var(--white);
   text-align: center;
   position: relative;
-  
+  margin-top: -1px; /* pull section up by 1px to hide seam */
 }
 
-/* Wave Divider Top */
+/* Wave Divider Top for How it Works */
 .custom-shape-divider-top-how-it-works {
     position: absolute;
-    top: -2px; /* Overlap to prevent white line gap */
+    top: -1px; /* slight overlap onto previous blue section */
     left: 0;
     width: 100%;
     overflow: hidden;
     line-height: 0;
+    z-index: 1;
 }
 
 .custom-shape-divider-top-how-it-works svg {
     position: relative;
     display: block;
     width: calc(100% + 1.3px);
-    height: 50px;
+    height: 70px;
 }
 
 .custom-shape-divider-top-how-it-works .shape-fill {
-    fill: #002e70; /* Match explicitly to previous section */
+    fill: #002e70; /* azul da seção de cima (campanha) */
 }
 
 /* Restore minimal styles without background patterns */
@@ -1387,6 +1389,7 @@ body {
   background-color: #fff;
   position: relative;
   overflow: hidden;
+  margin-top: -1px; /* Overlap previous section to hide seam */
 }
 
 .about-grid {
