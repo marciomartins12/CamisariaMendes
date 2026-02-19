@@ -15,6 +15,11 @@
         <a href="/admin/cupons" class="sidebar-link {{#if isCoupons}}active{{/if}}">
             <i class="fas fa-ticket-alt"></i> Cupons
         </a>
+        {{#if (eq admin.role 'superadmin')}}
+        <a href="/admin/usuarios" class="sidebar-link {{#if isAdmins}}active{{/if}}">
+            <i class="fas fa-users-cog"></i> Administradores
+        </a>
+        {{/if}}
         <a href="/admin/logout" class="sidebar-link logout">
             <i class="fas fa-sign-out-alt"></i> Sair
         </a>

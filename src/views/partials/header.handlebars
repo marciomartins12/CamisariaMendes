@@ -26,15 +26,36 @@
                 <li><a href="/#contato" class="nav-item">Contato</a></li>
                 <li><a href="/meus-pedidos" class="nav-item">Meus Pedidos</a></li>
             </ul>
-            <a href="/admin/login" class="btn-admin">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    class="admin-icon">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-                Área do Admin
-            </a>
+            <div class="nav-account">
+                {{#if admin}}
+                    <button type="button" class="account-toggle" id="accountMenuToggle">
+                        <span class="account-greeting">Bem-vindo(a)</span>
+                        <span class="account-name">{{admin.username}}</span>
+                        <i class="fas fa-chevron-down account-chevron"></i>
+                    </button>
+                    <div class="account-menu" id="accountMenu">
+                        <a href="/admin/dashboard" class="account-menu-item">Área do admin</a>
+                        <a href="/admin/logout" class="account-menu-item">Sair</a>
+                    </div>
+                {{else}}
+                    {{#if user}}
+                        <button type="button" class="account-toggle" id="accountMenuToggle">
+                            <span class="account-greeting">Bem-vindo(a)</span>
+                            <span class="account-name">{{user.name}}</span>
+                            <i class="fas fa-chevron-down account-chevron"></i>
+                        </button>
+                        <div class="account-menu" id="accountMenu">
+                            <a href="/meus-pedidos" class="account-menu-item">Ver meus pedidos</a>
+                            <a href="/auth/logout" class="account-menu-item">Sair</a>
+                        </div>
+                    {{else}}
+                        <a href="/auth/login" class="btn-admin">
+                            <span class="account-greeting">Bem-vindo(a)</span>
+                            <span class="account-link-cta">Entrar ou cadastrar</span>
+                        </a>
+                    {{/if}}
+                {{/if}}
+            </div>
         </div>
     </div>
 </nav>

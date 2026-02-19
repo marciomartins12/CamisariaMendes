@@ -162,23 +162,32 @@ body {
   width: 100%;
 }
 
-/* Admin Button Styles */
-.btn-admin {
+/* Account / Auth Area */
+.nav-account {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  position: relative;
+}
+
+.btn-admin,
+.account-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   color: var(--white);
   background-color: rgba(255, 255, 255, 0.15);
-  padding: 0.6rem 1.2rem;
-  border-radius: 50px;
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 700;
   border: 1px solid rgba(255, 255, 255, 0.3);
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 
-.btn-admin:hover {
+.btn-admin:hover,
+.account-toggle:hover {
   background-color: var(--white);
   color: var(--primary-blue);
   border-color: var(--white);
@@ -189,6 +198,95 @@ body {
 .admin-icon {
   width: 16px;
   height: 16px;
+}
+
+.account-greeting {
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+.account-link-cta {
+  font-weight: 800;
+}
+
+.account-name {
+  font-weight: 800;
+}
+
+.account-chevron {
+  font-size: 0.75rem;
+}
+
+.account-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background-color: var(--white);
+  color: #111827;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
+  min-width: 190px;
+  padding: 0.4rem 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: all 0.18s ease-out;
+  z-index: 1200;
+}
+
+.account-menu.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.account-menu-item {
+  display: block;
+  padding: 0.6rem 1rem;
+  color: #111827;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.account-menu-item:hover {
+  background-color: #f3f4f6;
+}
+
+.whatsapp-float {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: #25D366;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  z-index: 1100;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.whatsapp-float:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  background-color: #1ebe5d;
+}
+
+@media (max-width: 768px) {
+  .whatsapp-float {
+    bottom: 16px;
+    right: 16px;
+    width: 52px;
+    height: 52px;
+    font-size: 24px;
+  }
 }
 
 /* Mobile Menu Button */
@@ -256,6 +354,10 @@ body {
     gap: 2rem;
     width: 100%;
     text-align: center;
+  }
+
+  .nav-account {
+    margin-top: 2rem;
   }
 
   .nav-item {
@@ -439,17 +541,29 @@ body {
   justify-content: center;
   align-items: center;
   position: relative;
-  height: 500px;
+  height: 560px;
 }
 
 .shirt-composition {
   position: relative;
-  width: 400px;
-  height: 400px;
+  width: 520px;
+  height: 520px;
   display: flex;
   justify-content: center;
   align-items: center;
-  transform: scale(0.85); /* Slightly smaller as requested */
+  transform: scale(1);
+}
+
+.hero-shirt-image {
+  position: relative;
+  z-index: 1;
+  max-width: 460px;
+  width: 100%;
+  height: auto;
+  border-radius: 24px;
+  filter: drop-shadow(0 20px 30px rgba(0,0,0,0.18));
+  animation: float 6s ease-in-out infinite;
+  object-fit: contain;
 }
 
 .shirt-bg-circle {
@@ -1865,7 +1979,7 @@ body {
   }
 
   .shirt-composition {
-    transform: scale(0.7); /* Increased size as requested */
+    transform: scale(0.85);
     margin-top: 0; /* Reset negative margin */
     transform-origin: top center;
   }

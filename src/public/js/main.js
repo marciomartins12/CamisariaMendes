@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
     const navMenu = document.querySelector('.nav-menu');
     const navLinks = document.querySelectorAll('.nav-item');
+    const accountToggle = document.getElementById('accountMenuToggle');
+    const accountMenu = document.getElementById('accountMenu');
 
     // Toggle Mobile Menu
     if (mobileMenuBtn) {
@@ -31,7 +33,20 @@ document.addEventListener('DOMContentLoaded', () => {
             mobileMenuBtn.classList.remove('active');
             navMenu.classList.remove('active');
         }
+
+        if (accountMenu && accountMenu.classList.contains('open') &&
+            accountToggle && !accountToggle.contains(e.target) &&
+            !accountMenu.contains(e.target)) {
+            accountMenu.classList.remove('open');
+        }
     });
+
+    if (accountToggle && accountMenu) {
+        accountToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            accountMenu.classList.toggle('open');
+        });
+    }
 
     // Timeline Scroll Animation (Mobile Focus Effect)
     const timelineSteps = document.querySelectorAll('.timeline-step');

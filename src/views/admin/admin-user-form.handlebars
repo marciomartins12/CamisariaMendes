@@ -1,0 +1,100 @@
+<div class="admin-layout">
+    {{> admin-sidebar}}
+
+    <main class="admin-main-content">
+        <div class="dashboard-header-compact">
+            <div class="header-title">
+                <h2>{{#if editMode}}Editar Administrador{{else}}Novo Administrador{{/if}}</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="/admin/usuarios">Administradores</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">
+                            {{#if editMode}}Editar{{else}}Novo{{/if}}
+                        </li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        {{#if error}}
+        <div class="alert alert-danger">{{error}}</div>
+        {{/if}}
+
+        <div class="card">
+            <form action="{{#if editMode}}/admin/usuarios/editar/{{adminToEdit.id}}{{else}}/admin/usuarios/novo{{/if}}" method="POST" class="admin-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Usuário</label>
+                        <input
+                            type="text"
+                            name="username"
+                            class="form-control"
+                            required
+                            value="{{#if editMode}}{{adminToEdit.username}}{{else}}{{formData.username}}{{/if}}">
+                    </div>
+                    <div class="form-group">
+                        <label>E-mail</label>
+                        <input
+                            type="email"
+                            name="email"
+                            class="form-control"
+                            required
+                            value="{{#if editMode}}{{adminToEdit.email}}{{else}}{{formData.email}}{{/if}}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Senha {{#if editMode}}(deixe em branco para não alterar){{/if}}</label>
+                        <input
+                            type="password"
+                            name="password"
+                            class="form-control"
+                            {{#unless editMode}}required{{/unless}}>
+                    </div>
+                    <div class="form-group">
+                        <label>Confirmar Senha {{#if editMode}}(se for alterar){{/if}}</label>
+                        <input
+                            type="password"
+                            name="confirmPassword"
+                            class="form-control"
+                            {{#unless editMode}}required{{/unless}}>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Papel</label>
+                        <select name="role" class="form-control">
+                            <option value="admin"
+                                {{#if editMode}}
+                                    {{#if (eq adminToEdit.role 'admin')}}selected{{/if}}
+                                {{else}}
+                                    {{#if (eq formData.role 'admin')}}selected{{/if}}
+                                {{/if}}>
+                                Admin
+                            </option>
+                            <option value="superadmin"
+                                {{#if editMode}}
+                                    {{#if (eq adminToEdit.role 'superadmin')}}selected{{/if}}
+                                {{else}}
+                                    {{#if (eq formData.role 'superadmin')}}selected{{/if}}
+                                {{/if}}>
+                                Super Admin
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a href="/admin/usuarios" class="btn btn-outline">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">
+                        {{#if editMode}}Salvar Alterações{{else}}Criar Administrador{{/if}}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+

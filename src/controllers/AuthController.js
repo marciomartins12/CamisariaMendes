@@ -1,5 +1,5 @@
 const bcrypt = require('bcrypt');
-const { User, Campaign, Shirt } = require('../models');
+const { User, Campaign, Shirt, Admin } = require('../models');
 
 module.exports = {
     // Show Login/Register Page
@@ -23,11 +23,29 @@ module.exports = {
         const { email, password, campaignCode } = req.body;
 
         try {
+            // 1) Tentar autenticar como Admin (email)
+            const admin = await Admin.findOne({ where: { email } });
+            if (admin) {
+                const adminMatch = await bcrypt.compare(password, admin.password);
+                if (adminMatch) {
+                    req.session.user = null;
+                    req.session.admin = {
+                        id: admin.id,
+                        username: admin.username,
+                        email: admin.email,
+                        role: admin.role
+                    };
+                    return res.redirect('/admin/dashboard');
+                }
+            }
+
+            // 2) Se não for admin, tentar como usuário comum
             const user = await User.findOne({ where: { email } });
 
             if (user) {
                 const match = await bcrypt.compare(password, user.password);
                 if (match) {
+                    req.session.admin = null;
                     req.session.user = {
                         id: user.id,
                         name: user.name,
@@ -40,6 +58,9 @@ module.exports = {
                     return res.redirect('/');
                 }
             }
+
+            req.session.user = null;
+            req.session.admin = null;
 
             res.render('user/auth', {
                 title: 'Identifique-se - Camisaria Mendes',

@@ -29,6 +29,14 @@ const requireAdmin = (req, res, next) => {
     return res.redirect('/admin/login');
 };
 
+// Middleware to require super admin
+const requireSuperAdmin = (req, res, next) => {
+    if (req.session && req.session.admin && req.session.admin.role === 'superadmin') {
+        return next();
+    }
+    return res.redirect('/admin/dashboard');
+};
+
 // Login GET
 router.get('/login', (req, res) => {
     if (req.session && req.session.admin) {
@@ -51,6 +59,7 @@ router.post('/login', async (req, res) => {
             const match = await bcrypt.compare(password, admin.password);
             
             if (match) {
+                req.session.user = null;
                 req.session.admin = {
                     id: admin.id,
                     username: admin.username,
@@ -704,6 +713,206 @@ router.post('/cupons/deletar/:id', requireAdmin, async (req, res) => {
     } catch (error) {
         console.error(error);
         res.redirect('/admin/cupons');
+    }
+});
+
+// === Admin Management (Super Admin only) ===
+router.get('/usuarios', requireSuperAdmin, async (req, res) => {
+    try {
+        const admins = await Admin.findAll({ order: [['createdAt', 'DESC']] });
+        const adminsPlain = admins.map(a => a.get({ plain: true }));
+
+        res.render('admin/admin-users', {
+            title: 'Administradores',
+            layout: 'main',
+            isAdmins: true,
+            admins: adminsPlain,
+            admin: req.session.admin
+        });
+    } catch (error) {
+        console.error(error);
+        res.render('admin/admin-users', {
+            title: 'Administradores',
+            layout: 'main',
+            isAdmins: true,
+            admins: [],
+            error: 'Erro ao carregar administradores.',
+            admin: req.session.admin
+        });
+    }
+});
+
+router.get('/usuarios/novo', requireSuperAdmin, (req, res) => {
+    res.render('admin/admin-user-form', {
+        title: 'Novo Administrador',
+        layout: 'main',
+        isAdmins: true,
+        admin: req.session.admin
+    });
+});
+
+router.post('/usuarios/novo', requireSuperAdmin, async (req, res) => {
+    const { username, email, password, confirmPassword, role } = req.body;
+
+    try {
+        if (!username || !email || !password) {
+            return res.render('admin/admin-user-form', {
+                title: 'Novo Administrador',
+                layout: 'main',
+                isAdmins: true,
+                error: 'Preencha todos os campos obrigatórios.',
+                formData: { username, email, role },
+                admin: req.session.admin
+            });
+        }
+
+        if (password !== confirmPassword) {
+            return res.render('admin/admin-user-form', {
+                title: 'Novo Administrador',
+                layout: 'main',
+                isAdmins: true,
+                error: 'As senhas não coincidem.',
+                formData: { username, email, role },
+                admin: req.session.admin
+            });
+        }
+
+        const existing = await Admin.findOne({ where: { email } });
+        if (existing) {
+            return res.render('admin/admin-user-form', {
+                title: 'Novo Administrador',
+                layout: 'main',
+                isAdmins: true,
+                error: 'Já existe um administrador com este e-mail.',
+                formData: { username, email, role },
+                admin: req.session.admin
+            });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await Admin.create({
+            username,
+            email,
+            password: hashedPassword,
+            role: role && role === 'superadmin' ? 'superadmin' : 'admin'
+        });
+
+        req.flash('success', 'Administrador criado com sucesso.');
+        res.redirect('/admin/usuarios');
+    } catch (error) {
+        console.error(error);
+        res.render('admin/admin-user-form', {
+            title: 'Novo Administrador',
+            layout: 'main',
+            isAdmins: true,
+            error: 'Erro ao criar administrador.',
+            formData: { username, email, role },
+            admin: req.session.admin
+        });
+    }
+});
+
+router.get('/usuarios/editar/:id', requireSuperAdmin, async (req, res) => {
+    try {
+        const adminRecord = await Admin.findByPk(req.params.id);
+        if (!adminRecord) {
+            return res.redirect('/admin/usuarios');
+        }
+
+        res.render('admin/admin-user-form', {
+            title: 'Editar Administrador',
+            layout: 'main',
+            isAdmins: true,
+            editMode: true,
+            adminToEdit: adminRecord.get({ plain: true }),
+            admin: req.session.admin
+        });
+    } catch (error) {
+        console.error(error);
+        res.redirect('/admin/usuarios');
+    }
+});
+
+router.post('/usuarios/editar/:id', requireSuperAdmin, async (req, res) => {
+    const { username, email, password, confirmPassword, role } = req.body;
+    const id = req.params.id;
+
+    try {
+        const adminRecord = await Admin.findByPk(id);
+        if (!adminRecord) {
+            return res.redirect('/admin/usuarios');
+        }
+
+        adminRecord.username = username || adminRecord.username;
+        adminRecord.email = email || adminRecord.email;
+
+        if (role) {
+            adminRecord.role = role === 'superadmin' ? 'superadmin' : 'admin';
+        }
+
+        if (password) {
+            if (password !== confirmPassword) {
+                return res.render('admin/admin-user-form', {
+                    title: 'Editar Administrador',
+                    layout: 'main',
+                    isAdmins: true,
+                    editMode: true,
+                    adminToEdit: adminRecord.get({ plain: true }),
+                    error: 'As senhas não coincidem.',
+                    admin: req.session.admin
+                });
+            }
+            const hashedPassword = await bcrypt.hash(password, 10);
+            adminRecord.password = hashedPassword;
+        }
+
+        await adminRecord.save();
+
+        req.flash('success', 'Administrador atualizado com sucesso.');
+        res.redirect('/admin/usuarios');
+    } catch (error) {
+        console.error(error);
+        res.render('admin/admin-user-form', {
+            title: 'Editar Administrador',
+            layout: 'main',
+            isAdmins: true,
+            editMode: true,
+            adminToEdit: { id, username, email, role },
+            error: 'Erro ao atualizar administrador.',
+            admin: req.session.admin
+        });
+    }
+});
+
+router.post('/usuarios/deletar/:id', requireSuperAdmin, async (req, res) => {
+    const id = req.params.id;
+
+    try {
+        const adminRecord = await Admin.findByPk(id);
+        if (!adminRecord) {
+            return res.redirect('/admin/usuarios');
+        }
+
+        if (req.session.admin && req.session.admin.id === adminRecord.id) {
+            req.flash('error', 'Você não pode remover a si mesmo.');
+            return res.redirect('/admin/usuarios');
+        }
+
+        if (adminRecord.role === 'superadmin') {
+            const superCount = await Admin.count({ where: { role: 'superadmin' } });
+            if (superCount <= 1) {
+                req.flash('error', 'É necessário ter pelo menos um super admin.');
+                return res.redirect('/admin/usuarios');
+            }
+        }
+
+        await adminRecord.destroy();
+        req.flash('success', 'Administrador removido com sucesso.');
+        res.redirect('/admin/usuarios');
+    } catch (error) {
+        console.error(error);
+        req.flash('error', 'Erro ao remover administrador.');
+        res.redirect('/admin/usuarios');
     }
 });
 
