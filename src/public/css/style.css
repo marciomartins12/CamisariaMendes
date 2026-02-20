@@ -95,8 +95,12 @@ body {
 }
 
 .brand:hover .brand-icon-wrapper {
-  transform: rotate(0deg) scale(1.1);
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+  transform: scale(1.05);
+  box-shadow: none;
+}
+
+.brand:hover .brand-logo-img {
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.7));
 }
 
 .brand-svg {
