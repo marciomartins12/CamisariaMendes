@@ -100,6 +100,27 @@ module.exports = {
       // Convert to plain object for Handlebars
       const campaignPlain = campaign.get({ plain: true });
 
+      // Normalize images field for each shirt into an array
+      if (campaignPlain.shirts) {
+        campaignPlain.shirts.forEach(shirt => {
+          if (!shirt.images) {
+            shirt.images = [];
+          } else if (typeof shirt.images === 'string') {
+            try {
+              // Try parse JSON array stored as string
+              const parsed = JSON.parse(shirt.images);
+              shirt.images = Array.isArray(parsed) ? parsed : (parsed ? [parsed] : []);
+            } catch (e) {
+              // Fallback: treat as single URL string
+              shirt.images = [shirt.images];
+            }
+          } else if (!Array.isArray(shirt.images)) {
+            // Any other type, wrap as single element
+            shirt.images = [shirt.images];
+          }
+        });
+      }
+
       // 3. Render Store Page (instead of generic campaign page)
       res.render('shop/store', {
         title: campaign.title,

@@ -26,40 +26,71 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Usuário</label>
-                        <input
-                            type="text"
-                            name="username"
-                            class="form-control"
-                            required
-                            value="{{#if editMode}}{{adminToEdit.username}}{{else}}{{formData.username}}{{/if}}">
+                        <div class="input-wrapper">
+                            <input
+                                type="text"
+                                name="username"
+                                class="form-control"
+                                required
+                                minlength="3"
+                                autocomplete="username"
+                                value="{{#if editMode}}{{adminToEdit.username}}{{else}}{{formData.username}}{{/if}}">
+                            <i class="fas fa-user admin-input-icon"></i>
+                        </div>
+                        <div class="form-hint">Mínimo de 3 caracteres.</div>
                     </div>
                     <div class="form-group">
                         <label>E-mail</label>
-                        <input
-                            type="email"
-                            name="email"
-                            class="form-control"
-                            required
-                            value="{{#if editMode}}{{adminToEdit.email}}{{else}}{{formData.email}}{{/if}}">
+                        <div class="input-wrapper">
+                            <input
+                                type="email"
+                                name="email"
+                                class="form-control"
+                                required
+                                autocomplete="email"
+                                value="{{#if editMode}}{{adminToEdit.email}}{{else}}{{formData.email}}{{/if}}">
+                            <i class="fas fa-envelope admin-input-icon"></i>
+                        </div>
+                        <div class="form-hint">Usado para acesso e notificações.</div>
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label>Senha {{#if editMode}}(deixe em branco para não alterar){{/if}}</label>
-                        <input
-                            type="password"
-                            name="password"
-                            class="form-control"
-                            {{#unless editMode}}required{{/unless}}>
+                        <div class="input-wrapper has-toggle">
+                            <input
+                                type="password"
+                                name="password"
+                                id="adminPassword"
+                                class="form-control"
+                                {{#unless editMode}}required{{/unless}}
+                                autocomplete="new-password">
+                            <button type="button" class="toggle-visibility" data-target="#adminPassword">
+                                <i class="far fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="strength-meter" id="passwordStrength">
+                            <div class="bar"><span></span></div>
+                            <div class="label">Força da senha</div>
+                        </div>
+                        <div class="form-hint">Use letras maiúsculas, minúsculas, números e símbolos.</div>
                     </div>
                     <div class="form-group">
                         <label>Confirmar Senha {{#if editMode}}(se for alterar){{/if}}</label>
-                        <input
-                            type="password"
-                            name="confirmPassword"
-                            class="form-control"
-                            {{#unless editMode}}required{{/unless}}>
+                        <div class="input-wrapper has-toggle">
+                            <input
+                                type="password"
+                                name="confirmPassword"
+                                id="adminConfirmPassword"
+                                class="form-control"
+                                {{#unless editMode}}required{{/unless}}
+                                autocomplete="new-password">
+                            <button type="button" class="toggle-visibility" data-target="#adminConfirmPassword">
+                                <i class="far fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="form-hint" id="confirmHint">Deve coincidir com a senha.</div>
                     </div>
                 </div>
 
@@ -84,12 +115,13 @@
                                 Super Admin
                             </option>
                         </select>
+                        <div class="form-hint">Super Admin pode gerenciar administradores.</div>
                     </div>
                 </div>
 
                 <div class="form-actions">
                     <a href="/admin/usuarios" class="btn btn-outline">Cancelar</a>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-primary" id="submitAdminForm">
                         {{#if editMode}}Salvar Alterações{{else}}Criar Administrador{{/if}}
                     </button>
                 </div>
@@ -98,3 +130,92 @@
     </main>
 </div>
 
+<style>
+.admin-form .input-wrapper { position: relative; }
+.admin-form .admin-input-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #999; pointer-events: none; z-index: 1; }
+.admin-form .input-wrapper .form-control { padding-right: 56px; }
+.admin-form .input-wrapper.has-toggle .form-control { padding-right: 96px; }
+.toggle-visibility { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: transparent; border: 0; color: #666; cursor: pointer; padding: 4px; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; z-index: 2; }
+.form-hint { font-size: 0.85rem; color: #777; margin-top: 6px; }
+.strength-meter { margin-top: 8px; }
+.strength-meter .bar { width: 100%; height: 6px; background: #eee; border-radius: 4px; overflow: hidden; }
+.strength-meter .bar span { display: block; height: 100%; width: 0; background: #f44336; transition: width .25s ease, background .25s ease; }
+.strength-meter .label { font-size: 0.8rem; color: #555; margin-top: 4px; }
+.alert-inline { color: #c62828; font-size: 0.85rem; margin-top: 6px; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var toggles = document.querySelectorAll('.toggle-visibility');
+  toggles.forEach(function(btn) {
+    var targetSel = btn.getAttribute('data-target');
+    var input = document.querySelector(targetSel);
+    btn.addEventListener('click', function() {
+      var isPwd = input.getAttribute('type') === 'password';
+      input.setAttribute('type', isPwd ? 'text' : 'password');
+      btn.innerHTML = isPwd ? '<i class="far fa-eye-slash"></i>' : '<i class="far fa-eye"></i>';
+    });
+  });
+
+  var pwd = document.getElementById('adminPassword');
+  var bar = document.querySelector('#passwordStrength .bar span');
+  var submit = document.getElementById('submitAdminForm');
+  var confirm = document.getElementById('adminConfirmPassword');
+  var confirmHint = document.getElementById('confirmHint');
+
+  function scorePassword(s) {
+    var score = 0;
+    if (!s) return 0;
+    var letters = {};
+    for (var i = 0; i < s.length; i++) {
+      letters[s[i]] = (letters[s[i]] || 0) + 1;
+      score += 5.0 / letters[s[i]];
+    }
+    var variations = { digits: /\d/.test(s), lower: /[a-z]/.test(s), upper: /[A-Z]/.test(s), nonWords: /\W/.test(s) };
+    var variationCount = 0;
+    for (var k in variations) variationCount += variations[k] ? 1 : 0;
+    score += (variationCount - 1) * 10;
+    return parseInt(score);
+  }
+
+  function updateStrength() {
+    var val = pwd ? pwd.value : '';
+    var sc = scorePassword(val);
+    var pct = Math.max(0, Math.min(100, sc));
+    bar.style.width = pct + '%';
+    if (pct < 30) bar.style.background = '#f44336';
+    else if (pct < 60) bar.style.background = '#ff9800';
+    else if (pct < 85) bar.style.background = '#ffc107';
+    else bar.style.background = '#4caf50';
+  }
+
+  if (pwd) {
+    pwd.addEventListener('input', updateStrength);
+    updateStrength();
+  }
+
+  function validateConfirm() {
+    var ok = (confirm.value || '') === (pwd.value || '');
+    confirmHint.textContent = ok ? 'Senhas coincidem.' : 'Deve coincidir com a senha.';
+    confirmHint.style.color = ok ? '#2e7d32' : '#c62828';
+    return ok;
+  }
+
+  if (confirm) {
+    confirm.addEventListener('input', validateConfirm);
+  }
+
+  var form = document.querySelector('.admin-form');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      if (pwd && confirm && (pwd.value || '') !== (confirm.value || '')) {
+        e.preventDefault();
+        validateConfirm();
+        return;
+      }
+      submit.setAttribute('disabled', 'disabled');
+      submit.classList.add('loading');
+    });
+  }
+});
+</script>
