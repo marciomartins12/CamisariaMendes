@@ -23,14 +23,13 @@
             <div class="search-bar-wrapper">
                 <div class="search-input-group">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="campaignSearch" class="search-input" placeholder="Buscar por título, cliente..." onkeyup="filterCampaigns()">
+                    <input type="text" id="campaignSearch" class="search-input" placeholder="Buscar por título, líder..." onkeyup="filterCampaigns()">
                 </div>
                 <div class="filter-group">
                     <select id="statusFilter" class="filter-select" onchange="filterCampaigns()">
                         <option value="">Todos os Status</option>
                         <option value="active">Ativas</option>
                         <option value="inactive">Inativas</option>
-                        <option value="draft">Rascunhos</option>
                     </select>
                 </div>
             </div>
@@ -42,7 +41,7 @@
                         <thead>
                             <tr>
                                 <th>Campanha</th>
-                                <th>Cliente</th>
+                                <th>Líder</th>
                                 <th>Produtos</th>
                                 <th>Pedidos</th>
                                 <th>Arrecadado</th>
@@ -76,11 +75,11 @@
                                     <span class="stat-value">R$ {{this.totalRevenue}},00</span>
                                 </td>
                                 <td>
-                                    <button class="badge badge-{{this.status}} btn-status" onclick="toggleStatus({{this.id}}, '{{this.status}}')" title="Clique para alterar status">
+                                    <span class="badge badge-{{this.status}}">
                                         {{#if (eq this.status 'active')}}Ativa{{/if}}
                                         {{#if (eq this.status 'inactive')}}Inativa{{/if}}
                                         {{#if (eq this.status 'draft')}}Rascunho{{/if}}
-                                    </button>
+                                    </span>
                                 </td>
                                 <td>
                                     <div class="date-cell">
@@ -116,36 +115,6 @@
 </div>
 
 <script>
-function toggleStatus(id, currentStatus) {
-    let confirmMsg = '';
-    if (currentStatus === 'active') {
-        confirmMsg = 'Deseja realmente desativar esta campanha?';
-    } else {
-        confirmMsg = 'Deseja ativar esta campanha?';
-    }
-
-    if (confirm(confirmMsg)) {
-        fetch(`/admin/campanhas/toggle-status/${id}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Erro: ' + data.message);
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            alert('Erro ao comunicar com o servidor.');
-        });
-    }
-}
-
 function filterCampaigns() {
     const input = document.getElementById('campaignSearch');
     const filterText = input.value.toLowerCase();

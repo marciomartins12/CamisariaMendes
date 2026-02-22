@@ -83,7 +83,18 @@ module.exports = {
         return res.redirect('/');
       }
 
-      if (campaign.status !== 'active') {
+      const today = new Date().toISOString().slice(0, 10);
+      const endDateISO = campaign.endDate ? campaign.endDate.toString().slice(0, 10) : null;
+      const isExpired = endDateISO && endDateISO < today;
+
+      if (campaign.status !== 'active' || isExpired) {
+          if (isExpired && campaign.status === 'active') {
+              try {
+                  await campaign.update({ status: 'inactive' });
+              } catch (e) {
+                  console.error('Erro ao atualizar status da campanha expirada:', e);
+              }
+          }
           return res.render('home', {
               title: 'Camisaria Mendes',
               error: 'Esta campanha não está ativa no momento.',

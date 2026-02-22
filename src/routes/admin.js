@@ -9,7 +9,6 @@ router.use((req, res, next) => {
     next();
 });
 
-// Helper to generate unique access code
 const generateAccessCode = async () => {
     let code;
     let exists = true;
@@ -19,6 +18,34 @@ const generateAccessCode = async () => {
         if (!campaign) exists = false;
     }
     return code;
+};
+
+const parseBrazilianDateToISO = (value) => {
+    if (!value) return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    if (trimmed.includes('-')) {
+        const parts = trimmed.split('-');
+        if (parts.length !== 3) return null;
+        const [year, month, day] = parts;
+        if (!day || !month || !year) return null;
+        const d = day.padStart(2, '0');
+        const m = month.padStart(2, '0');
+        return `${year}-${m}-${d}`;
+    }
+    const parts = trimmed.split('/');
+    if (parts.length !== 3) return null;
+    const [day, month, year] = parts;
+    if (!day || !month || !year) return null;
+    const d = day.padStart(2, '0');
+    const m = month.padStart(2, '0');
+    return `${year}-${m}-${d}`;
+};
+
+const computeStatusFromEndDateISO = (isoEndDate) => {
+    if (!isoEndDate) return 'active';
+    const today = new Date().toISOString().slice(0, 10);
+    return isoEndDate < today ? 'inactive' : 'active';
 };
 
 // Middleware to require login
@@ -184,14 +211,23 @@ router.get('/campanhas', requireAdmin, async (req, res) => {
             order: [['createdAt', 'DESC']] 
         });
         
-        // Convert to plain objects and add stats
+        const statusUpdates = [];
         const campaignsPlain = campaigns.map(c => {
             const plain = c.get({ plain: true });
+            const computedStatus = computeStatusFromEndDateISO(plain.endDate);
+            if (computedStatus && plain.status !== computedStatus) {
+                statusUpdates.push(c.update({ status: computedStatus }));
+                plain.status = computedStatus;
+            }
             plain.productCount = plain.shirts ? plain.shirts.length : 0;
-            plain.totalRevenue = 0; // Placeholder until Order model exists
-            plain.totalOrders = 0; // Placeholder until Order model exists
+            plain.totalRevenue = 0;
+            plain.totalOrders = 0;
             return plain;
         });
+
+        if (statusUpdates.length) {
+            await Promise.all(statusUpdates);
+        }
 
         res.render('admin/campaigns', {
             title: 'Gerenciar Campanhas',
@@ -242,9 +278,24 @@ router.post('/campanhas/nova', requireAdmin, async (req, res) => {
     try {
         const { 
             title, description, clientName, clientPhone, clientInstagram, 
-            status, startDate, endDate, 
+            endDate, 
             shirtNames, shirtColors, shirtTypes, shirtPrices, shirtSizes, shirtImagesJSON 
         } = req.body;
+
+        const endDateISO = parseBrazilianDateToISO(endDate);
+        if (endDate && !endDateISO) {
+            await t.rollback();
+            return res.render('admin/campaign-form', {
+                title: 'Nova Campanha',
+                layout: 'main',
+                isCampaigns: true,
+                error: 'Data de término inválida.',
+                campaign: req.body
+            });
+        }
+
+        const todayISO = new Date().toISOString().slice(0, 10);
+        const status = computeStatusFromEndDateISO(endDateISO);
 
         const accessCode = await generateAccessCode();
         
@@ -266,8 +317,8 @@ router.post('/campanhas/nova', requireAdmin, async (req, res) => {
             clientInstagram,
             accessCode,
             status,
-            startDate: startDate || null,
-            endDate: endDate || null
+            startDate: todayISO,
+            endDate: endDateISO || null
         }, { transaction: t });
 
         // Create shirts
@@ -357,6 +408,91 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
     }
 });
 
+router.post('/campanhas/:campaignId/camisas/deletar/:shirtId', requireAdmin, async (req, res) => {
+    try {
+        const { campaignId, shirtId } = req.params;
+        const shirt = await Shirt.findOne({ where: { id: shirtId, campaignId } });
+        if (!shirt) {
+            return res.redirect(`/admin/campanhas/detalhes/${campaignId}`);
+        }
+        await shirt.destroy();
+        req.flash('success', 'Produto removido da campanha com sucesso.');
+        res.redirect(`/admin/campanhas/detalhes/${campaignId}`);
+    } catch (error) {
+        console.error(error);
+        res.redirect(`/admin/campanhas/detalhes/${req.params.campaignId}`);
+    }
+});
+
+router.post('/campanhas/:campaignId/camisas/editar/:shirtId', requireAdmin, async (req, res) => {
+    try {
+        const { campaignId, shirtId } = req.params;
+        const { name, color, type, price, sizes, imagesJSON } = req.body;
+
+        const shirt = await Shirt.findOne({ where: { id: shirtId, campaignId } });
+        if (!shirt) {
+            return res.redirect(`/admin/campanhas/detalhes/${campaignId}`);
+        }
+
+        let images = shirt.images;
+        try {
+            images = JSON.parse(imagesJSON || '[]');
+        } catch (e) {
+            images = shirt.images;
+        }
+
+        await shirt.update({
+            name: name || shirt.name,
+            color: color || '',
+            type: type || 'Tradicional',
+            price: price || 0,
+            sizes: sizes || '',
+            images: images || []
+        });
+
+        req.flash('success', 'Produto atualizado com sucesso.');
+        res.redirect(`/admin/campanhas/detalhes/${campaignId}`);
+    } catch (error) {
+        console.error(error);
+        res.redirect(`/admin/campanhas/detalhes/${req.params.campaignId}`);
+    }
+});
+
+router.post('/campanhas/:campaignId/camisas/criar', requireAdmin, async (req, res) => {
+    try {
+        const { campaignId } = req.params;
+        const { name, color, type, price, sizes, imagesJSON } = req.body;
+
+        const campaign = await Campaign.findByPk(campaignId);
+        if (!campaign) {
+            return res.redirect('/admin/campanhas');
+        }
+
+        let images = [];
+        try {
+            images = JSON.parse(imagesJSON || '[]');
+        } catch (e) {
+            images = [];
+        }
+
+        await Shirt.create({
+            name,
+            color: color || '',
+            type: type || 'Tradicional',
+            price: price || 0,
+            sizes: sizes || '',
+            images: images || [],
+            campaignId: campaign.id
+        });
+
+        req.flash('success', 'Novo produto adicionado à campanha.');
+        res.redirect(`/admin/campanhas/detalhes/${campaignId}`);
+    } catch (error) {
+        console.error(error);
+        res.redirect(`/admin/campanhas/detalhes/${req.params.campaignId}`);
+    }
+});
+
 // Export Orders (CSV)
 router.get('/campanhas/:id/exportar-pedidos', requireAdmin, async (req, res) => {
     try {
@@ -426,11 +562,13 @@ router.get('/campanhas/editar/:id', requireAdmin, async (req, res) => {
         if (!campaign) {
             return res.redirect('/admin/campanhas');
         }
+        const campaignPlain = campaign.get({ plain: true });
+
         res.render('admin/campaign-form', {
             title: 'Editar Campanha',
             layout: 'main',
             isCampaigns: true,
-            campaign: campaign.get({ plain: true })
+            campaign: campaignPlain
         });
     } catch (error) {
         console.error(error);
@@ -444,7 +582,7 @@ router.post('/campanhas/editar/:id', requireAdmin, async (req, res) => {
         const { id } = req.params;
         const { 
             title, description, clientName, clientPhone, clientInstagram, 
-            status, startDate, endDate,
+            endDate,
             shirtNames, shirtColors, shirtTypes, shirtPrices, shirtSizes, shirtImagesJSON 
         } = req.body;
 
@@ -455,7 +593,20 @@ router.post('/campanhas/editar/:id', requireAdmin, async (req, res) => {
             return res.redirect('/admin/campanhas');
         }
 
-        // Update Campaign
+        const endDateISO = parseBrazilianDateToISO(endDate);
+        if (endDate && !endDateISO) {
+            await t.rollback();
+            return res.render('admin/campaign-form', {
+                title: 'Editar Campanha',
+                layout: 'main',
+                isCampaigns: true,
+                error: 'Data de término inválida.',
+                campaign: { id, ...req.body }
+            });
+        }
+
+        const status = computeStatusFromEndDateISO(endDateISO);
+
         await campaign.update({
             title,
             description,
@@ -463,8 +614,7 @@ router.post('/campanhas/editar/:id', requireAdmin, async (req, res) => {
             clientPhone,
             clientInstagram,
             status,
-            startDate: startDate || null,
-            endDate: endDate || null
+            endDate: endDateISO || null
         }, { transaction: t });
 
         // Update shirts: Strategy -> Delete all and Re-create

@@ -36,43 +36,37 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Status <i class="fas fa-info-circle info-icon" title="Controla a visibilidade da campanha"></i></label>
-                            <select name="status" class="form-control">
-                                <option value="draft" {{#if (eq campaign.status 'draft')}}selected{{/if}}>Rascunho</option>
-                                <option value="active" {{#if (eq campaign.status 'active')}}selected{{/if}}>Ativa</option>
-                                <option value="inactive" {{#if (eq campaign.status 'inactive')}}selected{{/if}}>Inativa</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Data Início</label>
-                            <input type="date" name="startDate" class="form-control" value="{{campaign.startDate}}">
-                        </div>
-                        <div class="form-group">
-                            <label>Data Fim</label>
-                            <input type="date" name="endDate" class="form-control" value="{{campaign.endDate}}">
+                            <label>Data de término</label>
+                            <input
+                                type="date"
+                                name="endDate"
+                                class="form-control"
+                                value="{{campaign.endDate}}"
+                            >
+                            <small class="form-hint">A campanha começa na data de criação. Informe apenas a data de término.</small>
                         </div>
 
                         {{#if campaign.accessCode}}
                         <div class="form-group full-width highlight-box">
-                            <label>Código de Acesso (Único) <i class="fas fa-info-circle info-icon" title="Link/Senha para o cliente acessar a loja"></i></label>
+                            <label>Código de Acesso (Único) <i class="fas fa-info-circle info-icon" title="Link/Senha para o líder da campanha acessar a loja"></i></label>
                             <div class="code-display">
                                 <span>{{campaign.accessCode}}</span>
-                                <small>Compartilhe este código com o cliente.</small>
+                                <small>Compartilhe este código com o líder da campanha.</small>
                             </div>
                         </div>
                         {{/if}}
                     </div>
                 </div>
 
-                <!-- Section 2: Client Info -->
+                <!-- Section 2: Campaign Leader Info -->
                 <div class="form-section">
                     <div class="section-header">
                         <div class="icon-wrapper"><i class="fas fa-user-tie"></i></div>
-                        <h3>Dados do Cliente</h3>
+                        <h3>Dados do Líder da Campanha</h3>
                     </div>
                     <div class="form-grid three-columns">
                         <div class="form-group">
-                            <label>Nome do Cliente</label>
+                            <label>Nome do Líder</label>
                             <input type="text" name="clientName" class="form-control" value="{{campaign.clientName}}" required placeholder="Nome completo">
                         </div>
                         <div class="form-group">
@@ -117,11 +111,12 @@
                                             <input type="text" name="shirtColors" class="form-control" value="{{this.color}}">
                                         </div>
                                         <div class="form-group">
-                                            <label>Tipo</label>
+                                            <label>Corte <i class="fas fa-info-circle info-icon" title="O tipo de corte do molde da camisa. Inicialmente: tradicional, oversized, cropped, infant."></i></label>
                                             <select name="shirtTypes" class="form-control">
                                                 <option value="Tradicional" {{#if (eq this.type 'Tradicional')}}selected{{/if}}>Tradicional</option>
                                                 <option value="Oversized" {{#if (eq this.type 'Oversized')}}selected{{/if}}>Oversized</option>
-                                                <option value="Babylook" {{#if (eq this.type 'Babylook')}}selected{{/if}}>Babylook</option>
+                                                <option value="Cropped" {{#if (eq this.type 'Cropped')}}selected{{/if}}>Cropped</option>
+                                                <option value="Infant" {{#if (eq this.type 'Infant')}}selected{{/if}}>Infant</option>
                                             </select>
                                         </div>
                                         <div class="form-group">
@@ -193,11 +188,12 @@
                                             <input type="text" name="shirtColors" class="form-control" placeholder="Ex: Branca">
                                         </div>
                                         <div class="form-group">
-                                            <label>Tipo</label>
+                                            <label>Corte <i class="fas fa-info-circle info-icon" title="O tipo de corte do molde da camisa. Inicialmente: tradicional, oversized, cropped, infant."></i></label>
                                             <select name="shirtTypes" class="form-control">
                                                 <option value="Tradicional">Tradicional</option>
                                                 <option value="Oversized">Oversized</option>
-                                                <option value="Babylook">Babylook</option>
+                                                <option value="Cropped">Cropped</option>
+                                                <option value="Infant">Infant</option>
                                             </select>
                                         </div>
                                         <div class="form-group">
@@ -263,14 +259,18 @@
 </div>
 
 <script>
-    // Global variables
     let currentUploadWrapper = null;
 
-    // Initialize logic when DOM is ready
+    const SIZE_PRESETS = {
+        Tradicional: ['P', 'M', 'G', 'GG', 'XG', 'ExGG', 'P baby look', 'M baby look', 'G baby look'],
+        Infant: ['2', '4', '6', '8', '10', '12', '14'],
+        Default: ['P', 'M', 'G', 'GG', 'XG']
+    };
+
     document.addEventListener('DOMContentLoaded', function() {
         initChips();
+        initShirtTypeListeners();
 
-        // Handle Form Submission for Loading State
         const form = document.querySelector('.admin-form');
         if (form) {
             form.addEventListener('submit', function() {
@@ -286,7 +286,6 @@
             });
         }
 
-        // Event Delegation for Size Chips
         document.addEventListener('click', function(e) {
             if (e.target.classList.contains('size-chip')) {
                 e.target.classList.toggle('active');
@@ -295,20 +294,17 @@
         });
     });
 
-    // 1. Trigger File Selection
     function triggerImageUpload(btn) {
         const wrapper = btn.closest('.image-upload-wrapper');
         const input = wrapper.querySelector('.shirt-image-file');
         input.click();
     }
 
-    // 2. Handle File Selection
     function handleImageSelected(input) {
         if (input.files && input.files.length > 0) {
             currentUploadWrapper = input.closest('.image-upload-wrapper');
             const file = input.files[0];
 
-            // Validation (Optional but recommended)
             if (file.size > 5 * 1024 * 1024) { // 5MB
                 alert('A imagem deve ter no máximo 5MB.');
                 input.value = ''; // Reset input
@@ -319,10 +315,7 @@
             reader.onload = function(e) {
                 const base64 = e.target.result;
                 
-                // Add to Preview Grid
                 addPreviewImage(base64);
-
-                // Update Hidden Input JSON
                 updateImagesJson(currentUploadWrapper, base64, 'add');
                 
                 // Reset input to allow adding same file again if deleted
@@ -332,11 +325,9 @@
         }
     }
 
-    // Helper: Add Preview Image
     function addPreviewImage(base64) {
         const previewGrid = currentUploadWrapper.querySelector('.image-preview-grid');
         
-        // Remove placeholder if it exists
         const placeholder = previewGrid.querySelector('.placeholder-text');
         if (placeholder) placeholder.remove();
 
@@ -349,13 +340,11 @@
         previewGrid.appendChild(item);
     }
 
-    // Helper: Remove Image
     function removeImage(btn) {
         const item = btn.closest('.preview-item');
         const wrapper = btn.closest('.image-upload-wrapper');
         const grid = wrapper.querySelector('.image-preview-grid');
         
-        // Find index to remove from JSON
         const allItems = Array.from(grid.querySelectorAll('.preview-item'));
         const index = allItems.indexOf(item);
 
@@ -365,7 +354,6 @@
         }
     }
 
-    // Helper: Update JSON Input
     function updateImagesJson(wrapper, data, action, index = -1) {
         const jsonInput = wrapper.querySelector('.shirt-images-json');
         let images = [];
@@ -384,7 +372,6 @@
         jsonInput.value = JSON.stringify(images);
     }
 
-    // Add New Shirt Card Logic
     function addShirt() {
         const container = document.getElementById('shirts-container');
         const count = container.querySelectorAll('.shirt-card').length + 1;
@@ -408,11 +395,12 @@
                         <input type="text" name="shirtColors" class="form-control">
                     </div>
                     <div class="form-group">
-                        <label>Tipo</label>
+                        <label>Corte <i class="fas fa-info-circle info-icon" title="O tipo de corte do molde da camisa. Inicialmente: tradicional, oversized, cropped, infant."></i></label>
                         <select name="shirtTypes" class="form-control">
                             <option value="Tradicional">Tradicional</option>
                             <option value="Oversized">Oversized</option>
-                            <option value="Babylook">Babylook</option>
+                            <option value="Cropped">Cropped</option>
+                            <option value="Infant">Infant</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -423,15 +411,8 @@
                 <div class="form-group full-width">
                     <label>Tamanhos Disponíveis <i class="fas fa-info-circle info-icon" title="Selecione os tamanhos para este modelo"></i></label>
                     <div class="sizes-wrapper">
-                        <input type="hidden" name="shirtSizes" class="shirt-sizes-input" value="P, M, G, GG, XG">
-                        <div class="size-options">
-                            <button type="button" class="size-chip" data-value="P">P</button>
-                            <button type="button" class="size-chip" data-value="M">M</button>
-                            <button type="button" class="size-chip" data-value="G">G</button>
-                            <button type="button" class="size-chip" data-value="GG">GG</button>
-                            <button type="button" class="size-chip" data-value="XG">XG</button>
-                            <button type="button" class="size-chip" data-value="XXG">XXG</button>
-                        </div>
+                        <input type="hidden" name="shirtSizes" class="shirt-sizes-input" value="">
+                        <div class="size-options"></div>
                         <small class="text-muted"><i class="fas fa-mouse-pointer"></i> Selecione os tamanhos disponíveis</small>
                     </div>
                 </div>
@@ -457,6 +438,7 @@
         
         container.insertAdjacentHTML('beforeend', template);
         initChips();
+        initShirtTypeListeners();
     }
 
     function updateSizesInput(container) {
@@ -469,18 +451,53 @@
     function initChips() {
         document.querySelectorAll('.sizes-wrapper').forEach(wrapper => {
             const input = wrapper.querySelector('.shirt-sizes-input');
-            const chips = wrapper.querySelectorAll('.size-chip');
-            if (input.value) {
-                const currentSizes = input.value.split(',').map(s => s.trim());
-                chips.forEach(chip => {
-                    if (currentSizes.includes(chip.dataset.value)) {
-                        chip.classList.add('active');
-                    } else {
-                        chip.classList.remove('active');
-                    }
-                });
-            }
+            const card = wrapper.closest('.shirt-card');
+            applySizePresetForCard(card, input.value);
         });
+    }
+
+    function initShirtTypeListeners() {
+        document.querySelectorAll('.shirt-card select[name="shirtTypes"]').forEach(select => {
+            if (select.dataset.enhanced === 'true') return;
+            select.dataset.enhanced = 'true';
+            select.addEventListener('change', function() {
+                const card = this.closest('.shirt-card');
+                applySizePresetForCard(card, '');
+            });
+            const card = select.closest('.shirt-card');
+            const wrapper = card.querySelector('.sizes-wrapper');
+            const input = wrapper.querySelector('.shirt-sizes-input');
+            applySizePresetForCard(card, input.value);
+        });
+    }
+
+    function applySizePresetForCard(card, currentValue) {
+        if (!card) return;
+        const select = card.querySelector('select[name="shirtTypes"]');
+        const wrapper = card.querySelector('.sizes-wrapper');
+        if (!select || !wrapper) return;
+        const type = select.value || '';
+        let preset = SIZE_PRESETS.Default;
+        if (type === 'Tradicional') {
+            preset = SIZE_PRESETS.Tradicional;
+        } else if (type === 'Infant') {
+            preset = SIZE_PRESETS.Infant;
+        }
+        const sizeOptions = wrapper.querySelector('.size-options');
+        sizeOptions.innerHTML = '';
+        const currentSizes = currentValue ? currentValue.split(',').map(s => s.trim()).filter(Boolean) : [];
+        preset.forEach(size => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'size-chip';
+            btn.dataset.value = size;
+            btn.textContent = size;
+            if (!currentSizes.length || currentSizes.includes(size)) {
+                btn.classList.add('active');
+            }
+            sizeOptions.appendChild(btn);
+        });
+        updateSizesInput(sizeOptions);
     }
 </script>
 
