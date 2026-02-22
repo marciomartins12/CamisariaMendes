@@ -1,13 +1,13 @@
 :root {
-  --primary-blue: #0047AB; /* Azul Cobalto Vibrante */
+  --primary-blue: #0047AB;
   --primary-dark: #002e70;
-  --secondary-blue: #00d4ff; /* Azul Ciano Neon */
-  --bg-color: #f8f9fa;
+  --secondary-blue: #00d4ff;
+  --bg-color: #ffffff;
   --text-color: #333;
   --white: #ffffff;
   --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   --radius: 12px;
-  --header-height: 70px; /* Fixed header height variable */
+  --header-height: 70px;
 }
 
 * {
@@ -1609,6 +1609,11 @@ body {
     transform: rotate(180deg);
 }
 
+/* Fix footer wave color when previous section is the dark campaign section */
+.campaign-section ~ .footer .custom-shape-divider-top-footer .shape-fill {
+    fill: var(--primary-dark);
+}
+
 /* Fix footer wave color on Homepage (About Section is white) */
 .about-section ~ .footer .custom-shape-divider-top-footer .shape-fill {
     fill: #fff;
@@ -1727,6 +1732,18 @@ body {
   gap: 4rem;
   margin-bottom: 4rem;
   justify-content: space-between;
+}
+
+.footer-top-line {
+  display: none;
+}
+
+.campaign-section ~ .footer .footer-top-line {
+  display: block;
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(to right, rgba(255,255,255,0.08), rgba(255,255,255,0.3), rgba(255,255,255,0.08));
+  opacity: 0.9;
 }
 
 .footer-col h4 {

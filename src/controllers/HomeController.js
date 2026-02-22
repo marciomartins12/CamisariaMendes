@@ -21,8 +21,9 @@ module.exports = {
       const campaign = await Campaign.findOne({ where: { accessCode: codigo } });
       
       if (!campaign) {
-        return res.render('home', {
-            title: 'Camisaria Mendes',
+        return res.render('campanhas-page', {
+            title: 'Campanhas - Camisaria Mendes',
+            layout: 'main',
             error: 'Código de campanha inválido. Verifique e tente novamente.',
             displayPhone: '(98) 98778-0960',
             contactEmail: process.env.CONTACT_EMAIL,
@@ -34,8 +35,9 @@ module.exports = {
       }
 
       if (campaign.status !== 'active') {
-         return res.render('home', {
-            title: 'Camisaria Mendes',
+         return res.render('campanhas-page', {
+            title: 'Campanhas - Camisaria Mendes',
+            layout: 'main',
             error: 'Esta campanha não está ativa no momento.',
             displayPhone: '(98) 98778-0960',
             contactEmail: process.env.CONTACT_EMAIL,
@@ -51,8 +53,9 @@ module.exports = {
 
     } catch (error) {
       console.error(error);
-      res.render('home', {
-          title: 'Camisaria Mendes',
+      res.render('campanhas-page', {
+          title: 'Campanhas - Camisaria Mendes',
+          layout: 'main',
           error: 'Erro ao processar sua solicitação.',
           displayPhone: '(98) 98778-0960',
           contactEmail: process.env.CONTACT_EMAIL,
@@ -95,10 +98,10 @@ module.exports = {
                   console.error('Erro ao atualizar status da campanha expirada:', e);
               }
           }
-          return res.render('home', {
-              title: 'Camisaria Mendes',
+          return res.render('campanhas-page', {
+              title: 'Campanhas - Camisaria Mendes',
+              layout: 'main',
               error: 'Esta campanha não está ativa no momento.',
-              // ... existing locals ...
               whatsappLink: `https://wa.me/${process.env.WHATSAPP_NUMBER}`,
               instagramLink: `https://instagram.com/${process.env.INSTAGRAM_USER}`,
               emailLink: `mailto:${process.env.CONTACT_EMAIL}`,

@@ -1,0 +1,112 @@
+<section class="campaign-section" id="campanha">
+    <div class="container campaign-container">
+        <div class="campaign-info">
+            <span class="section-subtitle reveal-left">Área Restrita</span>
+            <h2 class="reveal-left delay-100">Acesse sua <span class="highlight-text">Campanha</span></h2>
+            <p class="reveal-left delay-200">Uma campanha é o seu espaço exclusivo para gerenciar pedidos do seu grupo. Aqui, por meio do seu código de acesso, estão centralizadas as escolhas de corte, tamanhos e pagamento de forma simples e organizada.</p>
+            
+            <ul class="campaign-features">
+                <li class="reveal-left delay-300">
+                    <div class="feature-icon">🤝</div>
+                    <div class="feature-text">
+                        <strong>Campanha em grupo</strong>
+                        <span>Obtenha seu código de acesso com o líder da campanha.</span>
+                    </div>
+                </li>
+                <li class="reveal-left delay-400">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-text">
+                        <strong>Visualize seus pedidos</strong>
+                        <span>
+                            Veja seu histórico em 
+                            {{#if user}}
+                                <a href="/meus-pedidos">Meus Pedidos</a>.
+                            {{else}}
+                                <a href="/auth/login">Meus Pedidos</a>.
+                            {{/if}}
+                        </span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <div class="campaign-form-wrapper reveal-right">
+            <div class="card campaign-card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <h3>Código da campanha</h3>
+                </div>
+                
+                <form action="/campanha/entrar" method="POST" class="campaign-form">
+                    <div class="input-group">
+                        <span class="input-icon">
+                            <i class="fas fa-hashtag"></i>
+                        </span>
+                        <input id="codigo" type="text" name="codigo" placeholder="Ex: MENDES2026" required class="input-code">
+                    </div>
+                    <small style="display:block;margin-top:-0.5rem;margin-bottom:1rem;color:rgba(255,255,255,0.75);font-size:0.85rem;">
+                        Ex.: MENDES2026 — letras maiúsculas e números, sem espaços.
+                    </small>
+                    <button type="submit" class="btn btn-secondary btn-block">
+                        Entrar na campanha
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </button>
+                </form>
+                {{#if error}}
+                <div class="alert alert-danger custom-alert" role="alert">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <div>{{error}}</div>
+                </div>
+                <script>
+                    document.addEventListener("DOMContentLoaded", function() {
+                        const campaignSection = document.getElementById("campanha");
+                        if (campaignSection) {
+                            campaignSection.scrollIntoView({ behavior: "smooth", block: "center" });
+                        }
+                    });
+                </script>
+                {{/if}}
+            </div>
+        </div>
+    </div>
+    <div class="custom-shape-divider-bottom-1678901234">
+        <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" class="shape-fill"></path>
+        </svg>
+    </div>
+</section>
+
+<style>
+    .custom-alert {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background-color: #ffebee;
+        color: #c62828;
+        border: 2px solid #ef5350;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+        font-weight: 600;
+        font-size: 1rem;
+        box-shadow: 0 4px 6px rgba(239, 83, 80, 0.2);
+        animation: slideIn 0.3s ease-out;
+    }
+
+    .custom-alert i {
+        font-size: 1.25rem;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>

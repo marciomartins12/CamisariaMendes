@@ -28,6 +28,30 @@ router.get('/payment/pending', (req, res) => res.render('shop/payment-pending', 
 
 // Home & Public
 router.get('/', HomeController.index);
+router.get('/campanhas', (req, res) => {
+  res.render('campanhas-page', { 
+    title: 'Campanhas - Camisaria Mendes',
+    layout: 'main',
+    whatsappLink: `https://wa.me/${process.env.WHATSAPP_NUMBER}`,
+    instagramLink: `https://instagram.com/${process.env.INSTAGRAM_USER}`,
+    emailLink: `mailto:${process.env.CONTACT_EMAIL}`,
+    contactEmail: process.env.CONTACT_EMAIL,
+    instagramUser: `@${process.env.INSTAGRAM_USER}`,
+    displayPhone: '(98) 98778-0960'
+  });
+});
+router.get('/como-funciona', (req, res) => {
+  res.render('como-funciona-page', { 
+    title: 'Como funciona - Camisaria Mendes',
+    layout: 'main'
+  });
+});
+router.get('/contato', (req, res) => {
+  res.render('contato-page', { 
+    title: 'Contato - Camisaria Mendes',
+    layout: 'main'
+  });
+});
 router.post('/campanha/entrar', HomeController.accessCampaign);
 
 // User Auth

@@ -16,11 +16,13 @@
         </button>
         <div class="nav-menu">
             <ul class="nav-links">
-                <li><a href="/#hero" class="nav-item">Início</a></li>
-                <li><a href="/#campanha" class="nav-item">Campanhas</a></li>
-                <li><a href="/#como-funciona" class="nav-item">Como funciona</a></li>
-                <li><a href="/#contato" class="nav-item">Contato</a></li>
+                <li><a href="/" class="nav-item">Início</a></li>
+                <li><a href="/campanhas" class="nav-item">Campanhas</a></li>
+                <li><a href="/como-funciona" class="nav-item">Como funciona</a></li>
+                <li><a href="/contato" class="nav-item">Contato</a></li>
+                {{#unless admin}}
                 <li><a href="/meus-pedidos" class="nav-item">Meus Pedidos</a></li>
+                {{/unless}}
             </ul>
             <div class="nav-account">
                 {{#if admin}}

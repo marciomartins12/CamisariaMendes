@@ -268,7 +268,13 @@
                                 <i class="fas fa-file-excel"></i>
                                 <span>Exportar Pedidos</span>
                             </button>
-                            <button class="action-tile-btn share" data-share-url="/c/{{campaign.accessCode}}">
+                            <button 
+                                class="action-tile-btn share" 
+                                data-share-url="/c/{{campaign.accessCode}}"
+                                data-campaign-title="{{campaign.title}}"
+                                data-campaign-leader="{{campaign.clientName}}"
+                                data-campaign-description="{{campaign.description}}"
+                            >
                                 <i class="fas fa-share-alt"></i>
                                 <span>Compartilhar Link</span>
                             </button>
@@ -353,8 +359,27 @@ document.addEventListener('DOMContentLoaded', function() {
         shareBtn.addEventListener('click', function() {
             const path = shareBtn.getAttribute('data-share-url') || '';
             const url = window.location.origin + path;
-            copyToClipboard(url);
-            alert('Link da campanha copiado!');
+            const title = shareBtn.getAttribute('data-campaign-title') || '';
+            const leader = shareBtn.getAttribute('data-campaign-leader') || '';
+            const description = shareBtn.getAttribute('data-campaign-description') || '';
+
+            let message = '🔒 Compra Exclusiva – ' + title;
+            if (leader) {
+                message += ' – ' + leader;
+            }
+            message += ';\n\n';
+
+            if (description) {
+                message += description + ';\n\n';
+            }
+
+            message += 'Cada integrante pode realizar sua compra individualmente, escolhendo o tamanho e efetuando o pagamento de forma independente.\n\n';
+            message += '📸 A produção será iniciada após atingir o tempo limite da campanha personalizada de venda conforme orientado ao líder do pedido.\n\n';
+            message += 'Clique no link abaixo para finalizar sua compra:\n\n';
+            message += '👉 Comprar minha camisa 🛒\n';
+            message += url;
+            copyToClipboard(message);
+            alert('Mensagem de compartilhamento copiada! Cole no WhatsApp para enviar.');
         });
     }
 
