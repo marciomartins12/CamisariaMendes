@@ -438,7 +438,7 @@ body {
 
 /* Hero Section */
 .hero {
-  min-height: calc(100vh - var(--header-height)); /* Subtract header height */
+  min-height: 85vh;
   display: flex;
   align-items: center;
   position: relative;
@@ -980,11 +980,44 @@ body {
   color: var(--secondary-blue);
 }
 
-.campaign-card h3 {
-  color: var(--white);
-  margin-bottom: 0.8rem;
-  font-size: 1.6rem;
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.code-header-icon {
+  font-size: 2.4rem;
+  display: inline-flex;
+  padding: 18px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 50%;
+  color: var(--secondary-blue);
+}
+
+.code-header-text {
+  color: #ffffff;
+  font-size: 1.8rem;
   font-weight: 800;
+  letter-spacing: 0.02em;
+  font-family: 'Montserrat', sans-serif;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .code-header-text {
+    font-size: 1.4rem;
+    letter-spacing: 0.01em;
+  }
+}
+
+.campaign-card h3 {
+  color: #ffffff;
+  margin-bottom: 0.8rem;
+  font-size: 1.9rem;
+  font-weight: 900;
   letter-spacing: -0.5px;
 }
 
@@ -1744,6 +1777,7 @@ body {
   width: 100%;
   background: linear-gradient(to right, rgba(255,255,255,0.08), rgba(255,255,255,0.3), rgba(255,255,255,0.08));
   opacity: 0.9;
+  margin-top: -24px;
 }
 
 .footer-col h4 {
