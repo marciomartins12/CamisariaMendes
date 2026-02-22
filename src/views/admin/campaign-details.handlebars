@@ -189,7 +189,6 @@
                                     <button 
                                         type="button" 
                                         class="btn-mini btn-edit-product"
-                                        onclick="openMiniEdit(this)"
                                         data-edit-shirt-id="{{this.id}}"
                                         data-edit-campaign-id="{{../id}}"
                                         data-edit-name="{{this.name}}"
@@ -447,6 +446,12 @@ function initMiniEdit() {
             removeMiniImage(form, index);
         });
     }
+
+    document.querySelectorAll('.btn-edit-product').forEach(btn => {
+        btn.addEventListener('click', function() {
+            openMiniEdit(this);
+        });
+    });
 }
 
 function initMiniGalleries() {
@@ -603,43 +608,47 @@ function openMiniEdit(btn) {
     const form = document.getElementById('miniEditForm');
     if (!modal || !form || !btn) return;
 
-    const shirtId = btn.dataset.editShirtId;
-    const campaignId = btn.dataset.editCampaignId;
-    if (!shirtId || !campaignId) return;
+    try {
+        const shirtId = btn.getAttribute('data-edit-shirt-id');
+        const campaignId = btn.getAttribute('data-edit-campaign-id');
+        if (!shirtId || !campaignId) return;
 
-    const name = btn.dataset.editName || '';
-    const color = btn.dataset.editColor || '';
-    const type = btn.dataset.editType || 'Tradicional';
-    const price = btn.dataset.editPrice || '';
-    const sizes = btn.dataset.editSizes || '';
+        const name = btn.getAttribute('data-edit-name') || '';
+        const color = btn.getAttribute('data-edit-color') || '';
+        const type = btn.getAttribute('data-edit-type') || 'Tradicional';
+        const price = btn.getAttribute('data-edit-price') || '';
+        const sizes = btn.getAttribute('data-edit-sizes') || '';
 
-    form.action = `/admin/campanhas/${campaignId}/camisas/editar/${shirtId}`;
-    form.name.value = name;
-    form.color.value = color;
-    form.type.value = type;
-    form.price.value = price;
+        form.action = `/admin/campanhas/${campaignId}/camisas/editar/${shirtId}`;
+        form.name.value = name;
+        form.color.value = color;
+        form.type.value = type;
+        form.price.value = price;
 
-    const sizesWrapper = form.querySelector('.mini-edit-sizes-wrapper');
-    const sizesInput = sizesWrapper ? sizesWrapper.querySelector('.shirt-sizes-input') : null;
-    if (sizesInput) {
-        sizesInput.value = sizes;
-        applyMiniSizePreset(form, sizes);
-    }
+        const sizesWrapper = form.querySelector('.mini-edit-sizes-wrapper');
+        const sizesInput = sizesWrapper ? sizesWrapper.querySelector('.shirt-sizes-input') : null;
+        if (sizesInput) {
+            sizesInput.value = sizes;
+            applyMiniSizePreset(form, sizes);
+        }
 
-    const card = btn.closest('.mini-product-card');
-    let images = [];
-    if (card) {
-        const imgWrapper = card.querySelector('.mini-product-image-wrapper[data-images]');
-        if (imgWrapper) {
-            const raw = imgWrapper.getAttribute('data-images') || '[]';
-            try {
-                images = JSON.parse(raw);
-            } catch (e) {
-                images = [];
+        const card = btn.closest('.mini-product-card');
+        let images = [];
+        if (card) {
+            const imgWrapper = card.querySelector('.mini-product-image-wrapper[data-images]');
+            if (imgWrapper) {
+                const raw = imgWrapper.getAttribute('data-images') || '[]';
+                try {
+                    images = JSON.parse(raw);
+                } catch (e) {
+                    images = [];
+                }
             }
         }
+        setupMiniImages(form, images);
+    } catch (e) {
+        console.error(e);
     }
-    setupMiniImages(form, images);
 
     modal.classList.add('visible');
 }

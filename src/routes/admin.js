@@ -409,18 +409,14 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
 });
 
 router.post('/campanhas/:campaignId/camisas/deletar/:shirtId', requireAdmin, async (req, res) => {
+    const { campaignId, shirtId } = req.params;
     try {
-        const { campaignId, shirtId } = req.params;
-        const shirt = await Shirt.findOne({ where: { id: shirtId, campaignId } });
-        if (!shirt) {
-            return res.redirect(`/admin/campanhas/detalhes/${campaignId}`);
-        }
-        await shirt.destroy();
+        await Shirt.destroy({ where: { id: shirtId } });
         req.flash('success', 'Produto removido da campanha com sucesso.');
-        res.redirect(`/admin/campanhas/detalhes/${campaignId}`);
+        return res.redirect(`/admin/campanhas/detalhes/${campaignId}`);
     } catch (error) {
         console.error(error);
-        res.redirect(`/admin/campanhas/detalhes/${req.params.campaignId}`);
+        return res.redirect(`/admin/campanhas/detalhes/${campaignId}`);
     }
 });
 
