@@ -186,21 +186,14 @@
                                 </div>
 
                                 <div class="mini-product-actions">
-                                    <button 
-                                        type="button" 
+                                    <a 
+                                        href="/admin/campanhas/detalhes/{{../campaign.id}}?editShirt={{this.id}}" 
                                         class="btn-mini btn-edit-product"
-                                        data-edit-shirt-id="{{this.id}}"
-                                        data-edit-campaign-id="{{../id}}"
-                                        data-edit-name="{{this.name}}"
-                                        data-edit-color="{{this.color}}"
-                                        data-edit-type="{{this.type}}"
-                                        data-edit-price="{{this.price}}"
-                                        data-edit-sizes="{{this.sizes}}"
                                     >
                                         <i class="fas fa-pen-to-square"></i>
                                         <span>Editar</span>
-                                    </button>
-                                    <form action="/admin/campanhas/{{../id}}/camisas/deletar/{{this.id}}" method="POST" class="inline-delete" onsubmit="return confirm('Deseja realmente apagar este modelo?');">
+                                    </a>
+                                    <form action="/admin/campanhas/{{../campaign.id}}/camisas/deletar/{{this.id}}" method="POST" class="inline-delete" onsubmit="return confirm('Deseja realmente apagar este modelo?');">
                                         <button type="submit" class="btn-mini delete">
                                             <i class="fas fa-trash"></i>
                                             <span>Apagar</span>
@@ -287,52 +280,50 @@
     </main>
 </div>
 
-<div class="mini-edit-modal-backdrop" id="miniEditModal">
+{{#if editingShirt}}
+<div class="mini-edit-modal-backdrop visible" id="miniEditModal">
     <div class="mini-edit-modal">
         <div class="mini-edit-header">
-            <h3>Editar produto</h3>
-            <button type="button" class="mini-edit-close" data-close-mini-edit>&times;</button>
+            <h3>Editar produto selecionado</h3>
+            <a href="/admin/campanhas/detalhes/{{campaign.id}}" class="mini-edit-close" style="text-decoration:none;">&times;</a>
         </div>
-        <form id="miniEditForm" method="POST">
+        <form action="/admin/campanhas/{{campaign.id}}/camisas/editar/{{editingShirt.id}}" method="POST" class="admin-form">
             <div class="mini-edit-body">
                 <div class="mini-edit-group">
                     <label>Nome do modelo</label>
-                    <input type="text" name="name" class="form-control" required>
+                    <input type="text" name="name" class="form-control" required value="{{editingShirt.name}}">
                 </div>
                 <div class="mini-edit-row">
                     <div class="mini-edit-group">
                         <label>Cor</label>
-                        <input type="text" name="color" class="form-control">
+                        <input type="text" name="color" class="form-control" value="{{editingShirt.color}}">
                     </div>
                     <div class="mini-edit-group">
                         <label>Corte</label>
                         <select name="type" class="form-control">
-                            <option value="Tradicional">Tradicional</option>
-                            <option value="Oversized">Oversized</option>
-                            <option value="Cropped">Cropped</option>
-                            <option value="Infant">Infant</option>
+                            <option value="Tradicional" {{#if (eq editingShirt.type 'Tradicional')}}selected{{/if}}>Tradicional</option>
+                            <option value="Oversized" {{#if (eq editingShirt.type 'Oversized')}}selected{{/if}}>Oversized</option>
+                            <option value="Cropped" {{#if (eq editingShirt.type 'Cropped')}}selected{{/if}}>Cropped</option>
+                            <option value="Infant" {{#if (eq editingShirt.type 'Infant')}}selected{{/if}}>Infant</option>
                         </select>
                     </div>
                 </div>
                 <div class="mini-edit-row">
                     <div class="mini-edit-group">
                         <label>Preço (R$)</label>
-                        <input type="number" step="0.01" name="price" class="form-control" required>
+                        <input type="number" step="0.01" name="price" class="form-control" required value="{{editingShirt.price}}">
                     </div>
                     <div class="mini-edit-group">
-                        <label>Tamanhos Disponíveis</label>
-                        <div class="sizes-wrapper mini-edit-sizes-wrapper">
-                            <input type="hidden" name="sizes" class="shirt-sizes-input" value="">
-                            <div class="size-options"></div>
-                        </div>
+                        <label>Tamanhos disponíveis</label>
+                        <input type="text" name="sizes" class="form-control" value="{{editingShirt.sizes}}" placeholder="Ex: P, M, G, GG">
                     </div>
                 </div>
                 <div class="mini-edit-group mini-edit-images">
                     <label>Imagens do modelo</label>
                     <div class="mini-edit-images-wrapper">
-                        <input type="hidden" name="imagesJSON" class="mini-edit-images-json" value="[]">
-                        <input type="file" accept="image/*" class="mini-edit-image-file" style="display:none">
-                        <button type="button" class="btn-mini btn-upload-image mini-edit-upload" data-mini-upload>
+                        <input type="hidden" name="imagesJSON" class="mini-edit-images-json" value='{{#if editingShirt.images}}{{json editingShirt.images}}{{else}}[]{{/if}}'>
+                        <input type="file" accept="image/*" class="mini-edit-image-file" style="display:none" onchange="handleMiniImageSelected(this)">
+                        <button type="button" class="btn-mini btn-upload-image mini-edit-upload" onclick="triggerMiniImageUpload(this)">
                             <i class="fas fa-cloud-upload-alt"></i>
                             <span>Adicionar imagem</span>
                         </button>
@@ -341,20 +332,15 @@
                 </div>
             </div>
             <div class="mini-edit-footer">
-                <button type="button" class="btn btn-outline" data-close-mini-edit>Cancelar</button>
+                <a href="/admin/campanhas/detalhes/{{campaign.id}}" class="btn btn-outline">Cancelar</a>
                 <button type="submit" class="btn btn-primary">Salvar alterações</button>
             </div>
         </form>
     </div>
 </div>
+{{/if}}
 
 <script>
-const MINI_SIZE_PRESETS = {
-    Tradicional: ['P', 'M', 'G', 'GG', 'XG', 'ExGG', 'P baby look', 'M baby look', 'G baby look'],
-    Infant: ['2', '4', '6', '8', '10', '12', '14'],
-    Default: ['P', 'M', 'G', 'GG', 'XG']
-};
-
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {
         alert('Código copiado!');
@@ -372,87 +358,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    initMiniEdit();
     initMiniGalleries();
+    initMiniEditImages();
 });
-
-function initMiniEdit() {
-    const modal = document.getElementById('miniEditModal');
-    const form = document.getElementById('miniEditForm');
-    if (!modal || !form) return;
-
-    document.querySelectorAll('[data-close-mini-edit]').forEach(el => {
-        el.addEventListener('click', () => {
-            modal.classList.remove('visible');
-        });
-    });
-
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) {
-            modal.classList.remove('visible');
-        }
-    });
-
-    const addBtn = document.getElementById('addProductBtn');
-    if (addBtn) {
-        addBtn.addEventListener('click', function() {
-            const campaignId = addBtn.dataset.campaignId;
-            form.action = `/admin/campanhas/${campaignId}/camisas/criar`;
-            form.name.value = '';
-            form.color.value = '';
-            form.type.value = 'Tradicional';
-            form.price.value = '';
-
-            const sizesWrapper = form.querySelector('.mini-edit-sizes-wrapper');
-            const sizesInput = sizesWrapper ? sizesWrapper.querySelector('.shirt-sizes-input') : null;
-            if (sizesInput) {
-                sizesInput.value = '';
-                applyMiniSizePreset(form, '');
-            }
-
-            setupMiniImages(form, []);
-            modal.classList.add('visible');
-        });
-    }
-
-    const typeSelect = form.querySelector('select[name="type"]');
-    if (typeSelect) {
-        typeSelect.addEventListener('change', function() {
-            const sizesWrapper = form.querySelector('.mini-edit-sizes-wrapper');
-            const sizesInput = sizesWrapper ? sizesWrapper.querySelector('.shirt-sizes-input') : null;
-            if (sizesInput) {
-                applyMiniSizePreset(form, sizesInput.value);
-            }
-        });
-    }
-
-    const uploadBtn = form.querySelector('[data-mini-upload]');
-    const fileInput = form.querySelector('.mini-edit-image-file');
-    if (uploadBtn && fileInput) {
-        uploadBtn.addEventListener('click', function() {
-            fileInput.click();
-        });
-        fileInput.addEventListener('change', function() {
-            handleMiniImageSelected(form, fileInput);
-        });
-    }
-
-    const imagesGrid = form.querySelector('.mini-edit-images-grid');
-    if (imagesGrid) {
-        imagesGrid.addEventListener('click', function(e) {
-            const btn = e.target.closest('[data-remove-mini-image]');
-            if (!btn) return;
-            const index = parseInt(btn.dataset.index, 10);
-            removeMiniImage(form, index);
-        });
-    }
-
-    document.querySelectorAll('.btn-edit-product').forEach(btn => {
-        btn.addEventListener('click', function() {
-            openMiniEdit(this);
-        });
-    });
-}
 
 function initMiniGalleries() {
     const wrappers = document.querySelectorAll('.mini-product-image-wrapper[data-images]');
@@ -495,71 +403,49 @@ function initMiniGalleries() {
     });
 }
 
-function applyMiniSizePreset(form, currentValue) {
-    const wrapper = form.querySelector('.mini-edit-sizes-wrapper');
+function initMiniEditImages() {
+    const wrapper = document.querySelector('.mini-edit-images-wrapper');
     if (!wrapper) return;
-    const select = form.querySelector('select[name="type"]');
-    const type = select ? select.value || '' : '';
-    let preset = MINI_SIZE_PRESETS.Default;
-    if (type === 'Tradicional') {
-        preset = MINI_SIZE_PRESETS.Tradicional;
-    } else if (type === 'Infant') {
-        preset = MINI_SIZE_PRESETS.Infant;
-    }
-    const sizeOptions = wrapper.querySelector('.size-options');
-    const sizesInput = wrapper.querySelector('.shirt-sizes-input');
-    if (!sizeOptions || !sizesInput) return;
-    sizeOptions.innerHTML = '';
-    const currentSizes = currentValue ? currentValue.split(',').map(s => s.trim()).filter(Boolean) : [];
-    preset.forEach(size => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'size-chip mini-edit-size-chip';
-        btn.dataset.value = size;
-        btn.textContent = size;
-        if (!currentSizes.length || currentSizes.includes(size)) {
-            btn.classList.add('active');
-        }
-        sizeOptions.appendChild(btn);
-    });
-    updateMiniSizesInput(wrapper);
-
-    sizeOptions.addEventListener('click', function(e) {
-        const chip = e.target.closest('.mini-edit-size-chip');
-        if (!chip) return;
-        chip.classList.toggle('active');
-        updateMiniSizesInput(wrapper);
-    });
-}
-
-function updateMiniSizesInput(wrapper) {
-    const chips = wrapper.querySelectorAll('.mini-edit-size-chip.active');
-    const values = Array.from(chips).map(c => c.dataset.value);
-    const input = wrapper.querySelector('.shirt-sizes-input');
-    if (input) {
-        input.value = values.join(', ');
-    }
-}
-
-function setupMiniImages(form, images) {
-    const jsonInput = form.querySelector('.mini-edit-images-json');
-    const grid = form.querySelector('.mini-edit-images-grid');
+    const jsonInput = wrapper.querySelector('.mini-edit-images-json');
+    const grid = wrapper.querySelector('.mini-edit-images-grid');
     if (!jsonInput || !grid) return;
-    jsonInput.value = JSON.stringify(images || []);
+    let images = [];
+    try {
+        images = JSON.parse(jsonInput.value || '[]');
+    } catch (e) {
+        images = [];
+    }
+    renderMiniEditImages(grid, jsonInput, images);
+}
+
+function renderMiniEditImages(grid, jsonInput, images) {
     grid.innerHTML = '';
-    (images || []).forEach((src, index) => {
+    (images || []).forEach(function(src, index) {
         const item = document.createElement('div');
         item.className = 'mini-edit-image-item';
-        item.innerHTML = `
-            <img src="${src}" class="mini-edit-image-thumb">
-            <button type="button" class="mini-edit-image-remove" data-remove-mini-image data-index="${index}">&times;</button>
-        `;
+        item.innerHTML = '<img src="' + src + '" class="mini-edit-image-thumb">' +
+            '<button type="button" class="mini-edit-image-remove" data-index="' + index + '">&times;</button>';
         grid.appendChild(item);
     });
+    jsonInput.value = JSON.stringify(images || []);
 }
 
-function handleMiniImageSelected(form, input) {
+function triggerMiniImageUpload(btn) {
+    const wrapper = btn.closest('.mini-edit-images-wrapper');
+    if (!wrapper) return;
+    const input = wrapper.querySelector('.mini-edit-image-file');
+    if (input) {
+        input.click();
+    }
+}
+
+function handleMiniImageSelected(input) {
     if (!input.files || !input.files.length) return;
+    const wrapper = input.closest('.mini-edit-images-wrapper');
+    if (!wrapper) return;
+    const jsonInput = wrapper.querySelector('.mini-edit-images-json');
+    const grid = wrapper.querySelector('.mini-edit-images-grid');
+    if (!jsonInput || !grid) return;
     const file = input.files[0];
     if (file.size > 5 * 1024 * 1024) {
         alert('A imagem deve ter no máximo 5MB.');
@@ -568,88 +454,40 @@ function handleMiniImageSelected(form, input) {
     }
     const reader = new FileReader();
     reader.onload = function(e) {
-        const base64 = e.target.result;
-        addMiniImage(form, base64);
+        let images = [];
+        try {
+            images = JSON.parse(jsonInput.value || '[]');
+        } catch (err) {
+            images = [];
+        }
+        images.push(e.target.result);
+        renderMiniEditImages(grid, jsonInput, images);
         input.value = '';
     };
     reader.readAsDataURL(file);
 }
 
-function addMiniImage(form, base64) {
-    const jsonInput = form.querySelector('.mini-edit-images-json');
-    const grid = form.querySelector('.mini-edit-images-grid');
-    if (!jsonInput || !grid) return;
+document.addEventListener('click', function(e) {
+    const removeBtn = e.target.closest('.mini-edit-image-remove');
+    if (!removeBtn) return;
+    const wrapper = removeBtn.closest('.mini-edit-images-wrapper');
+    if (!wrapper) return;
+    const grid = wrapper.querySelector('.mini-edit-images-grid');
+    const jsonInput = wrapper.querySelector('.mini-edit-images-json');
+    if (!grid || !jsonInput) return;
     let images = [];
     try {
         images = JSON.parse(jsonInput.value || '[]');
-    } catch (e) {
+    } catch (err) {
         images = [];
     }
-    images.push(base64);
-    setupMiniImages(form, images);
-}
-
-function removeMiniImage(form, index) {
-    const jsonInput = form.querySelector('.mini-edit-images-json');
-    if (!jsonInput) return;
-    let images = [];
-    try {
-        images = JSON.parse(jsonInput.value || '[]');
-    } catch (e) {
-        images = [];
+    const items = Array.from(grid.querySelectorAll('.mini-edit-image-item'));
+    const item = removeBtn.closest('.mini-edit-image-item');
+    const index = items.indexOf(item);
+    if (index > -1 && index < images.length) {
+        images.splice(index, 1);
+        renderMiniEditImages(grid, jsonInput, images);
     }
-    if (index < 0 || index >= images.length) return;
-    images.splice(index, 1);
-    setupMiniImages(form, images);
-}
+});
 
-function openMiniEdit(btn) {
-    const modal = document.getElementById('miniEditModal');
-    const form = document.getElementById('miniEditForm');
-    if (!modal || !form || !btn) return;
-
-    try {
-        const shirtId = btn.getAttribute('data-edit-shirt-id');
-        const campaignId = btn.getAttribute('data-edit-campaign-id');
-        if (!shirtId || !campaignId) return;
-
-        const name = btn.getAttribute('data-edit-name') || '';
-        const color = btn.getAttribute('data-edit-color') || '';
-        const type = btn.getAttribute('data-edit-type') || 'Tradicional';
-        const price = btn.getAttribute('data-edit-price') || '';
-        const sizes = btn.getAttribute('data-edit-sizes') || '';
-
-        form.action = `/admin/campanhas/${campaignId}/camisas/editar/${shirtId}`;
-        form.name.value = name;
-        form.color.value = color;
-        form.type.value = type;
-        form.price.value = price;
-
-        const sizesWrapper = form.querySelector('.mini-edit-sizes-wrapper');
-        const sizesInput = sizesWrapper ? sizesWrapper.querySelector('.shirt-sizes-input') : null;
-        if (sizesInput) {
-            sizesInput.value = sizes;
-            applyMiniSizePreset(form, sizes);
-        }
-
-        const card = btn.closest('.mini-product-card');
-        let images = [];
-        if (card) {
-            const imgWrapper = card.querySelector('.mini-product-image-wrapper[data-images]');
-            if (imgWrapper) {
-                const raw = imgWrapper.getAttribute('data-images') || '[]';
-                try {
-                    images = JSON.parse(raw);
-                } catch (e) {
-                    images = [];
-                }
-            }
-        }
-        setupMiniImages(form, images);
-    } catch (e) {
-        console.error(e);
-    }
-
-    modal.classList.add('visible');
-}
 </script>

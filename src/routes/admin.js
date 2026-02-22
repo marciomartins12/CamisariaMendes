@@ -376,7 +376,6 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
 
         const campaignPlain = campaign.get({ plain: true });
         
-        // Ensure images are parsed (safeguard for nested associations)
         if (campaignPlain.shirts) {
             campaignPlain.shirts.forEach(shirt => {
                 if (typeof shirt.images === 'string') {
@@ -389,18 +388,26 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
             });
         }
 
-        // Calculate days remaining
         const now = new Date();
         const endDate = new Date(campaignPlain.endDate);
         const timeDiff = endDate.getTime() - now.getTime();
         const daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
         campaignPlain.daysRemaining = daysRemaining > 0 ? daysRemaining : 0;
 
+        let editingShirt = null;
+        const editShirtId = req.query.editShirt;
+        if (editShirtId && campaignPlain.shirts && campaignPlain.shirts.length) {
+            editingShirt = campaignPlain.shirts.find(
+                s => String(s.id) === String(editShirtId)
+            ) || null;
+        }
+
         res.render('admin/campaign-details', {
             title: 'Detalhes da Campanha',
             layout: 'main',
             isCampaigns: true,
-            campaign: campaignPlain
+            campaign: campaignPlain,
+            editingShirt
         });
     } catch (error) {
         console.error(error);
