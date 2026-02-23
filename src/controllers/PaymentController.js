@@ -95,7 +95,7 @@ const PaymentController = {
             const userId = req.session && req.session.user ? req.session.user.id : null;
 
             const newOrder = await Order.create({
-                items: JSON.stringify(items),
+                items: items,
                 totalAmount,
                 discountAmount,
                 finalAmount,

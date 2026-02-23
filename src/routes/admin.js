@@ -409,6 +409,7 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
         if (shirtIds.length > 0) {
             try {
                 const allOrders = await Order.findAll({
+                    where: { status: 'approved' },
                     order: [['createdAt', 'DESC']]
                 });
 

@@ -1,4 +1,5 @@
 const { Order, User } = require('../models');
+const { Op } = require('sequelize');
 
 const OrderController = {
     // Render Checkout Page
@@ -51,7 +52,13 @@ const OrderController = {
             let totalOrders = 0;
             try {
                 const result = await Order.findAndCountAll({
-                    where: { userId: req.session.user.id, status: 'approved' },
+                    where: { 
+                        status: { [Op.in]: ['approved', 'pending'] },
+                        [Op.or]: [
+                            { userId: req.session.user.id },
+                            { customerEmail: req.session.user.email }
+                        ]
+                    },
                     order: [['createdAt', 'DESC']],
                     limit: perPage,
                     offset
