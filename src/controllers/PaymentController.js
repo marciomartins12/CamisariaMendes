@@ -30,10 +30,26 @@ const PaymentController = {
 
             await PaymentController.processPaymentUpdate(order, paymentInfo);
 
+            const isPix = paymentInfo.payment_method_id === 'pix' || paymentInfo.payment_type_id === 'bank_transfer';
+            let pixData = null;
+
+            if (isPix && paymentInfo.point_of_interaction && paymentInfo.point_of_interaction.transaction_data) {
+                const tx = paymentInfo.point_of_interaction.transaction_data;
+                pixData = {
+                    qr_code: tx.qr_code || null,
+                    qr_code_base64: tx.qr_code_base64 || null,
+                    ticket_url: tx.ticket_url || null,
+                    expiration_date: tx.date_of_expiration || null
+                };
+            }
+
             return res.json({
                 status: paymentInfo.status,
                 id: paymentInfo.id,
-                status_detail: paymentInfo.status_detail || null
+                status_detail: paymentInfo.status_detail || null,
+                payment_method_id: paymentInfo.payment_method_id || null,
+                payment_type_id: paymentInfo.payment_type_id || null,
+                pix: pixData
             });
         } catch (error) {
             console.error('processPaymentBrick error:', error);
