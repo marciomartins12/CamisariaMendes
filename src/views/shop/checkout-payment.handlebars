@@ -32,26 +32,6 @@
             </p>
             <div id="payment_container"></div>
         </div>
-
-        <div id="pix-section" style="display:none; margin-top:20px;">
-            <div style="background:#f5f5f5; border-radius:12px; padding:20px; border:1px dashed #ccc;">
-                <h3 style="margin-top:0; margin-bottom:10px;">Pagamento via Pix</h3>
-                <p style="color:#555; font-size:0.9rem; margin-bottom:15px;">
-                    Escaneie o QR Code abaixo com o aplicativo do seu banco ou copie o código Pix para pagar.
-                </p>
-                <div style="display:flex; flex-direction:column; align-items:center; gap:15px;">
-                    <img id="pix-qr-image" src="" alt="QR Code Pix" style="max-width:220px; background:#fff; padding:10px; border-radius:8px; display:none;">
-                    <div style="width:100%;">
-                        <label for="pix-code" style="display:block; font-size:0.9rem; margin-bottom:5px; color:#333;">Código Pix (copiar e colar)</label>
-                        <textarea id="pix-code" readonly style="width:100%; min-height:80px; border-radius:8px; border:1px solid #ccc; padding:10px; font-size:0.9rem; resize:vertical;"></textarea>
-                        <button type="button" onclick="copyPixCode()" style="margin-top:8px; padding:10px 16px; border:none; border-radius:8px; background:#009ee3; color:#fff; font-weight:600; cursor:pointer;">
-                            Copiar código Pix
-                        </button>
-                    </div>
-                </div>
-                <p id="pix-expiration" style="margin-top:10px; font-size:0.8rem; color:#777;"></p>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -123,7 +103,10 @@
                         })
                         .then(resp => resp.json())
                         .then(result => {
-                            const isPix = selectedPaymentMethod === 'pix' || formData.payment_method_id === 'pix' || result.payment_method_id === 'pix';
+                            const isPix =
+                                selectedPaymentMethod === 'pix' ||
+                                formData.payment_method_id === 'pix' ||
+                                result.payment_method_id === 'pix';
 
                             if (!result || !result.status) {
                                 console.error('Resposta inválida do backend ao processar pagamento:', result);
@@ -133,11 +116,8 @@
                             }
 
                             if (isPix) {
-                                if (result.pix && (result.pix.qr_code || result.pix.qr_code_base64)) {
-                                    showPixSection(result.pix);
-                                } else {
-                                    alert('Pagamento Pix criado. Se o QR Code não aparecer, verifique o link enviado no seu e-mail.');
-                                }
+                                const targetUrl = '/checkout/pix/' + orderId + (result && result.id ? ('?paymentId=' + result.id) : '');
+                                window.location.href = targetUrl;
                                 resolve();
                                 return;
                             }
@@ -164,54 +144,6 @@
                 }
             }
         });
-    }
-
-    function showPixSection(pix) {
-        const section = document.getElementById('pix-section');
-        const img = document.getElementById('pix-qr-image');
-        const codeEl = document.getElementById('pix-code');
-        const expirationEl = document.getElementById('pix-expiration');
-
-        if (!section || !codeEl || !img || !expirationEl) return;
-
-        if (pix.qr_code_base64) {
-            img.src = 'data:image/png;base64,' + pix.qr_code_base64;
-            img.style.display = 'block';
-        } else {
-            img.style.display = 'none';
-        }
-
-        if (pix.qr_code) {
-            codeEl.value = pix.qr_code;
-        }
-
-        if (pix.expiration_date) {
-            expirationEl.innerText = 'Este código Pix expira em: ' + pix.expiration_date;
-        } else {
-            expirationEl.innerText = '';
-        }
-
-        section.style.display = 'block';
-        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    function copyPixCode() {
-        const codeEl = document.getElementById('pix-code');
-        if (!codeEl || !codeEl.value) return;
-
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(codeEl.value).then(() => {
-                alert('Código Pix copiado para a área de transferência.');
-            }).catch(() => {
-                codeEl.select();
-                document.execCommand('copy');
-                alert('Código Pix copiado para a área de transferência.');
-            });
-        } else {
-            codeEl.select();
-            document.execCommand('copy');
-            alert('Código Pix copiado para a área de transferência.');
-        }
     }
 
     document.addEventListener('DOMContentLoaded', initPaymentPage);

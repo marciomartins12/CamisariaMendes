@@ -146,6 +146,64 @@ const PaymentController = {
         }
     },
 
+    async pixPage(req, res) {
+        try {
+            const { orderId } = req.params;
+            const { paymentId } = req.query;
+
+            const order = await Order.findByPk(orderId);
+            if (!order) {
+                return res.redirect('/meus-pedidos');
+            }
+
+            let pixData = null;
+            try {
+                const paymentClient = new mercadopago.Payment(client);
+                let paymentInfo = null;
+
+                if (paymentId) {
+                    paymentInfo = await paymentClient.get({ id: paymentId });
+                } else {
+                    const searchResult = await paymentClient.search({
+                        options: {
+                            external_reference: orderId.toString()
+                        }
+                    });
+                    if (searchResult.results && searchResult.results.length > 0) {
+                        paymentInfo = searchResult.results[searchResult.results.length - 1];
+                    }
+                }
+
+                if (paymentInfo && (paymentInfo.payment_method_id === 'pix' || paymentInfo.payment_type_id === 'bank_transfer')) {
+                    if (paymentInfo.point_of_interaction && paymentInfo.point_of_interaction.transaction_data) {
+                        const tx = paymentInfo.point_of_interaction.transaction_data;
+                        pixData = {
+                            qr_code: tx.qr_code || null,
+                            qr_code_base64: tx.qr_code_base64 || null,
+                            ticket_url: tx.ticket_url || null,
+                            expiration_date: tx.date_of_expiration || null
+                        };
+                    }
+                }
+            } catch (innerError) {
+                console.error('Error fetching Pix payment for page:', innerError);
+            }
+
+            const orderPlain = order.get({ plain: true });
+
+            res.render('shop/checkout-pix', {
+                title: `Pagamento Pix do Pedido #${orderPlain.id}`,
+                layout: 'main',
+                order: orderPlain,
+                pix: pixData,
+                initialStatus: orderPlain.status
+            });
+        } catch (error) {
+            console.error('Error rendering Pix page:', error);
+            res.redirect('/meus-pedidos');
+        }
+    },
+
     // Resume Payment (Create new preference for existing order)
     async continuePayment(req, res) {
         try {

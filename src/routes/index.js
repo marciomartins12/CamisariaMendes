@@ -20,6 +20,7 @@ router.post('/api/continue-payment/:orderId', PaymentController.continuePayment)
 // Checkout & Orders
 router.get('/checkout', OrderController.checkoutPage);
 router.get('/checkout/pagamento/:orderId', OrderController.paymentPage);
+router.get('/checkout/pix/:orderId', PaymentController.pixPage);
 router.get('/meus-pedidos', OrderController.historyPage);
 router.post('/orders/:id/delete', OrderController.deleteOrder);
 

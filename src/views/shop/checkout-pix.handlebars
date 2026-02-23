@@ -1,0 +1,177 @@
+<div class="app-container" style="max-width: 700px; margin: 0 auto; padding: 20px;">
+    <header style="margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 20px;">
+        <h1 style="font-size: 1.8rem; margin: 0;">Pagamento via Pix - Pedido #{{order.id}}</h1>
+        <a href="/meus-pedidos" style="color: #666; text-decoration: none; font-size: 0.9rem;">
+            <i class="fas fa-arrow-left"></i> Voltar para meus pedidos
+        </a>
+    </header>
+
+    <div style="background:#fff; padding:20px; border-radius:12px; border:1px solid #eee; margin-bottom:20px;">
+        <h3 style="margin-top:0;">Resumo do Pedido</h3>
+        <p style="margin: 4px 0; color: #555;">Pedido #{{order.id}}</p>
+        <p style="margin: 4px 0; color: #555;">Nome: {{order.customerName}}</p>
+        <p style="margin: 4px 0; color: #555;">E-mail: {{order.customerEmail}}</p>
+        <p style="margin: 4px 0; color: #555;">Telefone: {{order.customerPhone}}</p>
+
+        <div style="border-top: 1px solid #eee; margin-top: 15px; padding-top: 10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="color:#666;">Total do pedido</span>
+                <strong style="font-size:1.2rem;">R$ {{order.finalAmount}}</strong>
+            </div>
+        </div>
+    </div>
+
+    <div id="pix-info" style="background:#f5f5f5; padding:20px; border-radius:12px; border:1px dashed #ccc; margin-bottom:20px;">
+        <h3 style="margin-top:0; margin-bottom:10px;">Pague com Pix</h3>
+        <p style="color:#555; font-size:0.9rem; margin-bottom:15px;">
+            Escaneie o QR Code abaixo com o aplicativo do seu banco ou copie o código Pix para pagar.
+        </p>
+
+        <div style="display:flex; flex-direction:column; align-items:center; gap:15px;">
+            <img id="pix-qr-image" src="" alt="QR Code Pix" style="max-width:240px; background:#fff; padding:10px; border-radius:8px; display:none;">
+            <div style="width:100%;">
+                <label for="pix-code" style="display:block; font-size:0.9rem; margin-bottom:5px; color:#333;">Código Pix (copiar e colar)</label>
+                <textarea id="pix-code" readonly style="width:100%; min-height:80px; border-radius:8px; border:1px solid #ccc; padding:10px; font-size:0.9rem; resize:vertical;"></textarea>
+                <button type="button" id="btn-copy-pix" style="margin-top:8px; padding:10px 16px; border:none; border-radius:8px; background:#009ee3; color:#fff; font-weight:600; cursor:pointer;">
+                    Copiar código Pix
+                </button>
+            </div>
+        </div>
+        <p id="pix-expiration" style="margin-top:10px; font-size:0.8rem; color:#777;"></p>
+        <div id="pix-ticket-wrapper" style="margin-top:10px; display:none;">
+            <a id="pix-ticket-link" href="#" target="_blank" style="font-size:0.85rem; color:#009ee3; text-decoration:none;">
+                Ver detalhes do pagamento no site do Mercado Pago
+            </a>
+        </div>
+    </div>
+
+    <div id="status-card" style="background:#fff; padding:20px; border-radius:12px; border:1px solid #eee; text-align:center;">
+        <h3 style="margin-top:0;">Status do pagamento</h3>
+        <p id="payment-status-text" style="color:#666; margin-bottom:15px;">
+            {{#if (eq initialStatus 'approved')}}Pagamento aprovado!{{else}}Aguardando pagamento Pix...{{/if}}
+        </p>
+        <p id="payment-status-helper" style="color:#999; font-size:0.85rem; margin-bottom:20px;">
+            {{#if (eq initialStatus 'approved')}}
+            Seu pagamento já foi confirmado. Você pode visualizar os detalhes nos seus pedidos.
+            {{else}}
+            Assim que o pagamento for confirmado pelo banco, esta página será atualizada automaticamente.
+            {{/if}}
+        </p>
+        <button id="btn-view-orders" type="button" onclick="window.location.href='/meus-pedidos'" style="padding:10px 20px; border:none; border-radius:8px; background:#111; color:#fff; font-weight:600; cursor:pointer; display:none;">
+            Ver meus pedidos
+        </button>
+    </div>
+
+    <div id="pix-data"
+         data-qr="{{#if pix}}{{pix.qr_code}}{{/if}}"
+         data-qr-base64="{{#if pix}}{{pix.qr_code_base64}}{{/if}}"
+         data-ticket-url="{{#if pix}}{{pix.ticket_url}}{{/if}}"
+         data-expiration="{{#if pix}}{{pix.expiration_date}}{{/if}}">
+    </div>
+</div>
+
+<script>
+    function initPixPage() {
+        const pixDataEl = document.getElementById('pix-data');
+        const img = document.getElementById('pix-qr-image');
+        const codeEl = document.getElementById('pix-code');
+        const expirationEl = document.getElementById('pix-expiration');
+        const ticketWrapper = document.getElementById('pix-ticket-wrapper');
+        const ticketLink = document.getElementById('pix-ticket-link');
+        const btnCopy = document.getElementById('btn-copy-pix');
+        const btnViewOrders = document.getElementById('btn-view-orders');
+        const statusText = document.getElementById('payment-status-text');
+        const statusHelper = document.getElementById('payment-status-helper');
+
+        const qr = pixDataEl ? pixDataEl.getAttribute('data-qr') || '' : '';
+        const qrBase64 = pixDataEl ? pixDataEl.getAttribute('data-qr-base64') || '' : '';
+        const ticketUrl = pixDataEl ? pixDataEl.getAttribute('data-ticket-url') || '' : '';
+        const expiration = pixDataEl ? pixDataEl.getAttribute('data-expiration') || '' : '';
+
+        if (qrBase64) {
+            img.src = 'data:image/png;base64,' + qrBase64;
+            img.style.display = 'block';
+        }
+
+        if (qr) {
+            codeEl.value = qr;
+        }
+
+        if (expiration) {
+            expirationEl.innerText = 'Este código Pix expira em: ' + expiration;
+        }
+
+        if (ticketUrl) {
+            ticketWrapper.style.display = 'block';
+            ticketLink.href = ticketUrl;
+        }
+
+        btnCopy.addEventListener('click', function () {
+            if (!codeEl.value) return;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(codeEl.value).then(function () {
+                    alert('Código Pix copiado para a área de transferência.');
+                }).catch(function () {
+                    codeEl.select();
+                    document.execCommand('copy');
+                    alert('Código Pix copiado para a área de transferência.');
+                });
+            } else {
+                codeEl.select();
+                document.execCommand('copy');
+                alert('Código Pix copiado para a área de transferência.');
+            }
+        });
+
+        const orderId = '{{order.id}}';
+        let currentStatus = '{{initialStatus}}';
+
+        if (currentStatus === 'approved') {
+            btnViewOrders.style.display = 'inline-block';
+            return;
+        }
+
+        function updateStatusUI(newStatus) {
+            if (newStatus === 'approved') {
+                statusText.innerText = 'Pagamento aprovado!';
+                statusHelper.innerText = 'Seu pagamento já foi confirmado. Você pode visualizar os detalhes nos seus pedidos.';
+                btnViewOrders.style.display = 'inline-block';
+            } else {
+                statusText.innerText = 'Aguardando pagamento Pix...';
+                statusHelper.innerText = 'Assim que o pagamento for confirmado pelo banco, esta página será atualizada automaticamente.';
+            }
+        }
+
+        updateStatusUI(currentStatus);
+
+        let attempts = 0;
+        const maxAttempts = 60;
+
+        const intervalId = setInterval(function () {
+            attempts++;
+            if (attempts > maxAttempts) {
+                clearInterval(intervalId);
+                return;
+            }
+
+            fetch('/api/check-payment/' + orderId)
+                .then(function (resp) { return resp.json(); })
+                .then(function (data) {
+                    if (!data || !data.status) return;
+
+                    currentStatus = data.status;
+                    updateStatusUI(currentStatus);
+
+                    if (currentStatus === 'approved') {
+                        clearInterval(intervalId);
+                    }
+                })
+                .catch(function (error) {
+                    console.error('Erro ao verificar status do pagamento:', error);
+                });
+        }, 8000);
+    }
+
+    document.addEventListener('DOMContentLoaded', initPixPage);
+</script>
+
