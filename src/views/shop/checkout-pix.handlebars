@@ -124,6 +124,7 @@
         const statusHelper = document.getElementById('payment-status-helper');
         const successModal = document.getElementById('payment-success-modal');
         const closeSuccessModalBtn = document.getElementById('btn-close-success-modal');
+        let cartCleared = false;
 
         const qr = pixDataEl ? pixDataEl.getAttribute('data-qr') || '' : '';
         const qrBase64 = pixDataEl ? pixDataEl.getAttribute('data-qr-base64') || '' : '';
@@ -173,6 +174,13 @@
             if (successModal) {
                 successModal.style.display = 'flex';
             }
+            if (!cartCleared) {
+                try {
+                    localStorage.removeItem('camisaria_cart');
+                    localStorage.removeItem('camisaria_coupon');
+                } catch (e) {}
+                cartCleared = true;
+            }
             return;
         }
 
@@ -183,6 +191,13 @@
                 btnViewOrders.style.display = 'inline-block';
                 if (successModal) {
                     successModal.style.display = 'flex';
+                }
+                if (!cartCleared) {
+                    try {
+                        localStorage.removeItem('camisaria_cart');
+                        localStorage.removeItem('camisaria_coupon');
+                    } catch (e) {}
+                    cartCleared = true;
                 }
             } else {
                 statusText.innerText = 'Aguardando pagamento Pix...';

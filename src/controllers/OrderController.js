@@ -51,7 +51,7 @@ const OrderController = {
             let totalOrders = 0;
             try {
                 const result = await Order.findAndCountAll({
-                    where: { userId: req.session.user.id },
+                    where: { userId: req.session.user.id, status: 'approved' },
                     order: [['createdAt', 'DESC']],
                     limit: perPage,
                     offset
