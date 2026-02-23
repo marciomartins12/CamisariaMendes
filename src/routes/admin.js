@@ -1317,9 +1317,8 @@ router.get('/clientes-campanhas', requireAdmin, async (req, res) => {
                 }
 
                 let itemsQty = 0;
-                if (Array.isArray(order.items)) {
                 let itemsDetailed = [];
-                    order.items.forEach(it => {
+                if (Array.isArray(order.items)) {
                     itemsDetailed = order.items.map(it => {
                         const qty = it && it.qty ? it.qty : 0;
                         itemsQty += qty;
@@ -1343,6 +1342,7 @@ router.get('/clientes-campanhas', requireAdmin, async (req, res) => {
                             thumb
                         };
                     });
+                }
 
                 return {
                     ...order,
@@ -1352,7 +1352,6 @@ router.get('/clientes-campanhas', requireAdmin, async (req, res) => {
                     netAmountFormatted,
                     paymentMethodLabel: paymentLabel,
                     campaignTitle,
-                    campaignAccessCode,
                     campaignAccessCode,
                     itemsQty
                 };
