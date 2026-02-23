@@ -244,8 +244,6 @@ router.get('/campanhas', requireAdmin, async (req, res) => {
                     'id',
                     'status',
                     'finalAmount',
-                    'netAmountReceived',
-                    'feeAmount',
                     'items',
                     'customerName',
                     'customerEmail',
@@ -299,13 +297,8 @@ router.get('/campanhas', requireAdmin, async (req, res) => {
                         ordersCount += 1;
                         const val = parseFloat(o.finalAmount) || 0;
                         revenueSum += val;
-                        let net = null;
-                        if (o.netAmountReceived != null) {
-                            net = parseFloat(o.netAmountReceived) || 0;
-                        } else {
-                            const feePercent = getFeePercentByPaymentMethod(o.paymentMethod);
-                            net = val * (1 - feePercent);
-                        }
+                        const feePercent = getFeePercentByPaymentMethod(o.paymentMethod);
+                        const net = val * (1 - feePercent);
                         netRevenueSum += net;
                     }
                 });
@@ -640,7 +633,7 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
             try {
                 const allOrders = await Order.findAll({
                     where: { status: 'approved' },
-                    attributes: ['id', 'status', 'finalAmount', 'netAmountReceived', 'feeAmount', 'items', 'customerName', 'customerEmail', 'customerPhone', 'paymentMethod', 'createdAt']
+                    attributes: ['id', 'status', 'finalAmount', 'items', 'customerName', 'customerEmail', 'customerPhone', 'paymentMethod', 'createdAt']
                 });
 
                 ordersForCampaign = allOrders
@@ -688,13 +681,8 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
                     totalOrders += 1;
                     const val = parseFloat(o.finalAmount) || 0;
                     totalRevenue += val;
-                    let net = null;
-                    if (o.netAmountReceived != null) {
-                        net = parseFloat(o.netAmountReceived) || 0;
-                    } else {
-                        const feePercent = getFeePercentByPaymentMethod(o.paymentMethod);
-                        net = val * (1 - feePercent);
-                    }
+                    const feePercent = getFeePercentByPaymentMethod(o.paymentMethod);
+                    const net = val * (1 - feePercent);
                     totalNetRevenue += net;
                 });
             } catch (ordersError) {
@@ -1045,38 +1033,8 @@ router.post('/pedidos/:id/sincronizar', requireAdmin, async (req, res) => {
             const status = lastPayment.status;
             if (status === 'approved') {
                 order.status = 'approved';
-                order.paymentMethod = lastPayment.payment_method_id || order.paymentMethod;
-                order.transactionId = lastPayment.id ? lastPayment.id.toString() : order.transactionId;
-
-                let netAmount = null;
-                let feeAmount = null;
-                const tx = lastPayment.transaction_details || lastPayment.transactionDetails || null;
-                if (tx) {
-                    const totalPaid = typeof tx.total_paid_amount === 'number' ? tx.total_paid_amount : null;
-                    const netReceived = typeof tx.net_received_amount === 'number' ? tx.net_received_amount : null;
-                    if (netReceived !== null) {
-                        netAmount = netReceived;
-                        if (totalPaid !== null) {
-                            feeAmount = totalPaid - netReceived;
-                        }
-                    }
-                }
-                if (netAmount === null) {
-                    const val = parseFloat(order.finalAmount) || 0;
-                    const m = order.paymentMethod ? String(order.paymentMethod).toLowerCase() : '';
-                    let feePercent = 0;
-                    if (m === 'pix' || m === 'bank_transfer') {
-                        feePercent = 0.0099;
-                    } else if (m === 'credit_card' || m === 'debit_card' || m === 'prepaid_card') {
-                        feePercent = 0.0499;
-                    } else {
-                        feePercent = 0.0499;
-                    }
-                    netAmount = val * (1 - feePercent);
-                    feeAmount = val - netAmount;
-                }
-                order.netAmountReceived = netAmount;
-                order.feeAmount = feeAmount;
+                order.paymentMethod = lastPayment.payment_method_id;
+                order.transactionId = lastPayment.id.toString();
             } else if (status === 'rejected' || status === 'cancelled') {
                 order.status = status;
             }

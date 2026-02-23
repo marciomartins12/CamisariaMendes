@@ -25,14 +25,6 @@ const Order = sequelize.define('Order', {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false
   },
-  netAmountReceived: {
-    type: DataTypes.DECIMAL(10, 2),
-    allowNull: true
-  },
-  feeAmount: {
-    type: DataTypes.DECIMAL(10, 2),
-    allowNull: true
-  },
   paymentMethod: {
     type: DataTypes.STRING,
     allowNull: true

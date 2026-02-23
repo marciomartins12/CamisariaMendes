@@ -327,39 +327,8 @@ const PaymentController = {
 
         if (status === 'approved') {
             order.status = 'approved';
-            order.paymentMethod = paymentInfo.payment_method_id || order.paymentMethod;
-            order.transactionId = paymentInfo.id ? paymentInfo.id.toString() : order.transactionId;
-
-            let netAmount = null;
-            let feeAmount = null;
-            const tx = paymentInfo.transaction_details || paymentInfo.transactionDetails || null;
-            if (tx) {
-                const totalPaid = typeof tx.total_paid_amount === 'number' ? tx.total_paid_amount : null;
-                const netReceived = typeof tx.net_received_amount === 'number' ? tx.net_received_amount : null;
-                if (netReceived !== null) {
-                    netAmount = netReceived;
-                    if (totalPaid !== null) {
-                        feeAmount = totalPaid - netReceived;
-                    }
-                }
-            }
-            if (netAmount === null) {
-                const val = parseFloat(order.finalAmount) || 0;
-                const m = order.paymentMethod ? String(order.paymentMethod).toLowerCase() : '';
-                let feePercent = 0;
-                if (m === 'pix' || m === 'bank_transfer') {
-                    feePercent = 0.0099;
-                } else if (m === 'credit_card' || m === 'debit_card' || m === 'prepaid_card') {
-                    feePercent = 0.0499;
-                } else {
-                    feePercent = 0.0499;
-                }
-                netAmount = val * (1 - feePercent);
-                feeAmount = val - netAmount;
-            }
-            order.netAmountReceived = netAmount;
-            order.feeAmount = feeAmount;
-
+            order.paymentMethod = paymentInfo.payment_method_id;
+            order.transactionId = paymentInfo.id.toString();
             await order.save();
 
             // Increment Coupon Usage
