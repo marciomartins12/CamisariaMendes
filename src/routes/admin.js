@@ -229,6 +229,60 @@ router.get('/campanhas', requireAdmin, async (req, res) => {
             await Promise.all(statusUpdates);
         }
 
+        // Compute metrics: total approved orders and approved revenue per campaign
+        try {
+            const approvedOrders = await Order.findAll({
+                where: { status: 'approved' },
+                order: [['createdAt', 'DESC']]
+            });
+
+            const normalizedApproved = approvedOrders.map(order => {
+                const o = order.get({ plain: true });
+                try {
+                    if (typeof o.items === 'string') {
+                        o.items = JSON.parse(o.items);
+                        if (typeof o.items === 'string') {
+                            o.items = JSON.parse(o.items);
+                        }
+                    }
+                } catch (e) {
+                    o.items = [];
+                }
+                if (!Array.isArray(o.items)) o.items = [];
+                const itemIds = o.items
+                    .map(it => {
+                        const pid = it && (it.id ?? it.productId ?? it.shirtId);
+                        const num = Number(pid);
+                        return Number.isFinite(num) ? num : null;
+                    })
+                    .filter(v => v !== null);
+                return { ...o, itemIds };
+            });
+
+            campaignsPlain.forEach(cp => {
+                const shirtIds = (cp.shirts || []).map(s => Number(s.id)).filter(Number.isFinite);
+                let ordersCount = 0;
+                let revenueSum = 0;
+                normalizedApproved.forEach(o => {
+                    const has = o.itemIds.some(id => shirtIds.includes(id));
+                    if (has) {
+                        ordersCount += 1;
+                        const val = parseFloat(o.finalAmount) || 0;
+                        revenueSum += val;
+                    }
+                });
+                cp.totalOrders = ordersCount;
+                cp.totalRevenue = revenueSum;
+                try {
+                    cp.totalRevenueFormatted = revenueSum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                } catch (e) {
+                    cp.totalRevenueFormatted = `${revenueSum.toFixed(2)}`;
+                }
+            });
+        } catch (metricsErr) {
+            console.error('Erro ao calcular métricas de campanhas:', metricsErr);
+        }
+
         res.render('admin/campaigns', {
             title: 'Gerenciar Campanhas',
             layout: 'main',
@@ -431,7 +485,11 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
                             plain.items = [];
                         }
 
-                        const hasItemFromCampaign = plain.items.some(it => shirtIds.includes(it.id));
+                        const hasItemFromCampaign = plain.items.some(it => {
+                            const pid = it && (it.id ?? it.productId ?? it.shirtId);
+                            const num = Number(pid);
+                            return Number.isFinite(num) && shirtIds.includes(num);
+                        });
                         if (!hasItemFromCampaign) return null;
 
                         const customerName = plain.customerName || 'Cliente';
