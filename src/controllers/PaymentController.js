@@ -9,7 +9,7 @@ const preference = new mercadopago.Preference(client);
 const PaymentController = {
     async processPaymentBrick(req, res) {
         try {
-            const { orderId, ...paymentData } = req.body || {};
+            const { orderId, selectedPaymentMethod, ...paymentData } = req.body || {};
 
             if (!orderId) {
                 return res.status(400).json({ error: 'orderId é obrigatório.' });

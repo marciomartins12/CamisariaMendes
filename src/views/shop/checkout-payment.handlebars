@@ -105,6 +105,20 @@
                         })
                         .then(resp => resp.json())
                         .then(result => {
+                            const isPix = selectedPaymentMethod === 'pix' || formData.payment_method_id === 'pix';
+
+                            if (!result || !result.status) {
+                                console.error('Resposta inválida do backend ao processar pagamento:', result);
+                                alert('Erro ao processar pagamento. Tente novamente.');
+                                reject();
+                                return;
+                            }
+
+                            if (isPix) {
+                                resolve();
+                                return;
+                            }
+
                             if (result.status === 'approved') {
                                 window.location.href = '/payment/success';
                             } else if (result.status === 'pending' || result.status === 'in_process') {
