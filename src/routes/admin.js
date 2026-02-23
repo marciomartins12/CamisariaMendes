@@ -233,6 +233,7 @@ router.get('/campanhas', requireAdmin, async (req, res) => {
         try {
             const approvedOrders = await Order.findAll({
                 where: { status: 'approved' },
+                attributes: ['id', 'status', 'finalAmount', 'items', 'customerName', 'customerEmail', 'customerPhone', 'createdAt'],
                 order: [['createdAt', 'DESC']]
             });
 
@@ -330,6 +331,7 @@ router.get('/campanhas/debug/:id', requireAdmin, async (req, res) => {
 
         const approvedOrders = await Order.findAll({
             where: { status: 'approved' },
+            attributes: ['id', 'status', 'finalAmount', 'items', 'customerName', 'customerEmail', 'customerPhone', 'createdAt'],
             order: [['createdAt', 'DESC']]
         });
 
@@ -413,10 +415,14 @@ router.get('/campanhas/debug-raw/:id', requireAdmin, async (req, res) => {
         const campaignPlain = campaign.get({ plain: true });
         const approvedOrders = await Order.findAll({
             where: { status: 'approved' },
+            attributes: ['id', 'status', 'finalAmount', 'items', 'customerName', 'customerEmail', 'customerPhone', 'createdAt', 'userId'],
             order: [['createdAt', 'DESC']]
         });
 
-        const ordersPlain = approvedOrders.map(o => o.get({ plain: true }));
+        const ordersPlain = approvedOrders.map(order => {
+            const o = order.get({ plain: true });
+            return o;
+        });
 
         return res.json({
             campaign: campaignPlain,
