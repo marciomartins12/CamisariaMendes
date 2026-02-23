@@ -3,16 +3,12 @@ const { Order, User } = require('../models');
 const OrderController = {
     // Render Checkout Page
     checkoutPage(req, res) {
-        // If user is logged in, pass user data to pre-fill form
         const user = req.session.user || null;
         res.render('shop/checkout', {
             title: 'Finalizar Compra',
             layout: 'main',
             user: user,
-            // We might want to pass the campaign if needed for styling, 
-            // but usually checkout is generic or we need to know which campaign.
-            // Since cart is client-side, we don't know the campaign here easily unless passed or stored in session.
-            // For now, let's assume a generic checkout or minimalist style.
+            mpPublicKey: process.env.MP_PUBLIC_KEY || ''
         });
     },
 

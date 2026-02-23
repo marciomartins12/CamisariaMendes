@@ -2395,7 +2395,7 @@ body {
 
 /* --- SIDEBAR --- */
 .admin-sidebar {
-    width: 260px;
+    width: 220px;
     background-color: var(--admin-sidebar-bg);
     padding: 3rem 0;
     position: fixed;
@@ -2482,7 +2482,7 @@ body {
 /* --- MAIN CONTENT --- */
 .admin-main-content {
     flex: 1;
-    margin-left: 260px;
+    margin-left: 220px;
     padding: 0.5rem 3rem 8rem 3rem; /* Minimal top padding */
     background-color: var(--admin-bg);
     min-height: calc(100vh - var(--header-height));

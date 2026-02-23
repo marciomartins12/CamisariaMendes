@@ -60,9 +60,19 @@
                 </div>
 
                 <button type="submit" class="btn-pay">
-                    Ir para Pagamento (Mercado Pago) <i class="fas fa-lock"></i>
+                    Continuar para pagamento seguro <i class="fas fa-lock"></i>
                 </button>
             </form>
+        </div>
+
+        <div id="payment-section" style="display:none; grid-column: 1 / -1;">
+            <div class="summary-card" style="background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #eee; margin-top: 10px;">
+                <h3 style="margin-top: 0; margin-bottom: 10px;">Pagamento</h3>
+                <p style="color:#666; font-size:0.9rem; margin-bottom:15px;">
+                    Pague com cartão de crédito ou Pix sem sair do site, usando a segurança do Mercado Pago.
+                </p>
+                <div id="wallet_container"></div>
+            </div>
         </div>
 
     </div>
@@ -99,12 +109,24 @@
     }
 </style>
 
+<script src="https://sdk.mercadopago.com/js/v2"></script>
 <script>
     // Load Cart from LocalStorage
     let cart = [];
     let appliedCoupon = null;
+    let mp = null;
+    let bricksBuilder = null;
 
     function initCheckout() {
+        const publicKey = '{{mpPublicKey}}';
+        if (publicKey) {
+            try {
+                mp = new MercadoPago(publicKey, { locale: 'pt-BR' });
+                bricksBuilder = mp.bricks();
+            } catch (e) {
+                console.error('Erro ao inicializar Mercado Pago JS SDK:', e);
+            }
+        }
         const storedCart = localStorage.getItem('camisaria_cart');
         const storedCoupon = localStorage.getItem('camisaria_coupon');
 
@@ -198,11 +220,13 @@
 
             const data = await response.json();
 
-            if (data.init_point) {
-                // Clear cart after successful init (optional, maybe better to clear on success page)
-                // localStorage.removeItem('camisaria_cart');
-                // localStorage.removeItem('camisaria_coupon');
-                
+            if (data.preferenceId && bricksBuilder) {
+                document.getElementById('payment-section').style.display = 'block';
+                renderWalletBrick(data.preferenceId);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            } else if (data.init_point) {
+                // Fallback: redirecionar se Brick não estiver disponível
                 window.location.href = data.init_point;
             } else {
                 alert('Erro ao iniciar pagamento. Tente novamente.');
@@ -215,6 +239,31 @@
             btn.innerHTML = originalText;
             btn.disabled = false;
         }
+    }
+
+    function renderWalletBrick(preferenceId) {
+        const containerId = 'wallet_container';
+        const section = document.getElementById('payment-section');
+        if (!bricksBuilder || !section) return;
+
+        document.getElementById(containerId).innerHTML = '';
+
+        bricksBuilder.create('wallet', containerId, {
+            initialization: {
+                preferenceId: preferenceId
+            },
+            customization: {
+                texts: {
+                    valueProp: 'security_safety'
+                }
+            },
+            callbacks: {
+                onError: function(error) {
+                    console.error('Erro no Wallet Brick:', error);
+                    alert('Erro ao carregar o pagamento. Tente novamente em instantes.');
+                }
+            }
+        });
     }
 
     document.addEventListener('DOMContentLoaded', initCheckout);
