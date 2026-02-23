@@ -392,7 +392,43 @@ router.get('/campanhas/debug/:id', requireAdmin, async (req, res) => {
         });
     } catch (error) {
         console.error('Erro em /admin/campanhas/debug:', error);
-        return res.status(500).json({ error: 'Erro interno ao gerar debug de campanha' });
+        return res.status(500).json({
+            error: 'Erro interno ao gerar debug de campanha',
+            errorMessage: error && error.message ? error.message : null,
+            errorName: error && error.name ? error.name : null
+        });
+    }
+});
+
+router.get('/campanhas/debug-raw/:id', requireAdmin, async (req, res) => {
+    try {
+        const campaign = await Campaign.findByPk(req.params.id, {
+            include: [{ model: Shirt, as: 'shirts' }]
+        });
+
+        if (!campaign) {
+            return res.status(404).json({ error: 'Campanha não encontrada' });
+        }
+
+        const campaignPlain = campaign.get({ plain: true });
+        const approvedOrders = await Order.findAll({
+            where: { status: 'approved' },
+            order: [['createdAt', 'DESC']]
+        });
+
+        const ordersPlain = approvedOrders.map(o => o.get({ plain: true }));
+
+        return res.json({
+            campaign: campaignPlain,
+            approvedOrders: ordersPlain
+        });
+    } catch (error) {
+        console.error('Erro em /admin/campanhas/debug-raw:', error);
+        return res.status(500).json({
+            error: 'Erro interno ao gerar debug raw de campanha',
+            errorMessage: error && error.message ? error.message : null,
+            errorName: error && error.name ? error.name : null
+        });
     }
 });
 
