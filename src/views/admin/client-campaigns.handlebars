@@ -1,0 +1,149 @@
+<div class="admin-layout">
+    {{> admin-sidebar}}
+
+    <main class="admin-main-content">
+        <div class="dashboard-header-compact">
+            <div class="header-title">
+                <h2>Clientes e Campanhas</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Clientes e Campanhas</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        {{#if success}}
+        <div class="alert alert-success">{{success}}</div>
+        {{/if}}
+
+        {{#if error}}
+        <div class="alert alert-danger">{{error}}</div>
+        {{/if}}
+
+        {{#if editUser}}
+        <div class="campaigns-container" style="margin-bottom: 1.5rem;">
+            <div class="campaigns-list">
+                <div class="details-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-user-edit"></i> Editar Cliente</h3>
+                    </div>
+                    <div class="card-body">
+                        <form action="/admin/clientes-campanhas/editar/{{editUser.id}}" method="POST" class="admin-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="name">Nome</label>
+                                    <input type="text" id="name" name="name" class="form-control" value="{{editUser.name}}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="email">E-mail</label>
+                                    <input type="email" id="email" name="email" class="form-control" value="{{editUser.email}}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="phone">Telefone</label>
+                                    <input type="text" id="phone" name="phone" class="form-control" value="{{editUser.phone}}">
+                                </div>
+                            </div>
+                            <div class="form-actions" style="margin-top: 1rem;">
+                                <button type="submit" class="btn btn-primary">Salvar alterações</button>
+                                <a href="/admin/clientes-campanhas" class="btn btn-secondary">Cancelar</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{/if}}
+
+        <div class="campaigns-container">
+            <div class="campaigns-list">
+                {{#if users.length}}
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Contato</th>
+                                <th>Campanhas</th>
+                                <th>Pedidos</th>
+                                <th>Total Gasto</th>
+                                <th>Última compra</th>
+                                <th style="text-align: right;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#each users}}
+                            <tr>
+                                <td>
+                                    <div class="client-cell">
+                                        <strong>{{this.name}}</strong>
+                                        <small>{{this.email}}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    {{#if this.phone}}
+                                    <span>{{this.phone}}</span>
+                                    {{else}}
+                                    <span class="text-muted">Sem telefone</span>
+                                    {{/if}}
+                                </td>
+                                <td>
+                                    {{#if this.campaigns.length}}
+                                    <div>
+                                        {{#each this.campaigns}}
+                                        <div style="margin-bottom: 6px;">
+                                            <strong>{{this.title}}</strong>
+                                            <div style="font-size: 0.8rem; color: #64748b;">
+                                                Código: {{this.accessCode}} · Pedidos: {{this.totalOrders}} · Itens: {{this.totalItems}}
+                                            </div>
+                                        </div>
+                                        {{/each}}
+                                    </div>
+                                    {{else}}
+                                    <span class="text-muted">Nenhuma campanha</span>
+                                    {{/if}}
+                                </td>
+                                <td>
+                                    <span class="stat-value">{{this.totalOrders}}</span>
+                                </td>
+                                <td>
+                                    <span class="stat-value">
+                                        R$ {{this.totalSpent}}
+                                    </span>
+                                </td>
+                                <td>
+                                    {{#if this.lastOrderDate}}
+                                    <small>{{formatDate this.lastOrderDate}}</small>
+                                    {{else}}
+                                    <span class="text-muted">Sem compras</span>
+                                    {{/if}}
+                                </td>
+                                <td style="text-align: right;">
+                                    <div class="action-buttons">
+                                        <a href="/admin/clientes-campanhas?edit={{this.id}}" class="btn-icon edit" title="Editar cliente">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form action="/admin/clientes-campanhas/deletar/{{this.id}}" method="POST" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir este cliente?');">
+                                            <button type="submit" class="btn-icon delete" title="Excluir cliente">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {{/each}}
+                        </tbody>
+                    </table>
+                </div>
+                {{else}}
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fas fa-user-friends"></i></div>
+                    <h3>Nenhum cliente encontrado</h3>
+                    <p>Os clientes serão exibidos aqui conforme realizarem pedidos na loja.</p>
+                </div>
+                {{/if}}
+            </div>
+        </div>
+    </main>
+</div>

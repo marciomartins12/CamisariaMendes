@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
-const { Admin, Campaign, Shirt, Coupon, sequelize } = require('../models');
+const { Admin, Campaign, Shirt, Coupon, sequelize, User, Order } = require('../models');
 
 // Middleware to mark as admin area for all routes in this file
 router.use((req, res, next) => {
@@ -389,10 +389,71 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
         }
 
         const now = new Date();
-        const endDate = new Date(campaignPlain.endDate);
-        const timeDiff = endDate.getTime() - now.getTime();
-        const daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
-        campaignPlain.daysRemaining = daysRemaining > 0 ? daysRemaining : 0;
+        const endDate = campaignPlain.endDate ? new Date(campaignPlain.endDate) : null;
+        if (endDate && !isNaN(endDate.getTime())) {
+            const timeDiff = endDate.getTime() - now.getTime();
+            const daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
+            campaignPlain.daysRemaining = daysRemaining > 0 ? daysRemaining : 0;
+        } else {
+            campaignPlain.daysRemaining = 0;
+        }
+
+        // Build shirtId set for this campaign
+        const shirtIds = campaignPlain.shirts ? campaignPlain.shirts.map(s => s.id) : [];
+
+        // Load orders and link to this campaign via items -> shirtId
+        let ordersForCampaign = [];
+        let totalOrders = 0;
+        let totalRevenue = 0;
+
+        if (shirtIds.length > 0) {
+            const allOrders = await Order.findAll({
+                order: [['createdAt', 'DESC']]
+            });
+
+            ordersForCampaign = allOrders
+                .map(order => {
+                    const plain = order.get({ plain: true });
+                    try {
+                        if (typeof plain.items === 'string') {
+                            plain.items = JSON.parse(plain.items);
+                            if (typeof plain.items === 'string') {
+                                plain.items = JSON.parse(plain.items);
+                            }
+                        }
+                        if (!Array.isArray(plain.items)) {
+                            plain.items = [];
+                        }
+                    } catch (e) {
+                        console.error(`Erro ao parsear itens do pedido ${plain.id}:`, e);
+                        plain.items = [];
+                    }
+
+                    const hasItemFromCampaign = plain.items.some(it => shirtIds.includes(it.id));
+                    if (!hasItemFromCampaign) return null;
+
+                    const customerName = plain.customerName || 'Cliente';
+                    const customerEmail = plain.customerEmail || '';
+                    const customerPhone = plain.customerPhone || '';
+
+                    return {
+                        ...plain,
+                        customerName,
+                        customerEmail,
+                        customerPhone
+                    };
+                })
+                .filter(o => o !== null);
+
+            ordersForCampaign.forEach(o => {
+                totalOrders += 1;
+                const val = parseFloat(o.finalAmount) || 0;
+                totalRevenue += val;
+            });
+        }
+
+        campaignPlain.totalOrders = totalOrders;
+        campaignPlain.totalRevenue = totalRevenue;
 
         let editingShirt = null;
         const editShirtId = req.query.editShirt;
@@ -407,7 +468,8 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
             layout: 'main',
             isCampaigns: true,
             campaign: campaignPlain,
-            editingShirt
+            editingShirt,
+            orders: ordersForCampaign
         });
     } catch (error) {
         console.error(error);
@@ -686,6 +748,306 @@ router.post('/campanhas/deletar/:id', requireAdmin, async (req, res) => {
     } catch (error) {
         console.error(error);
         res.redirect('/admin/campanhas');
+    }
+});
+
+// === Orders Management (Admin) ===
+router.post('/pedidos/:id/sincronizar', requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const order = await Order.findByPk(id);
+        if (!order) {
+            req.flash('error', 'Pedido não encontrado.');
+            return res.redirect('back');
+        }
+
+        // Use same logic as PaymentController.checkStatus (without reusing controller directly here)
+        const mercadopago = require('mercadopago');
+        const client = new mercadopago.MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
+        const paymentSearch = new mercadopago.Payment(client);
+        const searchResult = await paymentSearch.search({
+            options: {
+                external_reference: order.id.toString()
+            }
+        });
+
+        if (searchResult.results && searchResult.results.length > 0) {
+            const lastPayment = searchResult.results[searchResult.results.length - 1];
+
+            const status = lastPayment.status;
+            if (status === 'approved') {
+                order.status = 'approved';
+                order.paymentMethod = lastPayment.payment_method_id;
+                order.transactionId = lastPayment.id.toString();
+            } else if (status === 'rejected' || status === 'cancelled') {
+                order.status = status;
+            }
+            await order.save();
+
+            req.flash('success', 'Status do pedido sincronizado com sucesso.');
+        } else {
+            req.flash('info', 'Nenhum pagamento encontrado ainda para este pedido.');
+        }
+
+        return res.redirect('back');
+    } catch (error) {
+        console.error('Erro ao sincronizar pedido:', error);
+        req.flash('error', 'Erro ao sincronizar status do pedido.');
+        return res.redirect('back');
+    }
+});
+
+router.post('/pedidos/:id/aprovar-manual', requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const order = await Order.findByPk(id);
+        if (!order) {
+            req.flash('error', 'Pedido não encontrado.');
+            return res.redirect('back');
+        }
+
+        order.status = 'approved';
+        order.paymentMethod = order.paymentMethod || 'manual';
+        order.transactionId = order.transactionId || `manual-${Date.now()}`;
+        await order.save();
+
+        req.flash('success', 'Pedido marcado como pago manualmente.');
+        return res.redirect('back');
+    } catch (error) {
+        console.error('Erro ao aprovar manualmente pedido:', error);
+        req.flash('error', 'Erro ao aprovar manualmente o pedido.');
+        return res.redirect('back');
+    }
+});
+
+router.post('/pedidos/:id/cancelar', requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const order = await Order.findByPk(id);
+        if (!order) {
+            req.flash('error', 'Pedido não encontrado.');
+            return res.redirect('back');
+        }
+
+        order.status = 'cancelled';
+        await order.save();
+
+        req.flash('success', 'Pedido cancelado com sucesso.');
+        return res.redirect('back');
+    } catch (error) {
+        console.error('Erro ao cancelar pedido:', error);
+        req.flash('error', 'Erro ao cancelar pedido.');
+        return res.redirect('back');
+    }
+});
+
+// === Clients & Campaigns Routes ===
+router.get('/clientes-campanhas', requireAdmin, async (req, res) => {
+    try {
+        const editUserId = req.query.edit || null;
+
+        const [users, orders] = await Promise.all([
+            User.findAll({ order: [['createdAt', 'DESC']] }),
+            Order.findAll({ order: [['createdAt', 'DESC']] })
+        ]);
+
+        const usersPlain = users.map(u => u.get({ plain: true }));
+
+        const ordersPlain = orders.map(order => {
+            const plain = order.get({ plain: true });
+            try {
+                if (typeof plain.items === 'string') {
+                    plain.items = JSON.parse(plain.items);
+                    if (typeof plain.items === 'string') {
+                        plain.items = JSON.parse(plain.items);
+                    }
+                }
+                if (!Array.isArray(plain.items)) {
+                    plain.items = [];
+                }
+            } catch (e) {
+                console.error(`Erro ao parsear itens do pedido ${plain.id}:`, e);
+                plain.items = [];
+            }
+            return plain;
+        });
+
+        const ordersByUser = {};
+        ordersPlain.forEach(order => {
+            if (!order.userId) return;
+            if (!ordersByUser[order.userId]) {
+                ordersByUser[order.userId] = [];
+            }
+            ordersByUser[order.userId].push(order);
+        });
+
+        const shirtIdSet = new Set();
+        Object.values(ordersByUser).forEach(userOrders => {
+            userOrders.forEach(order => {
+                if (Array.isArray(order.items)) {
+                    order.items.forEach(item => {
+                        if (item && item.id) {
+                            shirtIdSet.add(item.id);
+                        }
+                    });
+                }
+            });
+        });
+
+        let shirtsById = {};
+        if (shirtIdSet.size > 0) {
+            const shirts = await Shirt.findAll({
+                where: { id: Array.from(shirtIdSet) },
+                include: [{ model: Campaign }]
+            });
+            shirtsById = shirts.reduce((acc, shirt) => {
+                const plain = shirt.get({ plain: true });
+                acc[plain.id] = plain;
+                return acc;
+            }, {});
+        }
+
+        const usersWithStats = usersPlain.map(user => {
+            const userOrders = ordersByUser[user.id] || [];
+            const campaignsMap = {};
+            let totalOrders = 0;
+            let totalSpent = 0;
+            let lastOrderDate = null;
+
+            userOrders.forEach(order => {
+                totalOrders += 1;
+                const orderTotal = parseFloat(order.finalAmount) || 0;
+                totalSpent += orderTotal;
+
+                let campaign = null;
+                if (Array.isArray(order.items) && order.items.length > 0) {
+                    const firstItem = order.items[0];
+                    const shirt = shirtsById[firstItem.id];
+                    if (shirt && shirt.Campaign) {
+                        campaign = shirt.Campaign;
+                    }
+                }
+
+                if (campaign) {
+                    const key = campaign.id;
+                    if (!campaignsMap[key]) {
+                        campaignsMap[key] = {
+                            id: campaign.id,
+                            title: campaign.title,
+                            accessCode: campaign.accessCode,
+                            status: campaign.status,
+                            totalOrders: 0,
+                            totalItems: 0,
+                            totalSpent: 0,
+                            lastOrderDate: null
+                        };
+                    }
+
+                    const stats = campaignsMap[key];
+                    stats.totalOrders += 1;
+
+                    let itemsQty = 0;
+                    if (Array.isArray(order.items)) {
+                        order.items.forEach(it => {
+                            itemsQty += it.qty || 0;
+                        });
+                    }
+                    stats.totalItems += itemsQty;
+                    stats.totalSpent += orderTotal;
+
+                    const orderDate = order.createdAt;
+                    if (orderDate) {
+                        const current = stats.lastOrderDate ? new Date(stats.lastOrderDate) : null;
+                        const candidate = new Date(orderDate);
+                        if (!current || candidate > current) {
+                            stats.lastOrderDate = orderDate;
+                        }
+
+                        const userCurrent = lastOrderDate ? new Date(lastOrderDate) : null;
+                        if (!userCurrent || candidate > userCurrent) {
+                            lastOrderDate = orderDate;
+                        }
+                    }
+                }
+            });
+
+            return {
+                ...user,
+                totalOrders,
+                totalSpent,
+                campaigns: Object.values(campaignsMap),
+                lastOrderDate
+            };
+        });
+
+        let editUser = null;
+        if (editUserId) {
+            editUser = usersWithStats.find(u => String(u.id) === String(editUserId)) || null;
+        }
+
+        res.render('admin/client-campaigns', {
+            title: 'Clientes e Campanhas',
+            layout: 'main',
+            isClients: true,
+            users: usersWithStats,
+            editUser
+        });
+    } catch (error) {
+        console.error('Erro ao carregar clientes e campanhas:', error);
+        res.render('admin/client-campaigns', {
+            title: 'Clientes e Campanhas',
+            layout: 'main',
+            isClients: true,
+            users: [],
+            error: 'Erro ao carregar clientes e campanhas.'
+        });
+    }
+});
+
+router.post('/clientes-campanhas/editar/:id', requireAdmin, async (req, res) => {
+    const { id } = req.params;
+    const { name, email, phone } = req.body;
+
+    try {
+        const user = await User.findByPk(id);
+        if (!user) {
+            req.flash('error', 'Cliente não encontrado.');
+            return res.redirect('/admin/clientes-campanhas');
+        }
+
+        user.name = name || user.name;
+        user.email = email || user.email;
+        user.phone = phone || user.phone;
+
+        await user.save();
+
+        req.flash('success', 'Cliente atualizado com sucesso.');
+        res.redirect('/admin/clientes-campanhas');
+    } catch (error) {
+        console.error('Erro ao atualizar cliente:', error);
+        req.flash('error', 'Erro ao atualizar cliente.');
+        res.redirect(`/admin/clientes-campanhas?edit=${id}`);
+    }
+});
+
+router.post('/clientes-campanhas/deletar/:id', requireAdmin, async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const user = await User.findByPk(id);
+        if (!user) {
+            req.flash('error', 'Cliente não encontrado.');
+            return res.redirect('/admin/clientes-campanhas');
+        }
+
+        await user.destroy();
+
+        req.flash('success', 'Cliente removido com sucesso.');
+        res.redirect('/admin/clientes-campanhas');
+    } catch (error) {
+        console.error('Erro ao remover cliente:', error);
+        req.flash('error', 'Erro ao remover cliente.');
+        res.redirect('/admin/clientes-campanhas');
     }
 });
 

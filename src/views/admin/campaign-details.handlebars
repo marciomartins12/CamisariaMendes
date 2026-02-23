@@ -40,7 +40,7 @@
                 </div>
                 <div class="stat-content">
                     <h4>Pedidos</h4>
-                    <div class="value">0</div> <!-- Placeholder -->
+                    <div class="value">{{campaign.totalOrders}}</div>
                 </div>
             </div>
             <div class="detail-stat-card">
@@ -49,7 +49,7 @@
                 </div>
                 <div class="stat-content">
                     <h4>Arrecadado</h4>
-                    <div class="value">R$ 0,00</div> <!-- Placeholder -->
+                    <div class="value">R$ {{campaign.totalRevenue}}</div>
                 </div>
             </div>
             <div class="detail-stat-card">
@@ -203,6 +203,86 @@
                             </div>
                             {{/each}}
                         </div>
+                    </div>
+                </div>
+
+                <div class="details-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-receipt"></i> Pedidos da Campanha</h3>
+                    </div>
+                    <div class="card-body">
+                        {{#if orders.length}}
+                        <div class="table-responsive">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Data</th>
+                                        <th>Cliente</th>
+                                        <th>Contato</th>
+                                        <th>Valor</th>
+                                        <th>Status</th>
+                                        <th>Método</th>
+                                        <th style="text-align:right;">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{#each orders}}
+                                    <tr>
+                                        <td>#{{this.id}}</td>
+                                        <td>{{formatDate this.createdAt}}</td>
+                                        <td>{{this.customerName}}</td>
+                                        <td>
+                                            {{#if this.customerEmail}}<div>{{this.customerEmail}}</div>{{/if}}
+                                            {{#if this.customerPhone}}<div>{{this.customerPhone}}</div>{{/if}}
+                                        </td>
+                                        <td>R$ {{this.finalAmount}}</td>
+                                        <td>
+                                            <span class="badge badge-{{this.status}}">
+                                                {{#if (eq this.status 'approved')}}Aprovado{{/if}}
+                                                {{#if (eq this.status 'pending')}}Pendente{{/if}}
+                                                {{#if (eq this.status 'rejected')}}Rejeitado{{/if}}
+                                                {{#if (eq this.status 'cancelled')}}Cancelado{{/if}}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {{#if this.paymentMethod}}{{this.paymentMethod}}{{else}}-{{/if}}
+                                        </td>
+                                        <td style="text-align:right;">
+                                            <div class="action-buttons">
+                                                {{#if (eq this.status 'pending')}}
+                                                <form action="/admin/pedidos/{{this.id}}/sincronizar" method="POST" style="display:inline;">
+                                                    <button type="submit" class="btn-icon" title="Checar status no Mercado Pago">
+                                                        <i class="fas fa-sync-alt"></i>
+                                                    </button>
+                                                </form>
+                                                <form action="/admin/pedidos/{{this.id}}/aprovar-manual" method="POST" style="display:inline;" onsubmit="return confirm('Confirmar este pedido como pago manualmente?');">
+                                                    <button type="submit" class="btn-icon edit" title="Confirmar manualmente">
+                                                        <i class="fas fa-check-circle"></i>
+                                                    </button>
+                                                </form>
+                                                <form action="/admin/pedidos/{{this.id}}/cancelar" method="POST" style="display:inline;" onsubmit="return confirm('Cancelar este pedido?');">
+                                                    <button type="submit" class="btn-icon delete" title="Cancelar pedido">
+                                                        <i class="fas fa-times-circle"></i>
+                                                    </button>
+                                                </form>
+                                                {{else}}
+                                                <span style="font-size:0.8rem; color:#64748b;">Sem ações</span>
+                                                {{/if}}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {{/each}}
+                                </tbody>
+                            </table>
+                        </div>
+                        {{else}}
+                        <div class="empty-state">
+                            <div class="empty-icon"><i class="fas fa-receipt"></i></div>
+                            <h3>Nenhum pedido encontrado</h3>
+                            <p>Os pedidos desta campanha aparecerão aqui conforme forem realizados.</p>
+                        </div>
+                        {{/if}}
                     </div>
                 </div>
             </div>
