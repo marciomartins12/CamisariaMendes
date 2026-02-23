@@ -237,7 +237,6 @@ router.get('/campanhas', requireAdmin, async (req, res) => {
             await Promise.all(statusUpdates);
         }
 
-        // Compute metrics: total approved orders and approved revenue per campaign
         try {
             const approvedOrders = await Order.findAll({
                 where: { status: 'approved' },
@@ -245,6 +244,8 @@ router.get('/campanhas', requireAdmin, async (req, res) => {
                     'id',
                     'status',
                     'finalAmount',
+                    'netAmountReceived',
+                    'feeAmount',
                     'items',
                     'customerName',
                     'customerEmail',
@@ -298,9 +299,14 @@ router.get('/campanhas', requireAdmin, async (req, res) => {
                         ordersCount += 1;
                         const val = parseFloat(o.finalAmount) || 0;
                         revenueSum += val;
-                         const feePercent = getFeePercentByPaymentMethod(o.paymentMethod);
-                         const net = val * (1 - feePercent);
-                         netRevenueSum += net;
+                        let net = null;
+                        if (o.netAmountReceived != null) {
+                            net = parseFloat(o.netAmountReceived) || 0;
+                        } else {
+                            const feePercent = getFeePercentByPaymentMethod(o.paymentMethod);
+                            net = val * (1 - feePercent);
+                        }
+                        netRevenueSum += net;
                     }
                 });
                 cp.totalOrders = ordersCount;
@@ -625,7 +631,6 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
                 .filter(Boolean)
             : [];
 
-        // Load orders and link to this campaign via items -> shirtId
         let ordersForCampaign = [];
         let totalOrders = 0;
         let totalRevenue = 0;
@@ -635,7 +640,7 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
             try {
                 const allOrders = await Order.findAll({
                     where: { status: 'approved' },
-                    attributes: ['id', 'status', 'finalAmount', 'items', 'customerName', 'customerEmail', 'customerPhone', 'paymentMethod', 'createdAt']
+                    attributes: ['id', 'status', 'finalAmount', 'netAmountReceived', 'feeAmount', 'items', 'customerName', 'customerEmail', 'customerPhone', 'paymentMethod', 'createdAt']
                 });
 
                 ordersForCampaign = allOrders
@@ -683,8 +688,13 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
                     totalOrders += 1;
                     const val = parseFloat(o.finalAmount) || 0;
                     totalRevenue += val;
-                    const feePercent = getFeePercentByPaymentMethod(o.paymentMethod);
-                    const net = val * (1 - feePercent);
+                    let net = null;
+                    if (o.netAmountReceived != null) {
+                        net = parseFloat(o.netAmountReceived) || 0;
+                    } else {
+                        const feePercent = getFeePercentByPaymentMethod(o.paymentMethod);
+                        net = val * (1 - feePercent);
+                    }
                     totalNetRevenue += net;
                 });
             } catch (ordersError) {
@@ -1020,7 +1030,6 @@ router.post('/pedidos/:id/sincronizar', requireAdmin, async (req, res) => {
             return res.redirect('back');
         }
 
-        // Use same logic as PaymentController.checkStatus (without reusing controller directly here)
         const mercadopago = require('mercadopago');
         const client = new mercadopago.MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
         const paymentSearch = new mercadopago.Payment(client);
@@ -1036,8 +1045,38 @@ router.post('/pedidos/:id/sincronizar', requireAdmin, async (req, res) => {
             const status = lastPayment.status;
             if (status === 'approved') {
                 order.status = 'approved';
-                order.paymentMethod = lastPayment.payment_method_id;
-                order.transactionId = lastPayment.id.toString();
+                order.paymentMethod = lastPayment.payment_method_id || order.paymentMethod;
+                order.transactionId = lastPayment.id ? lastPayment.id.toString() : order.transactionId;
+
+                let netAmount = null;
+                let feeAmount = null;
+                const tx = lastPayment.transaction_details || lastPayment.transactionDetails || null;
+                if (tx) {
+                    const totalPaid = typeof tx.total_paid_amount === 'number' ? tx.total_paid_amount : null;
+                    const netReceived = typeof tx.net_received_amount === 'number' ? tx.net_received_amount : null;
+                    if (netReceived !== null) {
+                        netAmount = netReceived;
+                        if (totalPaid !== null) {
+                            feeAmount = totalPaid - netReceived;
+                        }
+                    }
+                }
+                if (netAmount === null) {
+                    const val = parseFloat(order.finalAmount) || 0;
+                    const m = order.paymentMethod ? String(order.paymentMethod).toLowerCase() : '';
+                    let feePercent = 0;
+                    if (m === 'pix' || m === 'bank_transfer') {
+                        feePercent = 0.0099;
+                    } else if (m === 'credit_card' || m === 'debit_card' || m === 'prepaid_card') {
+                        feePercent = 0.0499;
+                    } else {
+                        feePercent = 0.0499;
+                    }
+                    netAmount = val * (1 - feePercent);
+                    feeAmount = val - netAmount;
+                }
+                order.netAmountReceived = netAmount;
+                order.feeAmount = feeAmount;
             } else if (status === 'rejected' || status === 'cancelled') {
                 order.status = status;
             }
