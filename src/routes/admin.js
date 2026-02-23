@@ -1168,12 +1168,28 @@ router.get('/clientes-campanhas', requireAdmin, async (req, res) => {
             const campaignsMap = {};
             let totalOrders = 0;
             let totalSpent = 0;
+            let totalNetSpent = 0;
+            const paymentMethodsSet = new Set();
             let lastOrderDate = null;
 
             userOrders.forEach(order => {
-                totalOrders += 1;
-                const orderTotal = parseFloat(order.finalAmount) || 0;
-                totalSpent += orderTotal;
+                if (order.status === 'approved') {
+                    totalOrders += 1;
+                    const orderTotal = parseFloat(order.finalAmount) || 0;
+                    totalSpent += orderTotal;
+                    const feePercent = getFeePercentByPaymentMethod(order.paymentMethod);
+                    totalNetSpent += orderTotal * (1 - feePercent);
+                    if (order.paymentMethod) {
+                        const m = String(order.paymentMethod).toLowerCase();
+                        let label = m;
+                        if (m === 'pix') label = 'Pix';
+                        else if (m === 'bank_transfer') label = 'Transferência';
+                        else if (m === 'credit_card') label = 'Cartão de Crédito';
+                        else if (m === 'debit_card') label = 'Cartão de Débito';
+                        else if (m === 'prepaid_card') label = 'Cartão Pré-pago';
+                        paymentMethodsSet.add(label);
+                    }
+                }
 
                 let campaign = null;
                 if (Array.isArray(order.items) && order.items.length > 0) {
@@ -1200,7 +1216,9 @@ router.get('/clientes-campanhas', requireAdmin, async (req, res) => {
                     }
 
                     const stats = campaignsMap[key];
-                    stats.totalOrders += 1;
+                    if (order.status === 'approved') {
+                        stats.totalOrders += 1;
+                    }
 
                     let itemsQty = 0;
                     if (Array.isArray(order.items)) {
@@ -1209,7 +1227,10 @@ router.get('/clientes-campanhas', requireAdmin, async (req, res) => {
                         });
                     }
                     stats.totalItems += itemsQty;
-                    stats.totalSpent += orderTotal;
+                    if (order.status === 'approved') {
+                        const orderTotal = parseFloat(order.finalAmount) || 0;
+                        stats.totalSpent += orderTotal;
+                    }
 
                     const orderDate = order.createdAt;
                     if (orderDate) {
@@ -1227,10 +1248,23 @@ router.get('/clientes-campanhas', requireAdmin, async (req, res) => {
                 }
             });
 
+            let totalSpentFormatted = `${totalSpent.toFixed(2)}`;
+            let totalNetSpentFormatted = `${totalNetSpent.toFixed(2)}`;
+            try {
+                totalSpentFormatted = totalSpent.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            } catch (e) {}
+            try {
+                totalNetSpentFormatted = totalNetSpent.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            } catch (e) {}
+
             return {
                 ...user,
                 totalOrders,
                 totalSpent,
+                totalSpentFormatted,
+                totalNetSpent,
+                totalNetSpentFormatted,
+                paymentMethods: Array.from(paymentMethodsSet),
                 campaigns: Object.values(campaignsMap),
                 lastOrderDate
             };

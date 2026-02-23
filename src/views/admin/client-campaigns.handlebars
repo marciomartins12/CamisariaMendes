@@ -108,9 +108,15 @@
                                     <span class="stat-value">{{this.totalOrders}}</span>
                                 </td>
                                 <td>
-                                    <span class="stat-value">
-                                        R$ {{this.totalSpent}}
-                                    </span>
+                                    <div class="stat-value">R$ {{this.totalSpentFormatted}}</div>
+                                    <div style="font-size:0.85rem; color:#64748b;">Líquido: R$ {{this.totalNetSpentFormatted}}</div>
+                                    {{#if this.paymentMethods.length}}
+                                    <div style="font-size:0.8rem; color:#94a3b8;">Métodos: 
+                                        {{#each this.paymentMethods}}
+                                            {{this}}{{#unless @last}}, {{/unless}}
+                                        {{/each}}
+                                    </div>
+                                    {{/if}}
                                 </td>
                                 <td>
                                     {{#if this.lastOrderDate}}
