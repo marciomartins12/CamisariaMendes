@@ -1101,6 +1101,7 @@ router.post('/pedidos/:id/cancelar', requireAdmin, async (req, res) => {
 router.get('/clientes-campanhas', requireAdmin, async (req, res) => {
     try {
         const editUserId = req.query.edit || null;
+        const ordersUserId = req.query.orders || null;
 
         const [users, orders] = await Promise.all([
             User.findAll({ order: [['createdAt', 'DESC']] }),
@@ -1275,12 +1276,74 @@ router.get('/clientes-campanhas', requireAdmin, async (req, res) => {
             editUser = usersWithStats.find(u => String(u.id) === String(editUserId)) || null;
         }
 
+        let selectedUser = null;
+        let selectedUserOrders = [];
+        if (ordersUserId) {
+            selectedUser = usersWithStats.find(u => String(u.id) === String(ordersUserId)) || null;
+            const userOrders = ordersByUser[ordersUserId] || [];
+            selectedUserOrders = userOrders.map(order => {
+                const val = parseFloat(order.finalAmount) || 0;
+                const feePercent = getFeePercentByPaymentMethod(order.paymentMethod);
+                const net = val * (1 - feePercent);
+                let finalAmountFormatted = `${val.toFixed(2)}`;
+                let netAmountFormatted = `${net.toFixed(2)}`;
+                try {
+                    finalAmountFormatted = val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                } catch (e) {}
+                try {
+                    netAmountFormatted = net.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                } catch (e) {}
+
+                let paymentLabel = '';
+                if (order.paymentMethod) {
+                    const m = String(order.paymentMethod).toLowerCase();
+                    if (m === 'pix') paymentLabel = 'Pix';
+                    else if (m === 'bank_transfer') paymentLabel = 'Transferência';
+                    else if (m === 'credit_card') paymentLabel = 'Cartão de Crédito';
+                    else if (m === 'debit_card') paymentLabel = 'Cartão de Débito';
+                    else if (m === 'prepaid_card') paymentLabel = 'Cartão Pré-pago';
+                    else paymentLabel = order.paymentMethod;
+                }
+
+                let campaignTitle = '';
+                let campaignAccessCode = '';
+                if (Array.isArray(order.items) && order.items.length > 0) {
+                    const firstItem = order.items[0];
+                    const shirt = shirtsById[firstItem.id];
+                    if (shirt && shirt.Campaign) {
+                        campaignTitle = shirt.Campaign.title || '';
+                        campaignAccessCode = shirt.Campaign.accessCode || '';
+                    }
+                }
+
+                let itemsQty = 0;
+                if (Array.isArray(order.items)) {
+                    order.items.forEach(it => {
+                        itemsQty += it.qty || 0;
+                    });
+                }
+
+                return {
+                    ...order,
+                    finalAmountFormatted,
+                    netAmount: net,
+                    netAmountFormatted,
+                    paymentMethodLabel: paymentLabel,
+                    campaignTitle,
+                    campaignAccessCode,
+                    itemsQty
+                };
+            });
+        }
+
         res.render('admin/client-campaigns', {
             title: 'Clientes e Campanhas',
             layout: 'main',
             isClients: true,
             users: usersWithStats,
-            editUser
+            editUser,
+            selectedUser,
+            selectedUserOrders
         });
     } catch (error) {
         console.error('Erro ao carregar clientes e campanhas:', error);
