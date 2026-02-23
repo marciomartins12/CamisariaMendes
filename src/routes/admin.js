@@ -233,8 +233,16 @@ router.get('/campanhas', requireAdmin, async (req, res) => {
         try {
             const approvedOrders = await Order.findAll({
                 where: { status: 'approved' },
-                attributes: ['id', 'status', 'finalAmount', 'items', 'customerName', 'customerEmail', 'customerPhone', 'createdAt'],
-                order: [['createdAt', 'DESC']]
+                attributes: [
+                    'id',
+                    'status',
+                    'finalAmount',
+                    'items',
+                    'customerName',
+                    'customerEmail',
+                    'customerPhone',
+                    'createdAt'
+                ]
             });
 
             const normalizedApproved = approvedOrders.map(order => {
