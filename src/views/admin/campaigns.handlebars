@@ -45,6 +45,7 @@
                                 <th>Produtos</th>
                                 <th>Pedidos</th>
                                 <th>Arrecadado</th>
+                                <th>Líquido</th>
                                 <th>Status</th>
                                 <th>Período</th>
                                 <th style="text-align: right;">Ações</th>
@@ -73,6 +74,9 @@
                                 </td>
                                 <td>
                                     <span class="stat-value">R$ {{this.totalRevenueFormatted}}</span>
+                                </td>
+                                <td>
+                                    <span class="stat-value">R$ {{this.totalNetRevenueFormatted}}</span>
                                 </td>
                                 <td>
                                     <span class="badge badge-{{this.status}}">

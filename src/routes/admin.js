@@ -48,6 +48,14 @@ const computeStatusFromEndDateISO = (isoEndDate) => {
     return isoEndDate < today ? 'inactive' : 'active';
 };
 
+const getFeePercentByPaymentMethod = (paymentMethod) => {
+    if (!paymentMethod) return 0;
+    const m = String(paymentMethod).toLowerCase();
+    if (m === 'pix' || m === 'bank_transfer') return 0.0099;
+    if (m === 'credit_card' || m === 'debit_card' || m === 'prepaid_card') return 0.0499;
+    return 0.0499;
+};
+
 // Middleware to require login
 const requireAdmin = (req, res, next) => {
     if (req.session && req.session.admin) {
@@ -241,6 +249,7 @@ router.get('/campanhas', requireAdmin, async (req, res) => {
                     'customerName',
                     'customerEmail',
                     'customerPhone',
+                    'paymentMethod',
                     'createdAt'
                 ]
             });
@@ -275,6 +284,7 @@ router.get('/campanhas', requireAdmin, async (req, res) => {
                     .filter(Boolean);
                 let ordersCount = 0;
                 let revenueSum = 0;
+                let netRevenueSum = 0;
                 normalizedApproved.forEach(o => {
                     const matchById = o.itemIds.some(id => shirtIds.includes(id));
                     let has = matchById;
@@ -288,14 +298,23 @@ router.get('/campanhas', requireAdmin, async (req, res) => {
                         ordersCount += 1;
                         const val = parseFloat(o.finalAmount) || 0;
                         revenueSum += val;
+                         const feePercent = getFeePercentByPaymentMethod(o.paymentMethod);
+                         const net = val * (1 - feePercent);
+                         netRevenueSum += net;
                     }
                 });
                 cp.totalOrders = ordersCount;
                 cp.totalRevenue = revenueSum;
+                cp.totalNetRevenue = netRevenueSum;
                 try {
                     cp.totalRevenueFormatted = revenueSum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 } catch (e) {
                     cp.totalRevenueFormatted = `${revenueSum.toFixed(2)}`;
+                }
+                try {
+                    cp.totalNetRevenueFormatted = netRevenueSum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                } catch (e) {
+                    cp.totalNetRevenueFormatted = `${netRevenueSum.toFixed(2)}`;
                 }
             });
         } catch (metricsErr) {
@@ -610,6 +629,7 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
         let ordersForCampaign = [];
         let totalOrders = 0;
         let totalRevenue = 0;
+        let totalNetRevenue = 0;
 
         if (shirtIds.length > 0) {
             try {
@@ -663,6 +683,9 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
                     totalOrders += 1;
                     const val = parseFloat(o.finalAmount) || 0;
                     totalRevenue += val;
+                    const feePercent = getFeePercentByPaymentMethod(o.paymentMethod);
+                    const net = val * (1 - feePercent);
+                    totalNetRevenue += net;
                 });
             } catch (ordersError) {
                 console.error('Erro ao carregar pedidos da campanha:', ordersError);
@@ -674,6 +697,17 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
 
         campaignPlain.totalOrders = totalOrders;
         campaignPlain.totalRevenue = totalRevenue;
+        campaignPlain.totalNetRevenue = totalNetRevenue;
+        try {
+            campaignPlain.totalRevenueFormatted = totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        } catch (e) {
+            campaignPlain.totalRevenueFormatted = `${totalRevenue.toFixed(2)}`;
+        }
+        try {
+            campaignPlain.totalNetRevenueFormatted = totalNetRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        } catch (e) {
+            campaignPlain.totalNetRevenueFormatted = `${totalNetRevenue.toFixed(2)}`;
+        }
         try {
             campaignPlain.totalRevenueFormatted = totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         } catch (e) {
