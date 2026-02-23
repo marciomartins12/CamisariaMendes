@@ -407,49 +407,56 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
         let totalRevenue = 0;
 
         if (shirtIds.length > 0) {
-            const allOrders = await Order.findAll({
-                order: [['createdAt', 'DESC']]
-            });
+            try {
+                const allOrders = await Order.findAll({
+                    order: [['createdAt', 'DESC']]
+                });
 
-            ordersForCampaign = allOrders
-                .map(order => {
-                    const plain = order.get({ plain: true });
-                    try {
-                        if (typeof plain.items === 'string') {
-                            plain.items = JSON.parse(plain.items);
+                ordersForCampaign = allOrders
+                    .map(order => {
+                        const plain = order.get({ plain: true });
+                        try {
                             if (typeof plain.items === 'string') {
                                 plain.items = JSON.parse(plain.items);
+                                if (typeof plain.items === 'string') {
+                                    plain.items = JSON.parse(plain.items);
+                                }
                             }
-                        }
-                        if (!Array.isArray(plain.items)) {
+                            if (!Array.isArray(plain.items)) {
+                                plain.items = [];
+                            }
+                        } catch (e) {
+                            console.error(`Erro ao parsear itens do pedido ${plain.id}:`, e);
                             plain.items = [];
                         }
-                    } catch (e) {
-                        console.error(`Erro ao parsear itens do pedido ${plain.id}:`, e);
-                        plain.items = [];
-                    }
 
-                    const hasItemFromCampaign = plain.items.some(it => shirtIds.includes(it.id));
-                    if (!hasItemFromCampaign) return null;
+                        const hasItemFromCampaign = plain.items.some(it => shirtIds.includes(it.id));
+                        if (!hasItemFromCampaign) return null;
 
-                    const customerName = plain.customerName || 'Cliente';
-                    const customerEmail = plain.customerEmail || '';
-                    const customerPhone = plain.customerPhone || '';
+                        const customerName = plain.customerName || 'Cliente';
+                        const customerEmail = plain.customerEmail || '';
+                        const customerPhone = plain.customerPhone || '';
 
-                    return {
-                        ...plain,
-                        customerName,
-                        customerEmail,
-                        customerPhone
-                    };
-                })
-                .filter(o => o !== null);
+                        return {
+                            ...plain,
+                            customerName,
+                            customerEmail,
+                            customerPhone
+                        };
+                    })
+                    .filter(o => o !== null);
 
-            ordersForCampaign.forEach(o => {
-                totalOrders += 1;
-                const val = parseFloat(o.finalAmount) || 0;
-                totalRevenue += val;
-            });
+                ordersForCampaign.forEach(o => {
+                    totalOrders += 1;
+                    const val = parseFloat(o.finalAmount) || 0;
+                    totalRevenue += val;
+                });
+            } catch (ordersError) {
+                console.error('Erro ao carregar pedidos da campanha:', ordersError);
+                ordersForCampaign = [];
+                totalOrders = 0;
+                totalRevenue = 0;
+            }
         }
 
         campaignPlain.totalOrders = totalOrders;
