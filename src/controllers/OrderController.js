@@ -23,10 +23,24 @@ const OrderController = {
                 return res.redirect('/auth/login');
             }
 
-            const orders = await Order.findAll({
-                where: { userId: req.session.user.id },
-                order: [['createdAt', 'DESC']]
-            });
+            let orders = [];
+            try {
+                orders = await Order.findAll({
+                    where: { userId: req.session.user.id },
+                    order: [['createdAt', 'DESC']]
+                });
+            } catch (dbError) {
+                console.error('Error fetching orders from DB:', dbError);
+                const msg = String(dbError && dbError.message ? dbError.message : dbError);
+                const isNoTable =
+                    /no such table/i.test(msg) ||
+                    /ER_NO_SUCH_TABLE/i.test(msg) ||
+                    /does not exist/i.test(msg);
+                if (!isNoTable) {
+                    throw dbError;
+                }
+                orders = [];
+            }
 
             // Parse items JSON for display
             const ordersPlain = orders.map(order => {
