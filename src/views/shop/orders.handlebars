@@ -147,6 +147,17 @@
                 </div>
             {{/each}}
         </div>
+        {{#if hasPagination}}
+        <div class="orders-pagination">
+            {{#if hasPrev}}
+            <a href="/meus-pedidos?page={{prevPage}}" class="page-link">« Anterior</a>
+            {{/if}}
+            <span class="page-info">Página {{currentPage}} de {{totalPages}}</span>
+            {{#if hasNext}}
+            <a href="/meus-pedidos?page={{nextPage}}" class="page-link">Próxima »</a>
+            {{/if}}
+        </div>
+        {{/if}}
     {{/unless}}
 </div>
 
@@ -253,6 +264,31 @@ async function deleteOrder(orderId) {
         transition: transform 0.2s;
     }
     .btn-shop:hover { transform: translateY(-2px); }
+
+    .orders-pagination {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        font-size: 0.95rem;
+    }
+    .orders-pagination .page-link {
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid #ddd;
+        text-decoration: none;
+        color: #333;
+        font-weight: 500;
+    }
+    .orders-pagination .page-link:hover {
+        background: #000;
+        color: #fff;
+        border-color: #000;
+    }
+    .orders-pagination .page-info {
+        color: #555;
+    }
 
     .order-card {
         background: #fff;
