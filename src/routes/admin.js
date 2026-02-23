@@ -1318,18 +1318,41 @@ router.get('/clientes-campanhas', requireAdmin, async (req, res) => {
 
                 let itemsQty = 0;
                 if (Array.isArray(order.items)) {
+                let itemsDetailed = [];
                     order.items.forEach(it => {
-                        itemsQty += it.qty || 0;
+                    itemsDetailed = order.items.map(it => {
+                        const qty = it && it.qty ? it.qty : 0;
+                        itemsQty += qty;
+                        const pid = it && (it.id ?? it.productId ?? it.shirtId);
+                        let shirt = null;
+                        if (pid != null && shirtsById[pid]) {
+                            shirt = shirtsById[pid];
+                        }
+                        let thumb = null;
+                        if (shirt && Array.isArray(shirt.images) && shirt.images.length > 0) {
+                            thumb = shirt.images[0];
+                        } else if (it && it.image) {
+                            thumb = it.image;
+                        } else if (it && it.imageUrl) {
+                            thumb = it.imageUrl;
+                        }
+                        const name = it && it.name ? it.name : (shirt ? shirt.name : 'Item');
+                        return {
+                            ...it,
+                            displayName: name,
+                            thumb
+                        };
                     });
-                }
 
                 return {
                     ...order,
                     finalAmountFormatted,
+                    items: itemsDetailed,
                     netAmount: net,
                     netAmountFormatted,
                     paymentMethodLabel: paymentLabel,
                     campaignTitle,
+                    campaignAccessCode,
                     campaignAccessCode,
                     itemsQty
                 };

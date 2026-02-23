@@ -156,68 +156,70 @@
         </div>
 
         {{#if selectedUser}}
-        <div class="campaigns-container" style="margin-top: 1.5rem;">
-            <div class="campaigns-list">
-                <div class="details-card">
-                    <div class="card-header">
+        <div class="client-orders-modal">
+            <div class="client-orders-modal-backdrop" onclick="window.location='/admin/clientes-campanhas';"></div>
+            <div class="client-orders-modal-content">
+                <div class="client-orders-modal-header">
+                    <div>
                         <h3>
                             <i class="fas fa-shopping-bag"></i>
                             Pedidos de {{selectedUser.name}}
                         </h3>
-                        <span style="font-size: 0.85rem; color:#64748b;">{{selectedUser.email}}</span>
+                        <span class="client-orders-subtitle">{{selectedUser.email}}</span>
                     </div>
-                    <div class="card-body">
-                        {{#if selectedUserOrders.length}}
-                        <div class="table-responsive">
-                            <table class="admin-table">
-                                <thead>
-                                    <tr>
-                                        <th>Pedido</th>
-                                        <th>Campanha</th>
-                                        <th>Valor</th>
-                                        <th>Líquido</th>
-                                        <th>Método</th>
-                                        <th>Status</th>
-                                        <th>Itens</th>
-                                        <th>Data</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {{#each selectedUserOrders}}
-                                    <tr>
-                                        <td>#{{this.id}}</td>
-                                        <td>
-                                            {{#if this.campaignTitle}}
-                                                <strong>{{this.campaignTitle}}</strong>
-                                                {{#if this.campaignAccessCode}}
-                                                <div style="font-size:0.8rem; color:#64748b;">Código: {{this.campaignAccessCode}}</div>
-                                                {{/if}}
-                                            {{else}}
-                                                <span class="text-muted">Sem campanha vinculada</span>
+                    <button type="button" class="client-orders-modal-close" onclick="window.location='/admin/clientes-campanhas';">&times;</button>
+                </div>
+                <div class="client-orders-modal-body">
+                    {{#if selectedUserOrders.length}}
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Pedido</th>
+                                    <th>Campanha</th>
+                                    <th>Valor</th>
+                                    <th>Líquido</th>
+                                    <th>Método</th>
+                                    <th>Status</th>
+                                    <th>Itens</th>
+                                    <th>Data</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each selectedUserOrders}}
+                                <tr>
+                                    <td>#{{this.id}}</td>
+                                    <td>
+                                        {{#if this.campaignTitle}}
+                                            <strong>{{this.campaignTitle}}</strong>
+                                            {{#if this.campaignAccessCode}}
+                                            <div style="font-size:0.8rem; color:#64748b;">Código: {{this.campaignAccessCode}}</div>
                                             {{/if}}
-                                        </td>
-                                        <td>R$ {{this.finalAmountFormatted}}</td>
-                                        <td>R$ {{this.netAmountFormatted}}</td>
-                                        <td>{{#if this.paymentMethodLabel}}{{this.paymentMethodLabel}}{{else}}<span class="text-muted">N/I</span>{{/if}}</td>
-                                        <td>{{this.status}}</td>
-                                        <td>
-                                            {{this.itemsQty}}
-                                            {{#if this.items.length}}
-                                            <button type="button" class="btn btn-link" style="margin-left: 8px; padding: 0; font-size: 0.85rem;" onclick="openOrderItemsModal('{{this.id}}')">
-                                                Ver itens
-                                            </button>
-                                            {{/if}}
-                                        </td>
-                                        <td>{{#if this.createdAt}}{{formatDate this.createdAt}}{{/if}}</td>
-                                    </tr>
-                                    {{/each}}
-                                </tbody>
-                            </table>
-                        </div>
-                        {{else}}
-                        <p class="text-muted">Este cliente ainda não possui pedidos.</p>
-                        {{/if}}
+                                        {{else}}
+                                            <span class="text-muted">Sem campanha vinculada</span>
+                                        {{/if}}
+                                    </td>
+                                    <td>R$ {{this.finalAmountFormatted}}</td>
+                                    <td>R$ {{this.netAmountFormatted}}</td>
+                                    <td>{{#if this.paymentMethodLabel}}{{this.paymentMethodLabel}}{{else}}<span class="text-muted">N/I</span>{{/if}}</td>
+                                    <td>{{this.status}}</td>
+                                    <td>
+                                        {{this.itemsQty}}
+                                        {{#if this.items.length}}
+                                        <button type="button" class="btn btn-link" style="margin-left: 8px; padding: 0; font-size: 0.85rem;" onclick="openOrderItemsModal('{{this.id}}')">
+                                            Ver itens
+                                        </button>
+                                        {{/if}}
+                                    </td>
+                                    <td>{{#if this.createdAt}}{{formatDate this.createdAt}}{{/if}}</td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
                     </div>
+                    {{else}}
+                    <p class="text-muted">Este cliente ainda não possui pedidos.</p>
+                    {{/if}}
                 </div>
             </div>
         </div>
@@ -236,10 +238,21 @@
                     {{#if this.items.length}}
                     <ul>
                         {{#each this.items}}
-                        <li>
-                            {{#if this.qty}}{{this.qty}}x {{/if}}{{#if this.name}}{{this.name}}{{else}}Item{{/if}}
-                            {{#if this.size}} - Tamanho: {{this.size}}{{/if}}
-                            {{#if this.color}} - Cor: {{this.color}}{{/if}}
+                        <li class="order-item-row">
+                            {{#if this.thumb}}
+                            <div class="order-item-image">
+                                <img src="{{this.thumb}}" alt="{{this.displayName}}">
+                            </div>
+                            {{/if}}
+                            <div class="order-item-text">
+                                <div class="order-item-title">
+                                    {{#if this.qty}}{{this.qty}}x {{/if}}{{#if this.displayName}}{{this.displayName}}{{else}}Item{{/if}}
+                                </div>
+                                <div class="order-item-meta">
+                                    {{#if this.size}}Tamanho: {{this.size}}{{/if}}
+                                    {{#if this.color}}{{#if this.size}} · {{/if}}Cor: {{this.color}}{{/if}}
+                                </div>
+                            </div>
                         </li>
                         {{/each}}
                     </ul>
@@ -312,6 +325,86 @@
 .order-items-modal-body li {
     font-size: 0.9rem;
     margin-bottom: 4px;
+}
+.order-item-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.order-item-image img {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    object-fit: cover;
+    border: 1px solid #e2e8f0;
+}
+.order-item-text {
+    display: flex;
+    flex-direction: column;
+}
+.order-item-title {
+    font-weight: 500;
+}
+.order-item-meta {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+.client-orders-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 950;
+}
+.client-orders-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.55);
+}
+.client-orders-modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #ffffff;
+    border-radius: 10px;
+    max-width: 960px;
+    width: 95%;
+    max-height: 80vh;
+    box-shadow: 0 15px 35px rgba(15, 23, 42, 0.25);
+    display: flex;
+    flex-direction: column;
+}
+.client-orders-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e2e8f0;
+}
+.client-orders-modal-header h3 {
+    margin: 0;
+    font-size: 1.05rem;
+}
+.client-orders-subtitle {
+    display: block;
+    font-size: 0.85rem;
+    color: #64748b;
+}
+.client-orders-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: #64748b;
+}
+.client-orders-modal-body {
+    padding: 12px 16px;
+    overflow: auto;
 }
 </style>
 <script>
