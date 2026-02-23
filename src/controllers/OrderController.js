@@ -50,13 +50,18 @@ const OrderController = {
 
             let orders = [];
             let totalOrders = 0;
+            const rawEmail = (req.session.user.email || '').trim();
+            const rawPhone = (req.session.user.phone || '').trim();
+            const cleanPhone = rawPhone.replace(/\D/g, '');
+            const phoneTail = cleanPhone ? cleanPhone.slice(-9) : '';
             try {
                 const result = await Order.findAndCountAll({
                     where: { 
                         status: { [Op.in]: ['approved', 'pending'] },
                         [Op.or]: [
                             { userId: req.session.user.id },
-                            { customerEmail: req.session.user.email }
+                            { customerEmail: rawEmail },
+                            ...(phoneTail ? [{ customerPhone: { [Op.like]: `%${phoneTail}%` } }] : [])
                         ]
                     },
                     order: [['createdAt', 'DESC']],
@@ -65,6 +70,24 @@ const OrderController = {
                 });
                 orders = result.rows || [];
                 totalOrders = result.count || 0;
+                
+                // Fallback: if nothing found, try broader email LIKE (case-insensitive-ish) and full phone match
+                if (!orders || orders.length === 0) {
+                    const fallback = await Order.findAndCountAll({
+                        where: {
+                            status: { [Op.in]: ['approved', 'pending'] },
+                            [Op.or]: [
+                                { customerEmail: { [Op.like]: `%${rawEmail}%` } },
+                                ...(cleanPhone ? [{ customerPhone: { [Op.like]: `%${cleanPhone}%` } }] : [])
+                            ]
+                        },
+                        order: [['createdAt', 'DESC']],
+                        limit: perPage,
+                        offset
+                    });
+                    orders = fallback.rows || [];
+                    totalOrders = fallback.count || 0;
+                }
             } catch (dbError) {
                 console.error('Error fetching orders from DB:', dbError);
                 orders = [];
