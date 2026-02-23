@@ -89,6 +89,7 @@
                 }
             },
             callbacks: {
+                onReady: () => {},
                 onSubmit: ({ selectedPaymentMethod, formData }) => {
                     return new Promise((resolve, reject) => {
                         fetch('/api/process-payment', {
