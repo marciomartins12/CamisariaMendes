@@ -261,10 +261,20 @@ router.get('/campanhas', requireAdmin, async (req, res) => {
 
             campaignsPlain.forEach(cp => {
                 const shirtIds = (cp.shirts || []).map(s => Number(s.id)).filter(Number.isFinite);
+                const shirtNames = (cp.shirts || [])
+                    .map(s => (s.name || '').trim())
+                    .filter(Boolean);
                 let ordersCount = 0;
                 let revenueSum = 0;
                 normalizedApproved.forEach(o => {
-                    const has = o.itemIds.some(id => shirtIds.includes(id));
+                    const matchById = o.itemIds.some(id => shirtIds.includes(id));
+                    let has = matchById;
+                    if (!has && o.items && o.items.length && shirtNames.length) {
+                        has = o.items.some(it => {
+                            if (!it || typeof it.name !== 'string') return false;
+                            return shirtNames.includes(it.name.trim());
+                        });
+                    }
                     if (has) {
                         ordersCount += 1;
                         const val = parseFloat(o.finalAmount) || 0;
@@ -297,6 +307,92 @@ router.get('/campanhas', requireAdmin, async (req, res) => {
             isCampaigns: true,
             error: 'Erro ao carregar campanhas.'
         });
+    }
+});
+
+router.get('/campanhas/debug/:id', requireAdmin, async (req, res) => {
+    try {
+        const campaign = await Campaign.findByPk(req.params.id, {
+            include: [{ model: Shirt, as: 'shirts' }]
+        });
+
+        if (!campaign) {
+            return res.status(404).json({ error: 'Campanha não encontrada' });
+        }
+
+        const campaignPlain = campaign.get({ plain: true });
+        const shirtIds = campaignPlain.shirts ? campaignPlain.shirts.map(s => Number(s.id)).filter(Number.isFinite) : [];
+        const shirtNames = campaignPlain.shirts
+            ? campaignPlain.shirts
+                .map(s => (s.name || '').trim())
+                .filter(Boolean)
+            : [];
+
+        const approvedOrders = await Order.findAll({
+            where: { status: 'approved' },
+            order: [['createdAt', 'DESC']]
+        });
+
+        const debugOrders = approvedOrders.map(order => {
+            const o = order.get({ plain: true });
+            let items = o.items;
+            try {
+                if (typeof items === 'string') {
+                    items = JSON.parse(items);
+                    if (typeof items === 'string') {
+                        items = JSON.parse(items);
+                    }
+                }
+            } catch (e) {
+                items = [];
+            }
+            if (!Array.isArray(items)) items = [];
+
+            const itemIds = items
+                .map(it => {
+                    const pid = it && (it.id ?? it.productId ?? it.shirtId);
+                    const num = Number(pid);
+                    return Number.isFinite(num) ? num : null;
+                })
+                .filter(v => v !== null);
+
+            const matchById = itemIds.some(id => shirtIds.includes(id));
+            let matchByName = false;
+            if (!matchById && items.length && shirtNames.length) {
+                matchByName = items.some(it => {
+                    if (!it || typeof it.name !== 'string') return false;
+                    return shirtNames.includes(it.name.trim());
+                });
+            }
+
+            return {
+                id: o.id,
+                status: o.status,
+                finalAmount: o.finalAmount,
+                customerName: o.customerName,
+                customerEmail: o.customerEmail,
+                customerPhone: o.customerPhone,
+                itemIds,
+                itemsCount: items.length,
+                matchesCampaignById: matchById,
+                matchesCampaignByName: matchByName
+            };
+        });
+
+        const matched = debugOrders.filter(o => o.matchesCampaignById || o.matchesCampaignByName);
+
+        return res.json({
+            campaignId: campaignPlain.id,
+            campaignTitle: campaignPlain.title,
+            shirtIds,
+            shirtNames,
+            totalApprovedOrdersInSystem: debugOrders.length,
+            totalMatchedOrdersForCampaign: matched.length,
+            matchedOrders: matched
+        });
+    } catch (error) {
+        console.error('Erro em /admin/campanhas/debug:', error);
+        return res.status(500).json({ error: 'Erro interno ao gerar debug de campanha' });
     }
 });
 
@@ -452,8 +548,12 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
             campaignPlain.daysRemaining = 0;
         }
 
-        // Build shirtId set for this campaign
         const shirtIds = campaignPlain.shirts ? campaignPlain.shirts.map(s => s.id) : [];
+        const shirtNames = campaignPlain.shirts
+            ? campaignPlain.shirts
+                .map(s => (s.name || '').trim())
+                .filter(Boolean)
+            : [];
 
         // Load orders and link to this campaign via items -> shirtId
         let ordersForCampaign = [];
@@ -489,6 +589,9 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
                             const pid = it && (it.id ?? it.productId ?? it.shirtId);
                             const num = Number(pid);
                             return Number.isFinite(num) && shirtIds.includes(num);
+                        }) || plain.items.some(it => {
+                            if (!it || typeof it.name !== 'string' || !shirtNames.length) return false;
+                            return shirtNames.includes(it.name.trim());
                         });
                         if (!hasItemFromCampaign) return null;
 
