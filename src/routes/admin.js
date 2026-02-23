@@ -1104,7 +1104,7 @@ router.get('/clientes-campanhas', requireAdmin, async (req, res) => {
 
         const [users, orders] = await Promise.all([
             User.findAll({ order: [['createdAt', 'DESC']] }),
-            Order.findAll({ order: [['createdAt', 'DESC']] })
+            Order.findAll()
         ]);
 
         const usersPlain = users.map(u => u.get({ plain: true }));
