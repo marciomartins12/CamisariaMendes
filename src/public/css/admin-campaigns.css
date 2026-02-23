@@ -54,6 +54,7 @@
     box-shadow: var(--admin-card-shadow);
     border: 1px solid #eef2f6;
     overflow: hidden;
+    max-width: 100%;
 }
 
 .search-bar-wrapper {
@@ -111,6 +112,23 @@
 .admin-table {
     width: 100%;
     border-collapse: collapse;
+}
+
+/* Responsive tweaks specific for campaigns table */
+@media (max-width: 1024px) {
+    #campaignsTable th,
+    #campaignsTable td {
+        padding: 0.75rem 0.75rem;
+    }
+
+    /* Hide less importantes columns on medium/small screens:
+       Produtos (3) e Período (8) */
+    #campaignsTable th:nth-child(3),
+    #campaignsTable td:nth-child(3),
+    #campaignsTable th:nth-child(8),
+    #campaignsTable td:nth-child(8) {
+        display: none;
+    }
 }
 
 .admin-table th {
