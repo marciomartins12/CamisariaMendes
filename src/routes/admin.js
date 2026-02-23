@@ -587,7 +587,11 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
             campaignPlain.daysRemaining = 0;
         }
 
-        const shirtIds = campaignPlain.shirts ? campaignPlain.shirts.map(s => s.id) : [];
+        const shirtIds = campaignPlain.shirts
+            ? campaignPlain.shirts
+                .map(s => Number(s.id))
+                .filter(Number.isFinite)
+            : [];
         const shirtNames = campaignPlain.shirts
             ? campaignPlain.shirts
                 .map(s => (s.name || '').trim())
@@ -603,7 +607,7 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
             try {
                 const allOrders = await Order.findAll({
                     where: { status: 'approved' },
-                    order: [['createdAt', 'DESC']]
+                    attributes: ['id', 'status', 'finalAmount', 'items', 'customerName', 'customerEmail', 'customerPhone', 'paymentMethod', 'createdAt']
                 });
 
                 ordersForCampaign = allOrders
@@ -662,6 +666,11 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
 
         campaignPlain.totalOrders = totalOrders;
         campaignPlain.totalRevenue = totalRevenue;
+        try {
+            campaignPlain.totalRevenueFormatted = totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        } catch (e) {
+            campaignPlain.totalRevenueFormatted = `${totalRevenue.toFixed(2)}`;
+        }
 
         let editingShirt = null;
         const editShirtId = req.query.editShirt;
