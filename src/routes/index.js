@@ -12,12 +12,14 @@ const router = express.Router();
 router.post('/api/validate-coupon', CouponController.validate);
 router.post('/api/register-coupon-usage', CouponController.registerUsage);
 router.post('/api/create-payment', PaymentController.createPreference);
+router.post('/api/process-payment', PaymentController.processPaymentBrick);
 router.post('/api/webhook', PaymentController.webhook);
 router.get('/api/check-payment/:orderId', PaymentController.checkStatus); // New manual check route
 router.post('/api/continue-payment/:orderId', PaymentController.continuePayment); // Repay route
 
 // Checkout & Orders
 router.get('/checkout', OrderController.checkoutPage);
+router.get('/checkout/pagamento/:orderId', OrderController.paymentPage);
 router.get('/meus-pedidos', OrderController.historyPage);
 router.post('/orders/:id/delete', OrderController.deleteOrder);
 

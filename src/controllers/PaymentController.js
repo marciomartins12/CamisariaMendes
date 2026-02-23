@@ -7,6 +7,39 @@ const client = new mercadopago.MercadoPagoConfig({ accessToken: process.env.MP_A
 const preference = new mercadopago.Preference(client);
 
 const PaymentController = {
+    async processPaymentBrick(req, res) {
+        try {
+            const { orderId, ...paymentData } = req.body || {};
+
+            if (!orderId) {
+                return res.status(400).json({ error: 'orderId é obrigatório.' });
+            }
+
+            const order = await Order.findByPk(orderId);
+            if (!order) {
+                return res.status(404).json({ error: 'Pedido não encontrado.' });
+            }
+
+            const payment = new mercadopago.Payment(client);
+            const body = {
+                ...paymentData,
+                external_reference: orderId.toString()
+            };
+
+            const paymentInfo = await payment.create({ body });
+
+            await PaymentController.processPaymentUpdate(order, paymentInfo);
+
+            return res.json({
+                status: paymentInfo.status,
+                id: paymentInfo.id,
+                status_detail: paymentInfo.status_detail || null
+            });
+        } catch (error) {
+            console.error('processPaymentBrick error:', error);
+            return res.status(500).json({ error: 'Erro ao processar pagamento.' });
+        }
+    },
     async createPreference(req, res) {
         try {
             const { items, payer, couponCode } = req.body;
@@ -58,89 +91,9 @@ const PaymentController = {
                 userId: userId
             });
 
-            // --- 4. Prepare Data for Mercado Pago ---
-            
-            // Clean Phone Number
-            let areaCode = '11';
-            let number = '999999999';
-            
-            if (payer.phone) {
-                const cleanPhone = payer.phone.replace(/\D/g, ''); // Remove non-digits
-                if (cleanPhone.length >= 10) {
-                    areaCode = cleanPhone.substring(0, 2);
-                    number = cleanPhone.substring(2);
-                } else {
-                    number = cleanPhone;
-                }
-            }
-
-            // Split Name
-            const nameParts = payer.name ? payer.name.trim().split(' ') : ['Cliente', 'Mendes'];
-            const firstName = nameParts[0];
-            const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'Cliente';
-
-            // Base URL Logic
-            // In production, ALWAYS use APP_URL from env
-            const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-
-            console.log('Payment Base URL:', baseUrl);
-
-            // Create Preference
-            const preferenceData = {
-                body: {
-                    items: items.map(item => ({
-                        title: item.name,
-                        unit_price: parseFloat(item.price),
-                        quantity: parseInt(item.qty),
-                        currency_id: 'BRL',
-                        description: `Tamanho: ${item.size}`
-                    })),
-                    payer: {
-                        name: firstName,
-                        surname: lastName,
-                        email: payer.email,
-                        phone: {
-                            area_code: areaCode,
-                            number: number
-                        }
-                    },
-                    external_reference: newOrder.id.toString(),
-                    payment_methods: {
-                        excluded_payment_types: [
-                            { id: "ticket" } 
-                        ],
-                        installments: 12
-                    },
-                    back_urls: {
-                        success: `${baseUrl}/payment/success`,
-                        failure: `${baseUrl}/payment/failure`,
-                        pending: `${baseUrl}/payment/pending`
-                    },
-                    notification_url: `${baseUrl}/api/webhook`,
-                    auto_return: "approved",
-                    binary_mode: true, 
-                    statement_descriptor: "CAMISARIAMENDES",
-                }
-            };
-
-            console.log('MP Preference Body:', JSON.stringify(preferenceData.body, null, 2));
-
-            // Add discount logic
-            if (discountAmount > 0) {
-                preferenceData.body.items.push({
-                    title: 'Desconto (Cupom)',
-                    unit_price: -parseFloat(discountAmount.toFixed(2)),
-                    quantity: 1,
-                    currency_id: 'BRL'
-                });
-            }
-
-            const response = await preference.create(preferenceData);
-
             res.json({ 
-                preferenceId: response.id, 
-                init_point: response.init_point,
-                orderId: newOrder.id 
+                orderId: newOrder.id,
+                amount: finalAmount
             });
 
         } catch (error) {

@@ -7,9 +7,32 @@ const OrderController = {
         res.render('shop/checkout', {
             title: 'Finalizar Compra',
             layout: 'main',
-            user: user,
-            mpPublicKey: process.env.MP_PUBLIC_KEY || ''
+            user: user
         });
+    },
+
+    // Render Payment Page (after checkout)
+    async paymentPage(req, res) {
+        try {
+            const { orderId } = req.params;
+            const order = await Order.findByPk(orderId);
+
+            if (!order) {
+                return res.redirect('/meus-pedidos');
+            }
+
+            const orderPlain = order.get({ plain: true });
+
+            res.render('shop/checkout-payment', {
+                title: `Pagamento do Pedido #${orderPlain.id}`,
+                layout: 'main',
+                order: orderPlain,
+                mpPublicKey: process.env.MP_PUBLIC_KEY || ''
+            });
+        } catch (error) {
+            console.error('Error rendering payment page:', error);
+            res.redirect('/meus-pedidos');
+        }
     },
 
     // Render Order History Page

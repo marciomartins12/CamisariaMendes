@@ -1,0 +1,132 @@
+<div class="app-container" style="max-width: 700px; margin: 0 auto; padding: 20px;">
+    <header style="margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 20px;">
+        <h1 style="font-size: 1.8rem; margin: 0;">Pagamento do Pedido #{{order.id}}</h1>
+        <a href="/meus-pedidos" style="color: #666; text-decoration: none; font-size: 0.9rem;">
+            <i class="fas fa-arrow-left"></i> Voltar para meus pedidos
+        </a>
+    </header>
+
+    <div class="payment-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+        <div class="summary-card" style="background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #eee;">
+            <h3 style="margin-top: 0;">Resumo do Pedido</h3>
+            <p style="margin: 8px 0; color: #555;">Pedido #{{order.id}}</p>
+            <p style="margin: 4px 0; color: #555;">Nome: {{order.customerName}}</p>
+            <p style="margin: 4px 0; color: #555;">E-mail: {{order.customerEmail}}</p>
+            <p style="margin: 4px 0; color: #555;">Telefone: {{order.customerPhone}}</p>
+
+            <div style="border-top: 1px solid #eee; margin-top: 15px; padding-top: 10px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                    <span style="color:#666;">Total do pedido</span>
+                    <strong style="font-size:1.2rem;">R$ {{order.finalAmount}}</strong>
+                </div>
+                <p style="margin-top:8px; font-size:0.9rem; color:#777;">
+                    O pagamento será processado com segurança pelo Mercado Pago, mas sem sair do site.
+                </p>
+            </div>
+        </div>
+
+        <div class="payment-card" style="background:#fff; padding:20px; border-radius:12px; border:1px solid #eee;">
+            <h3 style="margin-top:0; margin-bottom:10px;">Escolha a forma de pagamento</h3>
+            <p style="color:#666; font-size:0.9rem; margin-bottom:15px;">
+                Pague com cartão de crédito, débito ou Pix. Seus dados são protegidos pelo Mercado Pago.
+            </p>
+            <div id="payment_container"></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://sdk.mercadopago.com/js/v2"></script>
+<script>
+    let mp = null;
+    let bricksBuilder = null;
+
+    function initPaymentPage() {
+        const publicKey = '{{mpPublicKey}}';
+        if (!publicKey) {
+            console.error('MP_PUBLIC_KEY não configurada.');
+            alert('Erro ao carregar o pagamento. Tente novamente mais tarde.');
+            return;
+        }
+
+        try {
+            mp = new MercadoPago(publicKey, { locale: 'pt-BR' });
+            bricksBuilder = mp.bricks();
+        } catch (e) {
+            console.error('Erro ao inicializar Mercado Pago JS SDK:', e);
+            alert('Erro ao carregar o pagamento. Tente novamente mais tarde.');
+            return;
+        }
+
+        const orderId = '{{order.id}}';
+        const amount = parseFloat('{{order.finalAmount}}'.replace(',', '.')) || 0;
+        const payerEmail = '{{order.customerEmail}}';
+
+        renderPaymentBrick(orderId, amount, payerEmail);
+    }
+
+    function renderPaymentBrick(orderId, amount, payerEmail) {
+        const containerId = 'payment_container';
+        const container = document.getElementById(containerId);
+        if (!bricksBuilder || !container) return;
+
+        container.innerHTML = '';
+
+        bricksBuilder.create('payment', containerId, {
+            initialization: {
+                amount: amount,
+                payer: {
+                    email: payerEmail
+                }
+            },
+            customization: {
+                paymentMethods: {
+                    creditCard: 'all',
+                    debitCard: 'all',
+                    pix: 'all',
+                    ticket: 'none',
+                    bankTransfer: 'none',
+                    atm: 'none'
+                }
+            },
+            callbacks: {
+                onSubmit: (paymentData) => {
+                    return new Promise((resolve, reject) => {
+                        fetch('/api/process-payment', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                ...paymentData,
+                                orderId: orderId
+                            })
+                        })
+                        .then(resp => resp.json())
+                        .then(result => {
+                            if (result.status === 'approved') {
+                                window.location.href = '/payment/success';
+                            } else if (result.status === 'pending' || result.status === 'in_process') {
+                                window.location.href = '/payment/pending';
+                            } else {
+                                window.location.href = '/payment/failure';
+                            }
+                            resolve();
+                        })
+                        .catch(error => {
+                            console.error('Erro ao processar pagamento:', error);
+                            alert('Erro ao processar pagamento. Tente novamente.');
+                            reject();
+                        });
+                    });
+                },
+                onError: function(error) {
+                    console.error('Erro no Payment Brick:', error);
+                    alert('Erro ao carregar o pagamento. Tente novamente em instantes.');
+                }
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', initPaymentPage);
+</script>
+
