@@ -404,7 +404,11 @@
                     </div>
                     <div class="mini-edit-group">
                         <label>Tamanhos disponíveis</label>
-                        <input type="text" name="sizes" class="form-control" placeholder="Ex: P, M, G, GG">
+                        <div class="sizes-wrapper">
+                            <input type="hidden" name="sizes" class="mini-sizes-input" value="">
+                            <div class="size-options"></div>
+                            <small class="text-muted"><i class="fas fa-mouse-pointer"></i> Selecione os tamanhos disponíveis</small>
+                        </div>
                     </div>
                 </div>
                 <div class="mini-edit-group mini-edit-images">
@@ -463,7 +467,11 @@
                     </div>
                     <div class="mini-edit-group">
                         <label>Tamanhos disponíveis</label>
-                        <input type="text" name="sizes" class="form-control" value="{{editingShirt.sizes}}" placeholder="Ex: P, M, G, GG">
+                        <div class="sizes-wrapper">
+                            <input type="hidden" name="sizes" class="mini-sizes-input" value="{{editingShirt.sizes}}">
+                            <div class="size-options"></div>
+                            <small class="text-muted"><i class="fas fa-mouse-pointer"></i> Selecione os tamanhos disponíveis</small>
+                        </div>
                     </div>
                 </div>
                 <div class="mini-edit-group mini-edit-images">
@@ -549,6 +557,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     initMiniGalleries();
     initMiniEditImages();
+    initSizeChipsForModals();
 });
 
 function initMiniGalleries() {
@@ -656,6 +665,88 @@ function handleMiniImageSelected(input) {
         input.value = '';
     };
     reader.readAsDataURL(file);
+}
+
+const SIZE_PRESETS = {
+    Tradicional: ['P', 'M', 'G', 'GG', 'XG', 'ExGG', 'P baby look', 'M baby look', 'G baby look'],
+    Infant: ['2', '4', '6', '8', '10', '12', '14'],
+    Default: ['P', 'M', 'G', 'GG', 'XG']
+};
+
+function updateMiniSizesInput(container) {
+    const chips = container.querySelectorAll('.size-chip.active');
+    const values = Array.from(chips).map(c => c.dataset.value);
+    const input = container.closest('.sizes-wrapper').querySelector('.mini-sizes-input');
+    if (input) {
+        input.value = values.join(', ');
+    }
+}
+
+function applySizePresetForModal(wrapper, currentValue) {
+    if (!wrapper) return;
+    const card = wrapper.closest('.mini-edit-modal');
+    if (!card) return;
+    const select = card.querySelector('select[name="type"]');
+    if (!select) return;
+    const type = select.value || '';
+    let preset = SIZE_PRESETS.Default;
+    if (type === 'Tradicional') {
+        preset = SIZE_PRESETS.Tradicional;
+    } else if (type === 'Infant') {
+        preset = SIZE_PRESETS.Infant;
+    }
+    const sizeOptions = wrapper.querySelector('.size-options');
+    if (!sizeOptions) return;
+    sizeOptions.innerHTML = '';
+    const currentSizes = currentValue ? currentValue.split(',').map(s => s.trim()).filter(Boolean) : [];
+    preset.forEach(size => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'size-chip';
+        btn.dataset.value = size;
+        btn.textContent = size;
+        if (!currentSizes.length || currentSizes.includes(size)) {
+            btn.classList.add('active');
+        }
+        sizeOptions.appendChild(btn);
+    });
+    updateMiniSizesInput(sizeOptions);
+}
+
+function initSizeChipsForModals() {
+    const wrappers = document.querySelectorAll('.mini-edit-modal .sizes-wrapper');
+    if (!wrappers.length) return;
+
+    wrappers.forEach(function(wrapper) {
+        const input = wrapper.querySelector('.mini-sizes-input');
+        const card = wrapper.closest('.mini-edit-modal');
+        if (!input || !card) return;
+        applySizePresetForModal(wrapper, input.value);
+
+        const select = card.querySelector('select[name="type"]');
+        if (select && !select.dataset.modalSizeEnhanced) {
+            select.dataset.modalSizeEnhanced = 'true';
+            select.addEventListener('change', function() {
+                const w = card.querySelector('.sizes-wrapper');
+                if (!w) return;
+                const hiddenInput = w.querySelector('.mini-sizes-input');
+                if (hiddenInput) {
+                    hiddenInput.value = '';
+                }
+                applySizePresetForModal(w, '');
+            });
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        const chip = e.target.closest('.mini-edit-modal .size-chip');
+        if (!chip) return;
+        chip.classList.toggle('active');
+        const container = chip.parentElement;
+        if (container) {
+            updateMiniSizesInput(container);
+        }
+    }, { passive: false });
 }
 
 document.addEventListener('click', function(e) {
