@@ -129,20 +129,320 @@ router.get('/logout', (req, res) => {
 // Dashboard
 router.get('/dashboard', requireAdmin, async (req, res) => {
     try {
-        const campaignCount = await Campaign.count({ where: { status: 'active' } });
+        const [activeCampaignCount, approvedOrders] = await Promise.all([
+            Campaign.count({ where: { status: 'active' } }),
+            Order.findAll({
+                where: { status: 'approved' },
+                attributes: [
+                    'id',
+                    'finalAmount',
+                    'items',
+                    'customerName',
+                    'customerEmail',
+                    'customerPhone',
+                    'paymentMethod',
+                    'createdAt',
+                    'userId'
+                ]
+            })
+        ]);
+
+        let totalRevenue = 0;
+        let totalNetRevenue = 0;
+        const shirtIdSet = new Set();
+        const customerStats = {};
+
+        const normalizedOrders = approvedOrders.map(order => {
+            const plain = order.get({ plain: true });
+            let items = plain.items;
+
+            try {
+                if (typeof items === 'string') {
+                    items = JSON.parse(items);
+                    if (typeof items === 'string') {
+                        items = JSON.parse(items);
+                    }
+                }
+            } catch (e) {
+                items = [];
+            }
+
+            if (!Array.isArray(items)) {
+                items = [];
+            }
+
+            const itemIds = [];
+            items.forEach(it => {
+                const pid = it && (it.id ?? it.productId ?? it.shirtId);
+                const num = Number(pid);
+                if (Number.isFinite(num)) {
+                    itemIds.push(num);
+                    shirtIdSet.add(num);
+                }
+            });
+
+            const val = parseFloat(plain.finalAmount) || 0;
+            const feePercent = getFeePercentByPaymentMethod(plain.paymentMethod);
+            const net = val * (1 - feePercent);
+
+            totalRevenue += val;
+            totalNetRevenue += net;
+
+            let customerKey = '';
+            if (plain.userId) {
+                customerKey = `user:${plain.userId}`;
+            } else if (plain.customerEmail) {
+                customerKey = `email:${String(plain.customerEmail).toLowerCase()}`;
+            } else if (plain.customerName) {
+                customerKey = `name:${String(plain.customerName).toLowerCase()}`;
+            }
+
+            if (customerKey) {
+                if (!customerStats[customerKey]) {
+                    customerStats[customerKey] = {
+                        userId: plain.userId || null,
+                        name: plain.customerName || 'Cliente',
+                        email: plain.customerEmail || '',
+                        totalOrders: 0,
+                        totalSpent: 0,
+                        totalNetSpent: 0
+                    };
+                }
+                const cs = customerStats[customerKey];
+                cs.totalOrders += 1;
+                cs.totalSpent += val;
+                cs.totalNetSpent += net;
+            }
+
+            let finalAmountFormatted = `${val.toFixed(2)}`;
+            let netAmountFormatted = `${net.toFixed(2)}`;
+            try {
+                finalAmountFormatted = val.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            } catch (e) {}
+            try {
+                netAmountFormatted = net.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            } catch (e) {}
+
+            let paymentMethodLabel = '';
+            if (plain.paymentMethod) {
+                const m = String(plain.paymentMethod).toLowerCase();
+                if (m === 'pix') paymentMethodLabel = 'Pix';
+                else if (m === 'bank_transfer') paymentMethodLabel = 'Transferência';
+                else if (m === 'credit_card') paymentMethodLabel = 'Cartão de Crédito';
+                else if (m === 'debit_card') paymentMethodLabel = 'Cartão de Débito';
+                else if (m === 'prepaid_card') paymentMethodLabel = 'Cartão Pré-pago';
+                else paymentMethodLabel = plain.paymentMethod;
+            }
+
+            return {
+                id: plain.id,
+                finalAmount: val,
+                finalAmountFormatted,
+                netAmount: net,
+                netAmountFormatted,
+                customerName: plain.customerName || 'Cliente',
+                customerEmail: plain.customerEmail || '',
+                customerPhone: plain.customerPhone || '',
+                paymentMethod: plain.paymentMethod,
+                paymentMethodLabel,
+                createdAt: plain.createdAt,
+                userId: plain.userId || null,
+                items,
+                itemIds,
+                campaignId: null,
+                campaignTitle: null,
+                campaignAccessCode: null
+            };
+        });
+
+        let shirtsById = {};
+        if (shirtIdSet.size > 0) {
+            const shirts = await Shirt.findAll({
+                where: { id: Array.from(shirtIdSet) },
+                include: [{ model: Campaign }]
+            });
+            shirtsById = shirts.reduce((acc, shirt) => {
+                const plain = shirt.get({ plain: true });
+                acc[plain.id] = plain;
+                return acc;
+            }, {});
+        }
+
+        const campaignStats = {};
+        normalizedOrders.forEach(o => {
+            let campaign = null;
+            if (Array.isArray(o.items) && o.items.length > 0) {
+                for (const it of o.items) {
+                    const pid = it && (it.id ?? it.productId ?? it.shirtId);
+                    const num = Number(pid);
+                    if (Number.isFinite(num) && shirtsById[num] && shirtsById[num].Campaign) {
+                        campaign = shirtsById[num].Campaign;
+                        break;
+                    }
+                }
+            }
+
+            if (campaign) {
+                o.campaignId = campaign.id;
+                o.campaignTitle = campaign.title;
+                o.campaignAccessCode = campaign.accessCode;
+
+                const key = campaign.id;
+                if (!campaignStats[key]) {
+                    campaignStats[key] = {
+                        id: campaign.id,
+                        title: campaign.title,
+                        accessCode: campaign.accessCode,
+                        totalOrders: 0,
+                        totalRevenue: 0,
+                        totalNetRevenue: 0
+                    };
+                }
+                const cs = campaignStats[key];
+                cs.totalOrders += 1;
+                cs.totalRevenue += o.finalAmount;
+                cs.totalNetRevenue += o.netAmount;
+            }
+        });
+
+        const totalApprovedOrders = normalizedOrders.length;
+        let totalRevenueFormatted = `${totalRevenue.toFixed(2)}`;
+        let totalNetRevenueFormatted = `${totalNetRevenue.toFixed(2)}`;
+        try {
+            totalRevenueFormatted = totalRevenue.toLocaleString('pt-BR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        } catch (e) {}
+        try {
+            totalNetRevenueFormatted = totalNetRevenue.toLocaleString('pt-BR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        } catch (e) {}
+
+        const uniqueCustomers = Object.keys(customerStats).length;
+        const averageTicket = totalApprovedOrders > 0 ? totalNetRevenue / totalApprovedOrders : 0;
+        let averageTicketFormatted = `${averageTicket.toFixed(2)}`;
+        try {
+            averageTicketFormatted = averageTicket.toLocaleString('pt-BR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        } catch (e) {}
+
+        let topCustomer = null;
+        Object.values(customerStats).forEach(cs => {
+            if (!topCustomer || cs.totalNetSpent > topCustomer.totalNetSpent) {
+                topCustomer = cs;
+            }
+        });
+
+        if (topCustomer) {
+            let totalSpentFormatted = `${topCustomer.totalSpent.toFixed(2)}`;
+            let totalNetSpentFormatted = `${topCustomer.totalNetSpent.toFixed(2)}`;
+            try {
+                totalSpentFormatted = topCustomer.totalSpent.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            } catch (e) {}
+            try {
+                totalNetSpentFormatted = topCustomer.totalNetSpent.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            } catch (e) {}
+            topCustomer = {
+                ...topCustomer,
+                totalSpentFormatted,
+                totalNetSpentFormatted
+            };
+        }
+
+        let topCampaign = null;
+        Object.values(campaignStats).forEach(cs => {
+            if (!topCampaign || cs.totalOrders > topCampaign.totalOrders) {
+                topCampaign = cs;
+            }
+        });
+
+        if (topCampaign) {
+            let campaignRevenueFormatted = `${topCampaign.totalRevenue.toFixed(2)}`;
+            let campaignNetRevenueFormatted = `${topCampaign.totalNetRevenue.toFixed(2)}`;
+            try {
+                campaignRevenueFormatted = topCampaign.totalRevenue.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            } catch (e) {}
+            try {
+                campaignNetRevenueFormatted = topCampaign.totalNetRevenue.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            } catch (e) {}
+            topCampaign = {
+                ...topCampaign,
+                totalRevenueFormatted: campaignRevenueFormatted,
+                totalNetRevenueFormatted: campaignNetRevenueFormatted
+            };
+        }
+
+        const latestOrders = normalizedOrders
+            .slice()
+            .sort((a, b) => {
+                const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                return db - da;
+            })
+            .slice(0, 8);
+
         res.render('admin/dashboard', {
             title: 'Dashboard - Camisaria Mendes',
             layout: 'main',
             isDashboard: true,
-            campaignCount
+            summary: {
+                activeCampaignCount,
+                totalApprovedOrders,
+                totalRevenue,
+                totalRevenueFormatted,
+                totalNetRevenue,
+                totalNetRevenueFormatted,
+                uniqueCustomers,
+                averageTicket,
+                averageTicketFormatted
+            },
+            latestOrders,
+            topCustomer,
+            topCampaign
         });
     } catch (error) {
-        console.error(error);
+        console.error('Erro ao carregar dashboard:', error);
         res.render('admin/dashboard', {
             title: 'Dashboard - Camisaria Mendes',
             layout: 'main',
             isDashboard: true,
-            campaignCount: 0
+            summary: {
+                activeCampaignCount: 0,
+                totalApprovedOrders: 0,
+                totalRevenue: 0,
+                totalRevenueFormatted: '0,00',
+                totalNetRevenue: 0,
+                totalNetRevenueFormatted: '0,00',
+                uniqueCustomers: 0,
+                averageTicket: 0,
+                averageTicketFormatted: '0,00'
+            },
+            latestOrders: [],
+            topCustomer: null,
+            topCampaign: null
         });
     }
 });

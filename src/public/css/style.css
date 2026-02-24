@@ -2595,6 +2595,78 @@ body {
     overflow: hidden;
 }
 
+.dashboard-main-grid {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr;
+    gap: 2rem;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 1024px) {
+    .dashboard-main-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.dashboard-orders-table th,
+.dashboard-orders-table td {
+    font-size: 0.9rem;
+}
+
+.dashboard-order-client-sub,
+.dashboard-order-campaign-sub {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.dashboard-highlights-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.highlight-card {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid #e2e8f0;
+}
+
+.highlight-card h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #475569;
+}
+
+.highlight-main {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.highlight-sub {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+}
+
+.highlight-metric {
+    font-size: 0.9rem;
+    color: #475569;
+}
+
+.highlight-metric strong {
+    color: #0f172a;
+}
+
+.dashboard-quick-actions {
+    margin-top: 2rem;
+}
+
 .form-container {
     max-width: 1000px;
     margin: 0 auto;

@@ -4,7 +4,7 @@
     <main class="admin-main-content">
         <div class="dashboard-header">
             <h2>Bem-vindo, {{admin.username}}!</h2>
-            <p>Visão geral do sistema</p>
+            <p>Resumo dos pagamentos e campanhas</p>
         </div>
 
         <div class="dashboard-stats">
@@ -13,26 +13,145 @@
                     <i class="fas fa-bullhorn"></i>
                 </div>
                 <div class="stat-info">
-                    <h3>{{campaignCount}}</h3>
-                    <p>Campanhas Ativas</p>
+                    <h3>{{summary.activeCampaignCount}}</h3>
+                    <p>Campanhas ativas</p>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon users">
-                    <i class="fas fa-users"></i>
+                    <i class="fas fa-receipt"></i>
                 </div>
                 <div class="stat-info">
-                    <h3>Admin</h3>
-                    <p>Perfil</p>
+                    <h3>{{summary.totalApprovedOrders}}</h3>
+                    <p>Pedidos aprovados</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon revenue">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>R$ {{summary.totalNetRevenueFormatted}}</h3>
+                    <p>Receita líquida</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon ticket">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>R$ {{summary.averageTicketFormatted}}</h3>
+                    <p>Ticket médio</p>
                 </div>
             </div>
         </div>
 
-        <div class="recent-activity">
-            <h3>Acesso Rápido</h3>
-            <div class="quick-actions">
-                <a href="/admin/campanhas/nova" class="btn btn-primary">Nova Campanha</a>
-                <a href="/admin/perfil" class="btn btn-outline">Editar Perfil</a>
+        <div class="dashboard-main-grid">
+            <div class="recent-activity">
+                <div class="section-header">
+                    <h3>Últimos pagamentos</h3>
+                </div>
+                {{#if latestOrders.length}}
+                <div class="table-responsive">
+                    <table class="admin-table dashboard-orders-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Cliente</th>
+                                <th>Campanha</th>
+                                <th>Método</th>
+                                <th>Bruto</th>
+                                <th>Líquido</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#each latestOrders}}
+                            <tr>
+                                <td>{{#if this.createdAt}}{{formatDate this.createdAt}}{{/if}}</td>
+                                <td>
+                                    <div class="dashboard-order-client">
+                                        <strong>{{this.customerName}}</strong>
+                                        {{#if this.customerEmail}}
+                                        <div class="dashboard-order-client-sub">{{this.customerEmail}}</div>
+                                        {{/if}}
+                                    </div>
+                                </td>
+                                <td>
+                                    {{#if this.campaignTitle}}
+                                    <div class="dashboard-order-campaign">
+                                        <strong>{{this.campaignTitle}}</strong>
+                                        {{#if this.campaignAccessCode}}
+                                        <div class="dashboard-order-campaign-sub">Código: {{this.campaignAccessCode}}</div>
+                                        {{/if}}
+                                    </div>
+                                    {{else}}
+                                    <span class="text-muted">Sem campanha</span>
+                                    {{/if}}
+                                </td>
+                                <td>{{#if this.paymentMethodLabel}}{{this.paymentMethodLabel}}{{else}}<span class="text-muted">N/I</span>{{/if}}</td>
+                                <td>R$ {{this.finalAmountFormatted}}</td>
+                                <td>R$ {{this.netAmountFormatted}}</td>
+                            </tr>
+                            {{/each}}
+                        </tbody>
+                    </table>
+                </div>
+                {{else}}
+                <p class="text-muted" style="margin-top: 1rem;">Nenhum pagamento aprovado ainda.</p>
+                {{/if}}
+            </div>
+
+            <div class="recent-activity">
+                <div class="section-header">
+                    <h3>Destaques</h3>
+                </div>
+
+                <div class="dashboard-highlights-grid">
+                    <div class="highlight-card">
+                        <h4>Cliente que mais comprou</h4>
+                        {{#if topCustomer}}
+                        <div class="highlight-main">{{topCustomer.name}}</div>
+                        {{#if topCustomer.email}}
+                        <div class="highlight-sub">{{topCustomer.email}}</div>
+                        {{/if}}
+                        <div class="highlight-metric">
+                            Total líquido: <strong>R$ {{topCustomer.totalNetSpentFormatted}}</strong>
+                        </div>
+                        <div class="highlight-metric">
+                            Pedidos aprovados: <strong>{{topCustomer.totalOrders}}</strong>
+                        </div>
+                        {{else}}
+                        <p class="text-muted">Nenhum cliente com pedidos aprovados ainda.</p>
+                        {{/if}}
+                    </div>
+
+                    <div class="highlight-card">
+                        <h4>Campanha com mais pedidos</h4>
+                        {{#if topCampaign}}
+                        <div class="highlight-main">{{topCampaign.title}}</div>
+                        {{#if topCampaign.accessCode}}
+                        <div class="highlight-sub">Código: {{topCampaign.accessCode}}</div>
+                        {{/if}}
+                        <div class="highlight-metric">
+                            Pedidos aprovados: <strong>{{topCampaign.totalOrders}}</strong>
+                        </div>
+                        <div class="highlight-metric">
+                            Receita líquida: <strong>R$ {{topCampaign.totalNetRevenueFormatted}}</strong>
+                        </div>
+                        {{else}}
+                        <p class="text-muted">Nenhuma campanha com pedidos aprovados ainda.</p>
+                        {{/if}}
+                    </div>
+                </div>
+
+                <div class="dashboard-quick-actions">
+                    <h4>Acesso rápido</h4>
+                    <div class="quick-actions">
+                        <a href="/admin/campanhas/nova" class="btn btn-primary">Nova Campanha</a>
+                        <a href="/admin/campanhas" class="btn btn-outline">Ver Campanhas</a>
+                        <a href="/admin/clientes-campanhas" class="btn btn-outline">Ver Clientes</a>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
