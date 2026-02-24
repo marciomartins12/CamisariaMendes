@@ -43,51 +43,52 @@ const OrderController = {
                 return res.redirect('/auth/login');
             }
 
+            // Auto-delete pending orders older than 2 days
+            const twoDaysAgo = new Date();
+            twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+            
+            const deletedCount = await Order.destroy({
+                where: {
+                    status: 'pending',
+                    createdAt: { [Op.lt]: twoDaysAgo }
+                }
+            });
+
+            if (deletedCount > 0) {
+                console.log(`[OrderController] Auto-deleted ${deletedCount} expired pending orders.`);
+            }
+
             const pageParam = parseInt(req.query.page, 10);
             const currentPage = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
-            const perPage = 3;
+            const perPage = 10; // Increased from 3 to 10 for better visibility
             const offset = (currentPage - 1) * perPage;
 
             let orders = [];
             let totalOrders = 0;
             const rawEmail = (req.session.user.email || '').trim();
-            const rawPhone = (req.session.user.phone || '').trim();
-            const cleanPhone = rawPhone.replace(/\D/g, '');
-            const phoneTail = cleanPhone ? cleanPhone.slice(-9) : '';
+            
+            // Build Where Clause
+            const whereClause = {
+                status: { [Op.in]: ['approved', 'pending', 'rejected', 'cancelled'] }, // Show all statuses
+                [Op.or]: [
+                    { userId: req.session.user.id }
+                ]
+            };
+
+            // If user has email, add it to OR condition to find guest orders
+            if (rawEmail) {
+                whereClause[Op.or].push({ customerEmail: rawEmail });
+            }
+
             try {
                 const result = await Order.findAndCountAll({
-                    where: { 
-                        status: { [Op.in]: ['approved', 'pending'] },
-                        [Op.or]: [
-                            { userId: req.session.user.id },
-                            { customerEmail: rawEmail },
-                            ...(phoneTail ? [{ customerPhone: { [Op.like]: `%${phoneTail}%` } }] : [])
-                        ]
-                    },
+                    where: whereClause,
                     order: [['createdAt', 'DESC']],
                     limit: perPage,
                     offset
                 });
                 orders = result.rows || [];
                 totalOrders = result.count || 0;
-                
-                // Fallback: if nothing found, try broader email LIKE (case-insensitive-ish) and full phone match
-                if (!orders || orders.length === 0) {
-                    const fallback = await Order.findAndCountAll({
-                        where: {
-                            status: { [Op.in]: ['approved', 'pending'] },
-                            [Op.or]: [
-                                { customerEmail: { [Op.like]: `%${rawEmail}%` } },
-                                ...(cleanPhone ? [{ customerPhone: { [Op.like]: `%${cleanPhone}%` } }] : [])
-                            ]
-                        },
-                        order: [['createdAt', 'DESC']],
-                        limit: perPage,
-                        offset
-                    });
-                    orders = fallback.rows || [];
-                    totalOrders = fallback.count || 0;
-                }
             } catch (dbError) {
                 console.error('Error fetching orders from DB:', dbError);
                 orders = [];
