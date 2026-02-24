@@ -251,7 +251,7 @@ const OrderController = {
                 user: req.session.user
             });
         }
-    },,
+    },
     // Delete Order (Only Pending/Rejected/Cancelled)
     async deleteOrder(req, res) {
         try {
