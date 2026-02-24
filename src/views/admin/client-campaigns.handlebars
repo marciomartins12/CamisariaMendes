@@ -57,10 +57,21 @@
         {{/if}}
 
         <div class="campaigns-container">
+            <div class="search-bar-wrapper">
+                <div class="search-input-group">
+                    <i class="fas fa-search"></i>
+                    <input 
+                        type="text" 
+                        id="clientCampaignSearch" 
+                        class="search-input" 
+                        placeholder="Buscar por cliente ou campanha..." 
+                        onkeyup="filterClientCampaigns()">
+                </div>
+            </div>
             <div class="campaigns-list">
                 {{#if users.length}}
                 <div class="table-responsive">
-                    <table class="admin-table">
+                    <table class="admin-table" id="clientsTable">
                         <thead>
                             <tr>
                                 <th>Cliente</th>
@@ -532,5 +543,33 @@ function openOrderItemsModal(id) {
 function closeOrderItemsModal(id) {
     var el = document.getElementById('order-items-modal-' + id);
     if (el) el.style.display = 'none';
+}
+function filterClientCampaigns() {
+    var input = document.getElementById('clientCampaignSearch');
+    var filterText = input ? input.value.toLowerCase() : '';
+    var table = document.getElementById('clientsTable');
+    if (!table) return;
+
+    var rows = table.getElementsByTagName('tr');
+
+    for (var i = 1; i < rows.length; i++) {
+        var row = rows[i];
+        var cells = row.getElementsByTagName('td');
+        if (!cells.length) continue;
+
+        var clientCell = cells[0];
+        var campaignsCell = cells[2];
+
+        var clientText = clientCell ? (clientCell.textContent || clientCell.innerText) : '';
+        var campaignsText = campaignsCell ? (campaignsCell.textContent || campaignsCell.innerText) : '';
+
+        var combined = (clientText + ' ' + campaignsText).toLowerCase();
+
+        if (combined.indexOf(filterText) > -1) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    }
 }
 </script>
