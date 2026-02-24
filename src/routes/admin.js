@@ -1224,29 +1224,12 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
         
         // 1. HEADER SECTION
         
-        // Header Table with Logo and Title
-        const logoPath = path.join(__dirname, '../public/images/logoSemFundo.png'); // Adjust if needed
-        let logoImage = null;
-        if (fs.existsSync(logoPath)) {
-            try {
-                logoImage = new ImageRun({
-                    data: fs.readFileSync(logoPath),
-                    transformation: { width: 80, height: 80 }
-                });
-            } catch(e) { console.error("Logo error", e); }
-        }
-
+        // Header Table with Title
         const headerTableRows = [
             new TableRow({
                 children: [
                     new TableCell({
-                        width: { size: 20, type: WidthType.PERCENTAGE },
-                        children: logoImage ? [new Paragraph({ children: [logoImage], alignment: AlignmentType.CENTER })] : [new Paragraph("")],
-                        verticalAlign: AlignmentType.CENTER,
-                        borders: { bottom: { style: BorderStyle.SINGLE, size: 12, color: "1F4E79" } }
-                    }),
-                    new TableCell({
-                        width: { size: 80, type: WidthType.PERCENTAGE },
+                        width: { size: 100, type: WidthType.PERCENTAGE },
                         children: [
                             new Paragraph({
                                 children: [
@@ -1257,7 +1240,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                                         color: "1F4E79"
                                     })
                                 ],
-                                alignment: AlignmentType.RIGHT
+                                alignment: AlignmentType.CENTER
                             }),
                             new Paragraph({
                                 children: [
@@ -1268,7 +1251,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                                         color: "555555"
                                     })
                                 ],
-                                alignment: AlignmentType.RIGHT,
+                                alignment: AlignmentType.CENTER,
                                 spacing: { before: 50 }
                             }),
                             new Paragraph({
@@ -1280,7 +1263,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                                         italics: true
                                     })
                                 ],
-                                alignment: AlignmentType.RIGHT,
+                                alignment: AlignmentType.CENTER,
                                 spacing: { before: 50 }
                             })
                         ],
@@ -1388,7 +1371,6 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
         // One unified table for all products? Or separate tables? 
         // Let's do separate tables per product for clarity, as requested "bem mais dividido".
         
-
         Object.entries(summary).forEach(([name, data]) => {
             // Sort sizes
             const sortedSizes = Object.entries(data.sizes).sort((a, b) => {
@@ -1511,22 +1493,6 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                     })
                 );
             } else {
-                // Just the table centered
-                children.push(
-                    new Table({
-                        width: { size: 80, type: WidthType.PERCENTAGE },
-                        alignment: AlignmentType.CENTER,
-                        rows: [new TableRow({ children: [new TableCell({ children: [sizesTable], borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } } })] })], // Wrap in table structure or add directly? Direct add is better but consistency.
-                        // Actually just adding sizesTable is fine if width is set on it.
-                        // But wait, sizesTable is a Table object.
-                    })
-                );
-                // Correct way: Just add sizesTable to children, but we defined it as 100% width.
-                // Let's redefine width to 80% for standalone.
-                // Or just wrapper.
-                children.pop(); // Remove the wrapper attempt above
-                
-                // Re-create table with 80% width
                  const sizesTableStandalone = new Table({
                     width: { size: 80, type: WidthType.PERCENTAGE },
                     alignment: AlignmentType.CENTER,
