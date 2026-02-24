@@ -370,6 +370,64 @@
     </main>
 </div>
 
+<div class="mini-edit-modal-backdrop" id="miniCreateModal">
+    <div class="mini-edit-modal">
+        <div class="mini-edit-header">
+            <h3>Novo produto da campanha</h3>
+            <button type="button" class="mini-edit-close">&times;</button>
+        </div>
+        <form action="/admin/campanhas/{{campaign.id}}/camisas/criar" method="POST" class="admin-form">
+            <div class="mini-edit-body">
+                <div class="mini-edit-group">
+                    <label>Nome do modelo</label>
+                    <input type="text" name="name" class="form-control" required placeholder="Ex: Camisa Nova">
+                </div>
+                <div class="mini-edit-row">
+                    <div class="mini-edit-group">
+                        <label>Cor</label>
+                        <input type="text" name="color" class="form-control" placeholder="Ex: Preto">
+                    </div>
+                    <div class="mini-edit-group">
+                        <label>Corte</label>
+                        <select name="type" class="form-control">
+                            <option value="Tradicional">Tradicional</option>
+                            <option value="Oversized">Oversized</option>
+                            <option value="Cropped">Cropped</option>
+                            <option value="Infant">Infant</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mini-edit-row">
+                    <div class="mini-edit-group">
+                        <label>Preço (R$)</label>
+                        <input type="number" step="0.01" name="price" class="form-control" required placeholder="0.00">
+                    </div>
+                    <div class="mini-edit-group">
+                        <label>Tamanhos disponíveis</label>
+                        <input type="text" name="sizes" class="form-control" placeholder="Ex: P, M, G, GG">
+                    </div>
+                </div>
+                <div class="mini-edit-group mini-edit-images">
+                    <label>Imagens do modelo</label>
+                    <div class="mini-edit-images-wrapper">
+                        <input type="hidden" name="imagesJSON" class="mini-edit-images-json" value="[]">
+                        <input type="file" accept="image/*" class="mini-edit-image-file" style="display:none" onchange="handleMiniImageSelected(this)">
+                        <button type="button" class="btn-mini btn-upload-image mini-edit-upload" onclick="triggerMiniImageUpload(this)">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>Adicionar imagem</span>
+                        </button>
+                        <div class="mini-edit-images-grid"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="mini-edit-footer">
+                <button type="button" class="btn btn-outline mini-edit-close">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Adicionar produto</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 {{#if editingShirt}}
 <div class="mini-edit-modal-backdrop visible" id="miniEditModal">
     <div class="mini-edit-modal">
@@ -467,6 +525,28 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    const addProductBtn = document.getElementById('addProductBtn');
+    const createModal = document.getElementById('miniCreateModal');
+    if (addProductBtn && createModal) {
+        addProductBtn.addEventListener('click', function() {
+            createModal.classList.add('visible');
+        });
+
+        const closeButtons = createModal.querySelectorAll('.mini-edit-close');
+        closeButtons.forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                createModal.classList.remove('visible');
+            });
+        });
+
+        createModal.addEventListener('click', function(e) {
+            if (e.target === createModal) {
+                createModal.classList.remove('visible');
+            }
+        });
+    }
+
     initMiniGalleries();
     initMiniEditImages();
 });
@@ -513,18 +593,20 @@ function initMiniGalleries() {
 }
 
 function initMiniEditImages() {
-    const wrapper = document.querySelector('.mini-edit-images-wrapper');
-    if (!wrapper) return;
-    const jsonInput = wrapper.querySelector('.mini-edit-images-json');
-    const grid = wrapper.querySelector('.mini-edit-images-grid');
-    if (!jsonInput || !grid) return;
-    let images = [];
-    try {
-        images = JSON.parse(jsonInput.value || '[]');
-    } catch (e) {
-        images = [];
-    }
-    renderMiniEditImages(grid, jsonInput, images);
+    const wrappers = document.querySelectorAll('.mini-edit-images-wrapper');
+    if (!wrappers.length) return;
+    wrappers.forEach(function(wrapper) {
+        const jsonInput = wrapper.querySelector('.mini-edit-images-json');
+        const grid = wrapper.querySelector('.mini-edit-images-grid');
+        if (!jsonInput || !grid) return;
+        let images = [];
+        try {
+            images = JSON.parse(jsonInput.value || '[]');
+        } catch (e) {
+            images = [];
+        }
+        renderMiniEditImages(grid, jsonInput, images);
+    });
 }
 
 function renderMiniEditImages(grid, jsonInput, images) {
