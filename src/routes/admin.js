@@ -1179,67 +1179,151 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             });
         });
         
-        // Create Document
-        const children = [
-            // Header
-            new Paragraph({
-                text: `Relatório de Pedidos - ${campaign.title}`,
-                heading: HeadingLevel.HEADING_1,
-                alignment: AlignmentType.CENTER,
-                spacing: { after: 300 }
-            }),
+
+        // Create Document with better styling
+        const children = [];
+        
+        // 1. HEADER SECTION
+        // Title Box with Shading
+        children.push(
             new Paragraph({
                 children: [
-                    new TextRun({ text: "Gerado em: ", bold: true }),
-                    new TextRun(new Date().toLocaleString('pt-BR')),
+                    new TextRun({ 
+                        text: `RELATÓRIO DE PEDIDOS`, 
+                        bold: true, 
+                        size: 32,
+                        color: "FFFFFF"
+                    })
                 ],
                 alignment: AlignmentType.CENTER,
-                spacing: { after: 500 }
-            }),
-            new Paragraph({
-                text: "Este relatório contém o resumo de produtos vendidos e a lista detalhada de pedidos desta campanha.",
-                alignment: AlignmentType.CENTER,
-                spacing: { after: 500 }
-            }),
-            
-            // Product Summary Section
-            new Paragraph({
-                text: "Resumo de Produtos",
-                heading: HeadingLevel.HEADING_2,
-                spacing: { before: 500, after: 300 }
+                spacing: { before: 200, after: 200 },
+                shading: { fill: "2E74B5", color: "auto", val: "clear" }, // Blue background
+                border: {
+                    bottom: { style: BorderStyle.SINGLE, size: 12, color: "1F4E79" }
+                }
             })
-        ];
+        );
 
-        // Add summary tables
+        // Campaign Info Table (2 columns: Details | Stats)
+        const campaignDate = new Date(campaign.createdAt).toLocaleDateString('pt-BR');
+        const totalRevenue = campaignOrders.reduce((sum, order) => sum + Number(order.finalAmount || 0), 0);
+        const totalItems = campaignOrders.reduce((sum, order) => {
+            const items = order.parsedItems || [];
+            return sum + items.reduce((s, i) => s + (Number(i.qty) || 1), 0);
+        }, 0);
+
+        children.push(
+            new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                borders: {
+                    top: { style: BorderStyle.NONE },
+                    bottom: { style: BorderStyle.SINGLE, size: 6, color: "E0E0E0" },
+                    left: { style: BorderStyle.NONE },
+                    right: { style: BorderStyle.NONE },
+                    insideVertical: { style: BorderStyle.NONE },
+                },
+                rows: [
+                    new TableRow({
+                        children: [
+                            new TableCell({
+                                width: { size: 60, type: WidthType.PERCENTAGE },
+                                children: [
+                                    new Paragraph({ 
+                                        children: [new TextRun({ text: "CAMPANHA:", bold: true, size: 24 })],
+                                        spacing: { before: 100 }
+                                    }),
+                                    new Paragraph({ text: campaign.title, spacing: { after: 100 } }),
+                                    new Paragraph({ 
+                                        children: [new TextRun({ text: "Responsável: ", bold: true }), new TextRun(campaign.clientName)] 
+                                    }),
+                                    new Paragraph({ 
+                                        children: [new TextRun({ text: "Código: ", bold: true }), new TextRun(campaign.accessCode)] 
+                                    }),
+                                ]
+                            }),
+                            new TableCell({
+                                width: { size: 40, type: WidthType.PERCENTAGE },
+                                children: [
+                                    new Paragraph({ 
+                                        children: [new TextRun({ text: "RESUMO:", bold: true, size: 24 })],
+                                        alignment: AlignmentType.RIGHT,
+                                        spacing: { before: 100 }
+                                    }),
+                                    new Paragraph({ 
+                                        children: [new TextRun({ text: "Total de Pedidos: ", bold: true }), new TextRun(String(campaignOrders.length))],
+                                        alignment: AlignmentType.RIGHT
+                                    }),
+                                    new Paragraph({ 
+                                        children: [new TextRun({ text: "Itens Vendidos: ", bold: true }), new TextRun(String(totalItems))],
+                                        alignment: AlignmentType.RIGHT
+                                    }),
+                                    new Paragraph({ 
+                                        children: [new TextRun({ text: "Faturamento: ", bold: true }), new TextRun(`R$ ${totalRevenue.toFixed(2).replace('.', ',')}`)],
+                                        alignment: AlignmentType.RIGHT,
+                                        spacing: { after: 100 }
+                                    }),
+                                ]
+                            })
+                        ]
+                    })
+                ]
+            }),
+            new Paragraph({ text: "", spacing: { after: 400 } }) // Spacer
+        );
+
+        // 2. PRODUCT SUMMARY SECTION
+        children.push(
+            new Paragraph({
+                text: "RESUMO POR PRODUTO",
+                heading: HeadingLevel.HEADING_2,
+                spacing: { after: 200 },
+                border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: "CCCCCC" } }
+            })
+        );
+
+        // One unified table for all products? Or separate tables? 
+        // Let's do separate tables per product for clarity, as requested "bem mais dividido".
+        
         Object.entries(summary).forEach(([name, data]) => {
-            children.push(
-                new Paragraph({
-                    children: [
-                        new TextRun({ text: name, bold: true, size: 28 }),
-                        new TextRun({ text: ` (${data.type})`, italics: true })
-                    ],
-                    spacing: { before: 300, after: 100 }
-                }),
-                new Paragraph({
-                    text: `Total de unidades: ${data.total}`,
-                    spacing: { after: 100 }
-                })
-            );
-
-            // Sort sizes logically if possible (Custom sort or just alphabetical)
+            // Sort sizes
             const sortedSizes = Object.entries(data.sizes).sort((a, b) => {
-                const order = ['P', 'M', 'G', 'GG', 'XG', 'XXG', 'EXG'];
+                const order = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'XXG', 'EXG', 'Infantil'];
                 const idxA = order.indexOf(a[0]);
                 const idxB = order.indexOf(b[0]);
                 if (idxA !== -1 && idxB !== -1) return idxA - idxB;
                 return a[0].localeCompare(b[0]);
             });
 
+            // Product Header
+            children.push(
+                new Paragraph({
+                    children: [
+                        new TextRun({ text: "• " + name, bold: true, size: 24, color: "333333" }),
+                        new TextRun({ text: ` (${data.type})`, italics: true, color: "666666" })
+                    ],
+                    spacing: { before: 200, after: 100 }
+                })
+            );
+
+            // Create a nice grid for sizes
+            // We'll create a table with 2 columns: Size | Quantity
+            // But to save space, maybe 4 columns? (Size | Qty | Size | Qty)
+            // Let's stick to 2 columns but centered and compact.
+            
+            const tableHeaderColor = "F2F2F2";
             const tableRows = [
                 new TableRow({
                     children: [
-                        new TableCell({ children: [new Paragraph({ text: "Tamanho", bold: true })], width: { size: 50, type: WidthType.PERCENTAGE } }),
-                        new TableCell({ children: [new Paragraph({ text: "Quantidade", bold: true })], width: { size: 50, type: WidthType.PERCENTAGE } })
+                        new TableCell({ 
+                            children: [new Paragraph({ text: "TAMANHO", bold: true, alignment: AlignmentType.CENTER })],
+                            shading: { fill: tableHeaderColor },
+                            width: { size: 50, type: WidthType.PERCENTAGE }
+                        }),
+                        new TableCell({ 
+                            children: [new Paragraph({ text: "QUANTIDADE", bold: true, alignment: AlignmentType.CENTER })],
+                            shading: { fill: tableHeaderColor },
+                            width: { size: 50, type: WidthType.PERCENTAGE }
+                        })
                     ]
                 })
             ];
@@ -1248,70 +1332,158 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                 tableRows.push(
                     new TableRow({
                         children: [
-                            new TableCell({ children: [new Paragraph(size)] }),
-                            new TableCell({ children: [new Paragraph(String(qty))] })
+                            new TableCell({ children: [new Paragraph({ text: size, alignment: AlignmentType.CENTER })] }),
+                            new TableCell({ children: [new Paragraph({ text: String(qty), alignment: AlignmentType.CENTER })] })
                         ]
                     })
                 );
             });
 
+            // Total Row
+            tableRows.push(
+                new TableRow({
+                    children: [
+                        new TableCell({ 
+                            children: [new Paragraph({ text: "TOTAL", bold: true, alignment: AlignmentType.RIGHT })],
+                            shading: { fill: "E6E6E6" }
+                        }),
+                        new TableCell({ 
+                            children: [new Paragraph({ text: String(data.total), bold: true, alignment: AlignmentType.CENTER })],
+                            shading: { fill: "E6E6E6" }
+                        })
+                    ]
+                })
+            );
+
             children.push(
                 new Table({
-                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    width: { size: 80, type: WidthType.PERCENTAGE }, // Not full width
+                    alignment: AlignmentType.CENTER,
                     rows: tableRows,
                     borders: {
-                        top: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
-                        bottom: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
-                        left: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
-                        right: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
-                        insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
-                        insideVertical: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" }
+                        top: { style: BorderStyle.SINGLE, size: 1, color: "999999" },
+                        bottom: { style: BorderStyle.SINGLE, size: 1, color: "999999" },
+                        left: { style: BorderStyle.SINGLE, size: 1, color: "999999" },
+                        right: { style: BorderStyle.SINGLE, size: 1, color: "999999" },
+                        insideHorizontal: { style: BorderStyle.DOTTED, size: 1, color: "CCCCCC" },
+                        insideVertical: { style: BorderStyle.SINGLE, size: 1, color: "999999" }
                     }
-                })
+                }),
+                new Paragraph({ text: "", spacing: { after: 300 } })
             );
         });
 
-        // Orders List Section
+        // 3. ORDERS LIST SECTION
         children.push(
             new Paragraph({
-                text: "Lista de Pedidos",
+                text: "DETALHAMENTO DE PEDIDOS",
                 heading: HeadingLevel.HEADING_2,
-                spacing: { before: 800, after: 300 },
-                pageBreakBefore: true
+                spacing: { before: 400, after: 300 },
+                pageBreakBefore: true,
+                border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: "CCCCCC" } }
             })
         );
 
-        campaignOrders.forEach(order => {
-            const itemsList = order.parsedItems
+        // Master Table for Orders
+        const orderHeaderColor = "2E74B5";
+        const orderHeaderTextColor = "FFFFFF";
+
+        // Table Header
+        const ordersTableRows = [
+            new TableRow({
+                tableHeader: true,
+                children: [
+                    new TableCell({ 
+                        children: [new Paragraph({ text: "PEDIDO / CLIENTE", bold: true, color: orderHeaderTextColor })],
+                        shading: { fill: orderHeaderColor },
+                        width: { size: 35, type: WidthType.PERCENTAGE }
+                    }),
+                    new TableCell({ 
+                        children: [new Paragraph({ text: "ITENS DO PEDIDO", bold: true, color: orderHeaderTextColor })],
+                        shading: { fill: orderHeaderColor },
+                        width: { size: 45, type: WidthType.PERCENTAGE }
+                    }),
+                    new TableCell({ 
+                        children: [new Paragraph({ text: "DETALHES", bold: true, color: orderHeaderTextColor })],
+                        shading: { fill: orderHeaderColor },
+                        width: { size: 20, type: WidthType.PERCENTAGE }
+                    })
+                ]
+            })
+        ];
+
+        campaignOrders.forEach((order, index) => {
+            const itemsLines = order.parsedItems
                 .filter(it => {
                     const pid = Number(it.id || it.productId || it.shirtId);
                     return shirtIds.includes(pid) || shirtNames.includes((it.name || '').trim());
                 })
-                .map(it => `${it.qty || 1}x ${it.name} (${it.size})`)
-                .join(', ');
+                .map(it => `• ${it.qty || 1}x ${it.name} [${it.size}]`);
 
-            children.push(
-                new Paragraph({
+            // Add formatting to items
+            const itemParagraphs = itemsLines.map(line => new Paragraph({ text: line, spacing: { after: 40 } }));
+            if (itemParagraphs.length === 0) itemParagraphs.push(new Paragraph({ text: "(Sem itens desta campanha)", italics: true }));
+
+            const rowColor = index % 2 === 0 ? "FFFFFF" : "F9F9F9"; // Striped rows
+
+            ordersTableRows.push(
+                new TableRow({
                     children: [
-                        new TextRun({ text: `Pedido #${order.id} - ${order.customerName}`, bold: true, color: "2E74B5" }),
-                    ],
-                    spacing: { before: 300 }
-                }),
-                new Paragraph({
-                    text: `Itens: ${itemsList}`,
-                    indent: { left: 720 }
-                }),
-                new Paragraph({
-                    text: `Contato: ${order.customerPhone || 'N/A'} | Email: ${order.customerEmail || 'N/A'}`,
-                    indent: { left: 720 },
-                    spacing: { after: 100 }
-                }),
-                new Paragraph({
-                    text: "",
-                    border: { bottom: { color: "E0E0E0", space: 1, style: BorderStyle.SINGLE, size: 6 } }
+                        new TableCell({ 
+                            children: [
+                                new Paragraph({ text: `Ref: #${order.id}`, bold: true }),
+                                new Paragraph({ text: order.customerName, bold: true, size: 22 }),
+                                new Paragraph({ text: order.customerPhone || '', size: 18 }),
+                                new Paragraph({ text: order.customerEmail || '', size: 18 })
+                            ],
+                            shading: { fill: rowColor },
+                            verticalAlign: AlignmentType.CENTER
+                        }),
+                        new TableCell({ 
+                            children: itemParagraphs,
+                            shading: { fill: rowColor },
+                            verticalAlign: AlignmentType.CENTER
+                        }),
+                        new TableCell({ 
+                            children: [
+                                new Paragraph({ text: new Date(order.createdAt).toLocaleDateString('pt-BR'), alignment: AlignmentType.RIGHT }),
+                                new Paragraph({ text: order.paymentMethod ? order.paymentMethod.toUpperCase() : 'N/A', alignment: AlignmentType.RIGHT, size: 18 }),
+                                new Paragraph({ text: `R$ ${Number(order.finalAmount).toFixed(2)}`, bold: true, alignment: AlignmentType.RIGHT })
+                            ],
+                            shading: { fill: rowColor },
+                            verticalAlign: AlignmentType.CENTER
+                        })
+                    ]
                 })
             );
         });
+
+        children.push(
+            new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                rows: ordersTableRows,
+                borders: {
+                    top: { style: BorderStyle.SINGLE, size: 2, color: "2E74B5" },
+                    bottom: { style: BorderStyle.SINGLE, size: 2, color: "2E74B5" },
+                    left: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
+                    right: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
+                    insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: "EEEEEE" },
+                    insideVertical: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" }
+                }
+            })
+        );
+
+        // Footer note
+        children.push(
+            new Paragraph({
+                text: "Fim do relatório.",
+                alignment: AlignmentType.CENTER,
+                spacing: { before: 500 },
+                color: "999999",
+                italics: true
+            })
+        );
+
 
         const doc = new Document({
             sections: [{
