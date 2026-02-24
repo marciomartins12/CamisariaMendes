@@ -1,12 +1,12 @@
-<div class="app-container" style="max-width: 900px; margin: 0 auto; padding: 20px;">
-    <header style="margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 20px;">
+<div class="pix-page">
+    <header class="pix-header">
         <h1 style="font-size: 1.8rem; margin: 0;">Pagamento via Pix - Pedido #{{order.id}}</h1>
         <a href="/meus-pedidos" style="color: #666; text-decoration: none; font-size: 0.9rem;">
             <i class="fas fa-arrow-left"></i> Voltar para meus pedidos
         </a>
     </header>
 
-    <div style="display:grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr); gap:20px; align-items:flex-start; margin-bottom:20px;">
+    <div class="pix-top-grid">
         <div style="background:#fff; padding:20px; border-radius:12px; border:1px solid #eee;">
             <h3 style="margin-top:0; margin-bottom:10px;">Resumo do Pedido</h3>
             <p style="margin: 4px 0; color: #555;">Pedido #{{order.id}}</p>
@@ -46,8 +46,8 @@
     </div>
 
     <div id="pix-info" style="background:linear-gradient(135deg,#009ee3 0%,#006fb3 100%); padding:24px 20px; border-radius:16px; border:1px solid #0080c0; margin-bottom:20px; color:#fff;">
-        <div style="display:flex; flex-wrap:wrap; gap:20px; align-items:center; justify-content:space-between;">
-            <div style="flex:1 1 260px; min-width:0;">
+        <div class="pix-main-row">
+            <div class="pix-main-column">
                 <h3 style="margin-top:0; margin-bottom:10px; font-size:1.3rem;">Finalize o pagamento Pix</h3>
                 <p style="font-size:0.95rem; margin-bottom:10px; color:rgba(255,255,255,0.9);">
                     Escaneie o QR Code ao lado com o aplicativo do seu banco ou copie o código Pix para pagar.
@@ -70,7 +70,7 @@
                 </div>
             </div>
 
-            <div style="flex:0 0 260px; text-align:center;">
+            <div class="pix-qr-column">
                 <div style="background:#fff; border-radius:16px; padding:14px; display:inline-block; box-shadow:0 8px 16px rgba(0,0,0,0.18);">
                     <p style="margin:0 0 6px; font-size:0.8rem; color:#333;">QR Code Pix</p>
                     <img id="pix-qr-image" src="" alt="QR Code Pix" style="max-width:220px; background:#fff; border-radius:8px; display:none;">
@@ -108,6 +108,57 @@
             </div>
         </div>
     </div>
+    <style>
+        .pix-page {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .pix-header {
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+
+        .pix-top-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .pix-main-row {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .pix-main-column {
+            flex: 1 1 260px;
+            min-width: 0;
+        }
+
+        .pix-qr-column {
+            flex: 0 0 260px;
+            text-align: center;
+        }
+
+        @media (min-width: 768px) {
+            .pix-top-grid {
+                display: grid;
+                grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr);
+                gap: 20px;
+                align-items: flex-start;
+            }
+
+            .pix-main-row {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+        }
+    </style>
 </div>
 
 <script>
