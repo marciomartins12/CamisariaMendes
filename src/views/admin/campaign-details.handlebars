@@ -772,26 +772,39 @@ document.addEventListener('click', function(e) {
     }
 });
 
-document.getElementById('btnExportWord').addEventListener('click', function() {
-    const btn = this;
-    const originalContent = btn.innerHTML;
-    
-    // Disable button and show loading state
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Gerando arquivo Word, aguarde...</span>';
-    
-    // Trigger download
-    const campaignId = "{{campaign.id}}";
-    window.location.href = `/admin/campanhas/${campaignId}/exportar-word`;
-    
-    // Reset button after a delay (assuming download starts quickly)
-    setTimeout(() => {
-        btn.innerHTML = '<i class="fas fa-check"></i> <span>Arquivo exportado com sucesso!</span>';
-        setTimeout(() => {
-            btn.disabled = false;
-            btn.innerHTML = originalContent;
-        }, 3000);
-    }, 2000);
+
+document.addEventListener('DOMContentLoaded', function() {
+    const exportBtn = document.getElementById('btnExportWord');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', function() {
+            const btn = this;
+            const originalContent = btn.innerHTML;
+            
+            // Disable button and show loading state
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Gerando arquivo Word, aguarde...</span>';
+            
+            // Trigger download
+            const campaignId = "{{campaign.id}}";
+            if (campaignId) {
+                window.location.href = `/admin/campanhas/${campaignId}/exportar-word`;
+                
+                // Reset button after a delay
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-check"></i> <span>Arquivo exportado com sucesso!</span>';
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.innerHTML = originalContent;
+                    }, 3000);
+                }, 3000);
+            } else {
+                alert('Erro: ID da campanha não encontrado.');
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+            }
+        });
+    }
 });
+
 
 </script>
