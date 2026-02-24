@@ -68,16 +68,31 @@ const OrderController = {
             const rawEmail = (req.session.user.email || '').trim();
             
             // Build Where Clause
+            const whereConditions = [];
+            
+            // 1. By User ID (Primary)
+            if (req.session.user.id) {
+                whereConditions.push({ userId: req.session.user.id });
+            }
+            
+            // 2. By Email (Guest checkout fallback)
+            if (rawEmail) {
+                whereConditions.push({ customerEmail: rawEmail });
+            }
+
             const whereClause = {
-                status: { [Op.in]: ['approved', 'pending', 'rejected', 'cancelled'] }, // Show all statuses
-                [Op.or]: [
-                    { userId: req.session.user.id }
-                ]
+                status: { [Op.in]: ['approved', 'pending', 'rejected', 'cancelled'] }
             };
 
-            // If user has email, add it to OR condition to find guest orders
-            if (rawEmail) {
-                whereClause[Op.or].push({ customerEmail: rawEmail });
+            // Optimize query: use OR only if multiple conditions exist
+            if (whereConditions.length > 1) {
+                whereClause[Op.or] = whereConditions;
+            } else if (whereConditions.length === 1) {
+                // Flatten condition
+                Object.assign(whereClause, whereConditions[0]);
+            } else {
+                 // Force empty result
+                 whereClause.id = -1;
             }
 
             try {
@@ -87,6 +102,7 @@ const OrderController = {
                     limit: perPage,
                     offset
                 });
+                
                 orders = result.rows || [];
                 totalOrders = result.count || 0;
             } catch (dbError) {
