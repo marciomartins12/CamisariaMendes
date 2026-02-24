@@ -70,12 +70,16 @@
                                     <span>Subtotal:</span>
                                     <span>R$ {{this.totalAmount}}</span>
                                 </div>
-                                <div style="display: flex; justify-content: space-between; color: #2e7d32; margin-bottom: 10px; font-size: 0.95rem; font-weight: 500;">
-                                    <span>
-                                        <i class="fas fa-tag"></i> Cupom ({{this.couponCode}}):
-                                    </span>
-                                    <span>- R$ {{this.discountAmount}}</span>
-                                </div>
+                                {{#if (eq this.discountAmount "0.00")}}
+                                    <!-- Coupon present but no discount (e.g. frete gratis or invalid calculation), optional: hide or show 0 -->
+                                {{else}}
+                                    <div style="display: flex; justify-content: space-between; color: #2e7d32; margin-bottom: 10px; font-size: 0.95rem; font-weight: 500;">
+                                        <span>
+                                            <i class="fas fa-tag"></i> Cupom ({{this.couponCode}}):
+                                        </span>
+                                        <span>- R$ {{this.discountAmount}}</span>
+                                    </div>
+                                {{/if}}
                             {{/if}}
                             
                             <div class="order-total" style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px dashed #ddd;">

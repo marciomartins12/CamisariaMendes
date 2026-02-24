@@ -74,37 +74,48 @@ const PaymentController = {
             let finalAmount = totalAmount;
 
             // --- 2. Validate Coupon (if provided) ---
+            let appliedCouponCode = null;
             if (couponCode) {
                 const coupon = await Coupon.findOne({ 
-                    where: { code: couponCode.toUpperCase(), status: 'active' } 
+                    where: { code: couponCode.toUpperCase() } 
                 });
 
-                if (coupon) {
-                    if (coupon.discountType === 'percentage') {
-                        discountAmount = totalAmount * (parseFloat(coupon.discountValue) / 100);
-                    } else {
-                        discountAmount = parseFloat(coupon.discountValue);
-                    }
-                    // Ensure discount doesn't exceed total
-                    if (discountAmount > totalAmount) discountAmount = totalAmount;
-                    finalAmount = totalAmount - discountAmount;
+                // Check if coupon exists AND is active/valid
+                if (coupon && coupon.status === 'active') {
+                     // Check expiration if needed
+                     const now = new Date();
+                     if (coupon.validUntil && new Date(coupon.validUntil) < now) {
+                         // Expired
+                     } else if (coupon.usageLimit > 0 && coupon.usageCount >= coupon.usageLimit) {
+                         // Limit reached
+                     } else {
+                        // Valid Coupon
+                        appliedCouponCode = coupon.code;
+                        if (coupon.discountType === 'percentage') {
+                            discountAmount = totalAmount * (parseFloat(coupon.discountValue) / 100);
+                        } else {
+                            discountAmount = parseFloat(coupon.discountValue);
+                        }
+                     }
                 }
             }
+
+            // Ensure discount doesn't exceed total
+            if (discountAmount > totalAmount) discountAmount = totalAmount;
+            finalAmount = totalAmount - discountAmount;
 
             // --- 3. Create Order in Database (Pending) ---
             const userId = req.session && req.session.user ? req.session.user.id : null;
 
             const newOrder = await Order.create({
                 items: items,
-                totalAmount,
-                discountAmount,
-                finalAmount,
-                couponCode: couponCode ? couponCode.toUpperCase() : null,
-                customerName: payer.name,
+                totalAmount: totalAmount,
+                discountAmount: discountAmount,
+                finalAmount: finalAmount,
+                couponCode: appliedCouponCode, // Only save if actually applied
+                userId,
                 customerEmail: payer.email,
-                customerPhone: payer.phone,
-                status: 'pending',
-                userId: userId
+                status: 'pending'
             });
 
             res.json({ 
