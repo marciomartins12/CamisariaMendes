@@ -1118,7 +1118,9 @@ router.post('/campanhas/:campaignId/camisas/criar', requireAdmin, async (req, re
 // Export Orders (Word)
 router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
     try {
-        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, BorderStyle, Header, Footer } = require('docx');
+        const fs = require('fs');
+        const path = require('path');
+        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, BorderStyle, Header, Footer, ImageRun } = require('docx');
         
         const campaign = await Campaign.findByPk(req.params.id, {
             include: [{ model: Shirt, as: 'shirts' }]
@@ -1155,7 +1157,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
         });
         
         // Aggregate data for summary
-        const summary = {}; // { 'Shirt Name': { total: 0, sizes: { 'M': 2, 'L': 1 }, type: 'Tradicional' } }
+        const summary = {}; // { 'Shirt Name': { total: 0, sizes: { 'M': 2, 'L': 1 }, type: 'Tradicional', image: 'url' } }
         
         campaignOrders.forEach(order => {
             order.parsedItems.forEach(item => {
@@ -1166,7 +1168,22 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                 if (shirtIds.includes(pid) || shirtNames.includes(name)) {
                     const key = name || `Produto #${pid}`;
                     if (!summary[key]) {
-                        summary[key] = { total: 0, sizes: {}, type: item.type || 'Padrão' };
+                        // Try to find image from campaign shirts
+                        let productImg = null;
+                        const matchingShirt = (campaign.shirts || []).find(s => s.id === pid || s.name === name);
+                        if (matchingShirt) {
+                            try {
+                                const imgs = JSON.parse(matchingShirt.imagesJSON || '[]');
+                                if (imgs.length > 0) productImg = imgs[0];
+                            } catch(e) {}
+                        }
+                        
+                        summary[key] = { 
+                            total: 0, 
+                            sizes: {}, 
+                            type: item.type || 'Padrão',
+                            image: productImg
+                        };
                     }
                     
                     const qty = Number(item.qty || item.quantity || 1);
@@ -1179,30 +1196,117 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             });
         });
         
+        // Helper to load image
+        const getImageBuffer = (imagePath) => {
+            try {
+                // If it's a URL or uploaded path, try to resolve it
+                // Assuming local uploads for now. If external URL, would need fetch.
+                // Checking for local file in public/uploads or public/images
+                
+                let localPath = null;
+                if (imagePath.startsWith('/')) {
+                    localPath = path.join(__dirname, '../public', imagePath);
+                } else {
+                    localPath = path.join(__dirname, '../public/images', imagePath);
+                }
+                
+                if (fs.existsSync(localPath)) {
+                    return fs.readFileSync(localPath);
+                }
+                return null;
+            } catch (e) {
+                return null;
+            }
+        };
 
         // Create Document with better styling
         const children = [];
         
         // 1. HEADER SECTION
-        // Title Box with Shading
-        children.push(
-            new Paragraph({
+        
+        // Header Table with Logo and Title
+        const logoPath = path.join(__dirname, '../public/images/logoSemFundo.png'); // Adjust if needed
+        let logoImage = null;
+        if (fs.existsSync(logoPath)) {
+            try {
+                logoImage = new ImageRun({
+                    data: fs.readFileSync(logoPath),
+                    transformation: { width: 80, height: 80 }
+                });
+            } catch(e) { console.error("Logo error", e); }
+        }
+
+        const headerTableRows = [
+            new TableRow({
                 children: [
-                    new TextRun({ 
-                        text: `RELATÓRIO DE PEDIDOS`, 
-                        bold: true, 
-                        size: 32,
-                        color: "FFFFFF"
+                    new TableCell({
+                        width: { size: 20, type: WidthType.PERCENTAGE },
+                        children: logoImage ? [new Paragraph({ children: [logoImage], alignment: AlignmentType.CENTER })] : [new Paragraph("")],
+                        verticalAlign: AlignmentType.CENTER,
+                        borders: { bottom: { style: BorderStyle.SINGLE, size: 12, color: "1F4E79" } }
+                    }),
+                    new TableCell({
+                        width: { size: 80, type: WidthType.PERCENTAGE },
+                        children: [
+                            new Paragraph({
+                                children: [
+                                    new TextRun({ 
+                                        text: "CAMISARIA MENDES", 
+                                        bold: true, 
+                                        size: 28,
+                                        color: "1F4E79"
+                                    })
+                                ],
+                                alignment: AlignmentType.RIGHT
+                            }),
+                            new Paragraph({
+                                children: [
+                                    new TextRun({ 
+                                        text: "RELATÓRIO DE PEDIDOS", 
+                                        bold: true, 
+                                        size: 24,
+                                        color: "555555"
+                                    })
+                                ],
+                                alignment: AlignmentType.RIGHT,
+                                spacing: { before: 50 }
+                            }),
+                            new Paragraph({
+                                children: [
+                                    new TextRun({ 
+                                        text: `Gerado por: ${req.session.user ? req.session.user.name : 'Administrador'} em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`,
+                                        size: 16,
+                                        color: "777777",
+                                        italics: true
+                                    })
+                                ],
+                                alignment: AlignmentType.RIGHT,
+                                spacing: { before: 50 }
+                            })
+                        ],
+                        verticalAlign: AlignmentType.CENTER,
+                        borders: { bottom: { style: BorderStyle.SINGLE, size: 12, color: "1F4E79" } }
                     })
-                ],
-                alignment: AlignmentType.CENTER,
-                spacing: { before: 200, after: 200 },
-                shading: { fill: "2E74B5", color: "auto", val: "clear" }, // Blue background
-                border: {
-                    bottom: { style: BorderStyle.SINGLE, size: 12, color: "1F4E79" }
-                }
+                ]
             })
+        ];
+
+        children.push(
+            new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                rows: headerTableRows,
+                borders: {
+                    top: { style: BorderStyle.NONE },
+                    bottom: { style: BorderStyle.NONE },
+                    left: { style: BorderStyle.NONE },
+                    right: { style: BorderStyle.NONE },
+                    insideVertical: { style: BorderStyle.NONE }
+                }
+            }),
+            new Paragraph({ text: "", spacing: { after: 300 } })
         );
+
+        // Campaign Info Table (2 columns: Details | Stats)
 
         // Campaign Info Table (2 columns: Details | Stats)
         const campaignDate = new Date(campaign.createdAt).toLocaleDateString('pt-BR');
@@ -1284,6 +1388,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
         // One unified table for all products? Or separate tables? 
         // Let's do separate tables per product for clarity, as requested "bem mais dividido".
         
+
         Object.entries(summary).forEach(([name, data]) => {
             // Sort sizes
             const sortedSizes = Object.entries(data.sizes).sort((a, b) => {
@@ -1305,13 +1410,25 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                 })
             );
 
-            // Create a nice grid for sizes
-            // We'll create a table with 2 columns: Size | Quantity
-            // But to save space, maybe 4 columns? (Size | Qty | Size | Qty)
-            // Let's stick to 2 columns but centered and compact.
+            // Table with 2 columns: Image (Left) | Sizes Table (Right)
+            // If image exists, we split. If not, just sizes table.
             
+            let productImageRun = null;
+            if (data.image) {
+                const imgBuffer = getImageBuffer(data.image);
+                if (imgBuffer) {
+                    try {
+                        productImageRun = new ImageRun({
+                            data: imgBuffer,
+                            transformation: { width: 150, height: 150 }
+                        });
+                    } catch(e) {}
+                }
+            }
+
+            // Sizes Table Logic
             const tableHeaderColor = "F2F2F2";
-            const tableRows = [
+            const sizeTableRows = [
                 new TableRow({
                     children: [
                         new TableCell({ 
@@ -1329,7 +1446,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             ];
 
             sortedSizes.forEach(([size, qty]) => {
-                tableRows.push(
+                sizeTableRows.push(
                     new TableRow({
                         children: [
                             new TableCell({ children: [new Paragraph({ text: size, alignment: AlignmentType.CENTER })] }),
@@ -1340,7 +1457,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             });
 
             // Total Row
-            tableRows.push(
+            sizeTableRows.push(
                 new TableRow({
                     children: [
                         new TableCell({ 
@@ -1355,11 +1472,65 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                 })
             );
 
-            children.push(
-                new Table({
-                    width: { size: 80, type: WidthType.PERCENTAGE }, // Not full width
+            const sizesTable = new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                alignment: AlignmentType.CENTER,
+                rows: sizeTableRows,
+                borders: {
+                    top: { style: BorderStyle.SINGLE, size: 1, color: "999999" },
+                    bottom: { style: BorderStyle.SINGLE, size: 1, color: "999999" },
+                    left: { style: BorderStyle.SINGLE, size: 1, color: "999999" },
+                    right: { style: BorderStyle.SINGLE, size: 1, color: "999999" },
+                    insideHorizontal: { style: BorderStyle.DOTTED, size: 1, color: "CCCCCC" },
+                    insideVertical: { style: BorderStyle.SINGLE, size: 1, color: "999999" }
+                }
+            });
+
+            if (productImageRun) {
+                // Layout: [ Image Cell (30%) ] [ Sizes Table Cell (70%) ]
+                children.push(
+                    new Table({
+                        width: { size: 100, type: WidthType.PERCENTAGE },
+                        borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE }, insideVertical: { style: BorderStyle.NONE } },
+                        rows: [
+                            new TableRow({
+                                children: [
+                                    new TableCell({
+                                        width: { size: 30, type: WidthType.PERCENTAGE },
+                                        children: [new Paragraph({ children: [productImageRun], alignment: AlignmentType.CENTER })],
+                                        verticalAlign: AlignmentType.CENTER
+                                    }),
+                                    new TableCell({
+                                        width: { size: 70, type: WidthType.PERCENTAGE },
+                                        children: [sizesTable],
+                                        verticalAlign: AlignmentType.TOP
+                                    })
+                                ]
+                            })
+                        ]
+                    })
+                );
+            } else {
+                // Just the table centered
+                children.push(
+                    new Table({
+                        width: { size: 80, type: WidthType.PERCENTAGE },
+                        alignment: AlignmentType.CENTER,
+                        rows: [new TableRow({ children: [new TableCell({ children: [sizesTable], borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } } })] })], // Wrap in table structure or add directly? Direct add is better but consistency.
+                        // Actually just adding sizesTable is fine if width is set on it.
+                        // But wait, sizesTable is a Table object.
+                    })
+                );
+                // Correct way: Just add sizesTable to children, but we defined it as 100% width.
+                // Let's redefine width to 80% for standalone.
+                // Or just wrapper.
+                children.pop(); // Remove the wrapper attempt above
+                
+                // Re-create table with 80% width
+                 const sizesTableStandalone = new Table({
+                    width: { size: 80, type: WidthType.PERCENTAGE },
                     alignment: AlignmentType.CENTER,
-                    rows: tableRows,
+                    rows: sizeTableRows,
                     borders: {
                         top: { style: BorderStyle.SINGLE, size: 1, color: "999999" },
                         bottom: { style: BorderStyle.SINGLE, size: 1, color: "999999" },
@@ -1368,9 +1539,11 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                         insideHorizontal: { style: BorderStyle.DOTTED, size: 1, color: "CCCCCC" },
                         insideVertical: { style: BorderStyle.SINGLE, size: 1, color: "999999" }
                     }
-                }),
-                new Paragraph({ text: "", spacing: { after: 300 } })
-            );
+                });
+                children.push(sizesTableStandalone);
+            }
+
+            children.push(new Paragraph({ text: "", spacing: { after: 300 } }));
         });
 
         // 3. ORDERS LIST SECTION
