@@ -1115,6 +1115,223 @@ router.post('/campanhas/:campaignId/camisas/criar', requireAdmin, async (req, re
     }
 });
 
+// Export Orders (Word)
+router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
+    try {
+        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, BorderStyle, Header, Footer } = require('docx');
+        
+        const campaign = await Campaign.findByPk(req.params.id, {
+            include: [{ model: Shirt, as: 'shirts' }]
+        });
+        
+        if (!campaign) return res.status(404).send('Campanha não encontrada');
+
+        const shirtIds = (campaign.shirts || []).map(s => Number(s.id));
+        const shirtNames = (campaign.shirts || []).map(s => (s.name || '').trim());
+        
+        // Fetch all approved orders
+        const allOrders = await Order.findAll({
+            where: { status: 'approved' },
+            attributes: ['id', 'status', 'finalAmount', 'items', 'customerName', 'customerEmail', 'customerPhone', 'createdAt', 'paymentMethod']
+        });
+        
+        // Filter orders for this campaign
+        const campaignOrders = allOrders.filter(order => {
+            const plain = order.get({ plain: true });
+            let items = plain.items;
+            try {
+                if (typeof items === 'string') items = JSON.parse(items);
+                if (typeof items === 'string') items = JSON.parse(items);
+            } catch(e) { items = []; }
+            if (!Array.isArray(items)) items = [];
+            
+            // Attach parsed items to order object for later use
+            order.parsedItems = items;
+            
+            return items.some(it => {
+                const pid = Number(it.id || it.productId || it.shirtId);
+                return shirtIds.includes(pid) || shirtNames.includes((it.name || '').trim());
+            });
+        });
+        
+        // Aggregate data for summary
+        const summary = {}; // { 'Shirt Name': { total: 0, sizes: { 'M': 2, 'L': 1 }, type: 'Tradicional' } }
+        
+        campaignOrders.forEach(order => {
+            order.parsedItems.forEach(item => {
+                const pid = Number(item.id || item.productId || item.shirtId);
+                const name = (item.name || '').trim();
+                
+                // Check if this item belongs to campaign
+                if (shirtIds.includes(pid) || shirtNames.includes(name)) {
+                    const key = name || `Produto #${pid}`;
+                    if (!summary[key]) {
+                        summary[key] = { total: 0, sizes: {}, type: item.type || 'Padrão' };
+                    }
+                    
+                    const qty = Number(item.qty || item.quantity || 1);
+                    summary[key].total += qty;
+                    
+                    const size = item.size || 'N/A';
+                    if (!summary[key].sizes[size]) summary[key].sizes[size] = 0;
+                    summary[key].sizes[size] += qty;
+                }
+            });
+        });
+        
+        // Create Document
+        const children = [
+            // Header
+            new Paragraph({
+                text: `Relatório de Pedidos - ${campaign.title}`,
+                heading: HeadingLevel.HEADING_1,
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 300 }
+            }),
+            new Paragraph({
+                children: [
+                    new TextRun({ text: "Gerado em: ", bold: true }),
+                    new TextRun(new Date().toLocaleString('pt-BR')),
+                ],
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 500 }
+            }),
+            new Paragraph({
+                text: "Este relatório contém o resumo de produtos vendidos e a lista detalhada de pedidos desta campanha.",
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 500 }
+            }),
+            
+            // Product Summary Section
+            new Paragraph({
+                text: "Resumo de Produtos",
+                heading: HeadingLevel.HEADING_2,
+                spacing: { before: 500, after: 300 }
+            })
+        ];
+
+        // Add summary tables
+        Object.entries(summary).forEach(([name, data]) => {
+            children.push(
+                new Paragraph({
+                    children: [
+                        new TextRun({ text: name, bold: true, size: 28 }),
+                        new TextRun({ text: ` (${data.type})`, italics: true })
+                    ],
+                    spacing: { before: 300, after: 100 }
+                }),
+                new Paragraph({
+                    text: `Total de unidades: ${data.total}`,
+                    spacing: { after: 100 }
+                })
+            );
+
+            // Sort sizes logically if possible (Custom sort or just alphabetical)
+            const sortedSizes = Object.entries(data.sizes).sort((a, b) => {
+                const order = ['P', 'M', 'G', 'GG', 'XG', 'XXG', 'EXG'];
+                const idxA = order.indexOf(a[0]);
+                const idxB = order.indexOf(b[0]);
+                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                return a[0].localeCompare(b[0]);
+            });
+
+            const tableRows = [
+                new TableRow({
+                    children: [
+                        new TableCell({ children: [new Paragraph({ text: "Tamanho", bold: true })], width: { size: 50, type: WidthType.PERCENTAGE } }),
+                        new TableCell({ children: [new Paragraph({ text: "Quantidade", bold: true })], width: { size: 50, type: WidthType.PERCENTAGE } })
+                    ]
+                })
+            ];
+
+            sortedSizes.forEach(([size, qty]) => {
+                tableRows.push(
+                    new TableRow({
+                        children: [
+                            new TableCell({ children: [new Paragraph(size)] }),
+                            new TableCell({ children: [new Paragraph(String(qty))] })
+                        ]
+                    })
+                );
+            });
+
+            children.push(
+                new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    rows: tableRows,
+                    borders: {
+                        top: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
+                        bottom: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
+                        left: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
+                        right: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
+                        insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
+                        insideVertical: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" }
+                    }
+                })
+            );
+        });
+
+        // Orders List Section
+        children.push(
+            new Paragraph({
+                text: "Lista de Pedidos",
+                heading: HeadingLevel.HEADING_2,
+                spacing: { before: 800, after: 300 },
+                pageBreakBefore: true
+            })
+        );
+
+        campaignOrders.forEach(order => {
+            const itemsList = order.parsedItems
+                .filter(it => {
+                    const pid = Number(it.id || it.productId || it.shirtId);
+                    return shirtIds.includes(pid) || shirtNames.includes((it.name || '').trim());
+                })
+                .map(it => `${it.qty || 1}x ${it.name} (${it.size})`)
+                .join(', ');
+
+            children.push(
+                new Paragraph({
+                    children: [
+                        new TextRun({ text: `Pedido #${order.id} - ${order.customerName}`, bold: true, color: "2E74B5" }),
+                    ],
+                    spacing: { before: 300 }
+                }),
+                new Paragraph({
+                    text: `Itens: ${itemsList}`,
+                    indent: { left: 720 }
+                }),
+                new Paragraph({
+                    text: `Contato: ${order.customerPhone || 'N/A'} | Email: ${order.customerEmail || 'N/A'}`,
+                    indent: { left: 720 },
+                    spacing: { after: 100 }
+                }),
+                new Paragraph({
+                    text: "",
+                    border: { bottom: { color: "E0E0E0", space: 1, style: BorderStyle.SINGLE, size: 6 } }
+                })
+            );
+        });
+
+        const doc = new Document({
+            sections: [{
+                properties: {},
+                children: children
+            }]
+        });
+        
+        const buffer = await Packer.toBuffer(doc);
+        
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        res.setHeader('Content-Disposition', `attachment; filename=pedidos-${campaign.accessCode}.docx`);
+        res.send(buffer);
+        
+    } catch (error) {
+        console.error('Erro ao gerar DOCX:', error);
+        res.status(500).send('Erro ao gerar arquivo');
+    }
+});
+
 // Export Orders (CSV)
 router.get('/campanhas/:id/exportar-pedidos', requireAdmin, async (req, res) => {
     try {

@@ -968,6 +968,16 @@
     color: #fff;
 }
 
+.action-tile-btn.word:hover {
+    border-color: #2b579a;
+    background: #eff6ff;
+    color: #1e3a8a;
+}
+.action-tile-btn.word:hover i {
+    background: #2b579a;
+    color: #fff;
+}
+
 /* --- NEW MODERN DATA GRID LAYOUT --- */
 .details-data-grid {
     display: grid;
