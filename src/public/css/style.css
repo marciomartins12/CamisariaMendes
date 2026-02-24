@@ -117,19 +117,19 @@ body {
 }
 
 .brand-main {
-  font-family: "Futura Md BT", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Jost", "Futura Md BT", sans-serif;
   color: var(--secondary-blue);
   font-size: 0.8em;
   text-transform: uppercase;
   letter-spacing: 2px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .brand-sub {
-  font-family: "Futura Md BT", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Jost", "Futura Md BT", sans-serif;
   color: #ffffff;
   font-size: 0.9em;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 /* Nav Menu Wrapper */
