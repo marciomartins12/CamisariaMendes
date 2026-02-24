@@ -18,6 +18,7 @@ router.get('/api/check-payment/:orderId', PaymentController.checkStatus); // New
 router.post('/api/continue-payment/:orderId', PaymentController.continuePayment); // Repay route
 
 // Checkout & Orders
+router.get('/debug/orders', OrderController.debugOrders);
 router.get('/checkout', OrderController.checkoutPage);
 router.get('/checkout/pagamento/:orderId', OrderController.paymentPage);
 router.get('/checkout/pix/:orderId', PaymentController.pixPage);

@@ -36,6 +36,57 @@ const OrderController = {
         }
     },
 
+    // Debug Route for Production Diagnosis
+    async debugOrders(req, res) {
+        try {
+            const user = req.session.user || null;
+            const userId = user ? user.id : null;
+            const userEmail = user ? user.email : null;
+
+            // 1. Check orders for this specific user
+            let userOrders = [];
+            if (userId || userEmail) {
+                const whereConditions = [];
+                if (userId) whereConditions.push({ userId });
+                if (userEmail) whereConditions.push({ customerEmail: userEmail });
+
+                const whereClause = {
+                    status: { [Op.in]: ['approved', 'pending', 'rejected', 'cancelled'] }
+                };
+
+                if (whereConditions.length > 1) {
+                    whereClause[Op.or] = whereConditions;
+                } else if (whereConditions.length === 1) {
+                    Object.assign(whereClause, whereConditions[0]);
+                }
+
+                userOrders = await Order.findAll({
+                    where: whereClause,
+                    limit: 5,
+                    order: [['createdAt', 'DESC']]
+                });
+            }
+
+            // 2. Check any recent orders in DB (to see if DB is empty)
+            const recentOrders = await Order.findAll({
+                limit: 5,
+                order: [['createdAt', 'DESC']],
+                attributes: ['id', 'status', 'createdAt', 'userId', 'customerEmail']
+            });
+
+            res.json({
+                environment: process.env.NODE_ENV,
+                session: req.session,
+                user: user,
+                userOrdersCount: userOrders.length,
+                userOrdersSample: userOrders.map(o => ({ id: o.id, status: o.status, date: o.createdAt })),
+                dbRecentOrdersSample: recentOrders
+            });
+        } catch (error) {
+            res.status(500).json({ error: error.message, stack: error.stack });
+        }
+    },
+
     // Render Order History Page
     async historyPage(req, res) {
         try {
