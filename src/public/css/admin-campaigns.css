@@ -107,6 +107,7 @@
 /* Table Styles */
 .table-responsive {
     overflow-x: auto;
+    max-width: 100%;
 }
 
 .admin-table {
@@ -115,7 +116,7 @@
 }
 
 /* Responsive tweaks specific for campaigns table */
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
     #campaignsTable th,
     #campaignsTable td {
         padding: 0.75rem 0.75rem;

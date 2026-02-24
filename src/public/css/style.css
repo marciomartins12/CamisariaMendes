@@ -2485,6 +2485,8 @@ body {
     padding: 0.5rem 3rem 8rem 3rem; /* Minimal top padding */
     background-color: var(--admin-bg);
     min-height: calc(100vh - var(--header-height));
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .dashboard-header {
