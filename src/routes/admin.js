@@ -1557,7 +1557,21 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                     const pid = Number(it.id || it.productId || it.shirtId);
                     return shirtIds.includes(pid) || shirtNames.includes((it.name || '').trim());
                 })
-                .map(it => `• ${it.qty || 1}x ${it.name} [${it.size}]`);
+                .map(it => {
+                    const pid = Number(it.id || it.productId || it.shirtId);
+                    let matchingShirt = (campaign.shirts || []).find(s => s.id === pid);
+                    
+                    // Fallback: try to match by name if ID fails
+                    if (!matchingShirt && it.name) {
+                        matchingShirt = (campaign.shirts || []).find(s => (s.name || '').trim() === (it.name || '').trim());
+                    }
+
+                    const type = matchingShirt ? matchingShirt.type : (it.type || 'Padrão');
+                    
+                    // Ex: "• 1x Camiseta X [M] - Tradicional"
+                    // User asked for "tipo da camisa" and "corte". Assuming type covers this.
+                    return `• ${it.qty || 1}x ${it.name} [${it.size}] - Tipo: ${type}`;
+                });
 
             // Add formatting to items
             const itemParagraphs = itemsLines.map(line => new Paragraph({ text: line, spacing: { after: 40 } }));
