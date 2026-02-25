@@ -1213,10 +1213,13 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                 if (shirtIds.includes(pid) || shirtNames.includes(name)) {
                     const key = name || `Produto #${pid}`;
                     if (!summary[key]) {
-                        // Try to find image from campaign shirts
+                        // Try to find image/type from campaign shirts
                         let productImg = null;
+                        let productType = item.type || 'Padrão';
+
                         const matchingShirt = (campaign.shirts || []).find(s => s.id === pid || s.name === name);
                         if (matchingShirt) {
+                            productType = matchingShirt.type;
                             try {
                                 const imgs = JSON.parse(matchingShirt.imagesJSON || '[]');
                                 if (imgs.length > 0) productImg = imgs[0];
@@ -1226,7 +1229,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                         summary[key] = { 
                             total: 0, 
                             sizes: {}, 
-                            type: item.type || 'Padrão',
+                            type: productType,
                             image: productImg
                         };
                     }
