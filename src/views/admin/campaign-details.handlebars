@@ -67,304 +67,298 @@
             </div>
         </div>
 
-        <div class="details-grid-layout">
-            <!-- Left Column: General Info & Products -->
-            <div class="left-col">
-                <!-- General Info Card -->
-                <div class="details-card">
-                    <div class="card-header">
-                        <h3><i class="fas fa-info-circle"></i> Informações Gerais</h3>
-                        <span class="badge badge-{{campaign.status}}">
-                            {{#if (eq campaign.status 'active')}}Ativa{{/if}}
-                            {{#if (eq campaign.status 'inactive')}}Inativa{{/if}}
-                        </span>
-                    </div>
-                    <div class="card-body">
-                        <div class="details-data-grid">
-                            <!-- Description -->
-                            <div class="data-item full-width">
-                                <div class="data-icon purple">
-                                    <i class="fas fa-align-left"></i>
-                                </div>
-                                <div class="data-content">
-                                    <span class="data-label">Descrição</span>
-                                    <span class="data-value">{{campaign.description}}</span>
-                                </div>
+        <div class="details-info-row">
+            <!-- General Info Card -->
+            <div class="details-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-info-circle"></i> Informações Gerais</h3>
+                    <span class="badge badge-{{campaign.status}}">
+                        {{#if (eq campaign.status 'active')}}Ativa{{/if}}
+                        {{#if (eq campaign.status 'inactive')}}Inativa{{/if}}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="details-data-grid">
+                        <!-- Description -->
+                        <div class="data-item full-width">
+                            <div class="data-icon purple">
+                                <i class="fas fa-align-left"></i>
                             </div>
-
-                            <!-- Date -->
-                            <div class="data-item">
-                                <div class="data-icon blue">
-                                    <i class="far fa-calendar-alt"></i>
-                                </div>
-                                <div class="data-content">
-                                    <span class="data-label">Período</span>
-                                    <span class="data-value">{{formatDate campaign.startDate}} - {{formatDate campaign.endDate}}</span>
-                                </div>
+                            <div class="data-content">
+                                <span class="data-label">Descrição</span>
+                                <span class="data-value">{{campaign.description}}</span>
                             </div>
+                        </div>
 
-                            <!-- Created At -->
-                            <div class="data-item">
-                                <div class="data-icon orange">
-                                    <i class="far fa-clock"></i>
-                                </div>
-                                <div class="data-content">
-                                    <span class="data-label">Criada em</span>
-                                    <span class="data-value">{{formatDate campaign.createdAt}}</span>
-                                </div>
+                        <!-- Date -->
+                        <div class="data-item">
+                            <div class="data-icon blue">
+                                <i class="far fa-calendar-alt"></i>
                             </div>
+                            <div class="data-content">
+                                <span class="data-label">Período</span>
+                                <span class="data-value">{{formatDate campaign.startDate}} - {{formatDate campaign.endDate}}</span>
+                            </div>
+                        </div>
 
-                            <!-- Access Code -->
-                            <div class="data-item full-width">
-                                <div class="data-icon green">
-                                    <i class="fas fa-key"></i>
-                                </div>
-                                <div class="data-content">
-                                    <span class="data-label">Código de Acesso</span>
-                                    <div class="data-value" style="display: flex; align-items: center; gap: 10px;">
-                                        <code style="background: #f1f5f9; padding: 4px 10px; border-radius: 8px; border: 1px solid #e2e8f0; font-family: monospace; color: #475569; font-weight: 700; font-size: 1.1rem;">{{campaign.accessCode}}</code>
-                                        <button class="copy-btn" onclick="copyToClipboard('{{campaign.accessCode}}')" title="Copiar Código">
-                                            <i class="far fa-copy"></i>
-                                        </button>
-                                    </div>
+                        <!-- Created At -->
+                        <div class="data-item">
+                            <div class="data-icon orange">
+                                <i class="far fa-clock"></i>
+                            </div>
+                            <div class="data-content">
+                                <span class="data-label">Criada em</span>
+                                <span class="data-value">{{formatDate campaign.createdAt}}</span>
+                            </div>
+                        </div>
+
+                        <!-- Access Code -->
+                        <div class="data-item full-width">
+                            <div class="data-icon green">
+                                <i class="fas fa-key"></i>
+                            </div>
+                            <div class="data-content">
+                                <span class="data-label">Código de Acesso</span>
+                                <div class="data-value" style="display: flex; align-items: center; gap: 10px;">
+                                    <code style="background: #f1f5f9; padding: 4px 10px; border-radius: 8px; border: 1px solid #e2e8f0; font-family: monospace; color: #475569; font-weight: 700; font-size: 1.1rem;">{{campaign.accessCode}}</code>
+                                    <button class="copy-btn" onclick="copyToClipboard('{{campaign.accessCode}}')" title="Copiar Código">
+                                        <i class="far fa-copy"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="details-card">
-                    <div class="card-header">
-                        <h3><i class="fas fa-tshirt"></i> Produtos Disponíveis</h3>
-                        <button 
-                            type="button" 
-                            class="btn-mini btn-add-product" 
-                            id="addProductBtn"
-                            data-campaign-id="{{campaign.id}}"
-                        >
-                            <i class="fas fa-plus"></i>
-                            <span>Novo produto</span>
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div class="products-grid-mini">
-                            {{#each campaign.shirts}}
-                            <div class="mini-product-card">
-                                <div class="mini-product-image-wrapper" data-images='{{json this.images}}' data-index="0">
-                                    {{#if this.images.[0]}}
-                                        <img src="{{this.images.[0]}}" alt="{{this.name}}" class="mini-product-image">
-                                        {{#if this.images.[1]}}
-                                        <div class="mini-product-multi">
-                                            <span class="multi-count">{{this.images.length}} fotos</span>
-                                        </div>
-                                        <button type="button" class="mini-image-nav prev"><i class="fas fa-chevron-left"></i></button>
-                                        <button type="button" class="mini-image-nav next"><i class="fas fa-chevron-right"></i></button>
-                                        {{/if}}
-                                    {{else}}
-                                        <div class="mini-product-placeholder">
-                                            <i class="fas fa-tshirt"></i>
-                                        </div>
-                                    {{/if}}
-                                    <div class="product-price-badge">
-                                        R$ {{this.price}}
-                                    </div>
-                                </div>
-                                
-                                <div class="mini-product-details">
-                                    <h4 class="mini-product-title" title="{{this.name}}">{{this.name}}</h4>
-                                    
-                                    <div class="mini-product-specs">
-                                        <div class="spec-item">
-                                            <i class="fas fa-tag"></i> <span>{{this.type}}</span>
-                                        </div>
-                                        <div class="spec-item">
-                                            <i class="fas fa-palette"></i> <span>{{this.color}}</span>
-                                        </div>
-                                    </div>
+            <!-- Campaign Leader Info Card -->
+            <div class="details-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-user-tie"></i> Dados do Líder da Campanha</h3>
+                </div>
+                <div class="card-body">
+                    <div class="details-data-grid" style="grid-template-columns: 1fr;">
+                        <div class="data-item">
+                            <div class="data-icon blue">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="data-content">
+                                <span class="data-label">Nome</span>
+                                <span class="data-value">{{campaign.clientName}}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="data-item">
+                            <div class="data-icon green">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <div class="data-content">
+                                <span class="data-label">Telefone</span>
+                                <span class="data-value">{{campaign.clientPhone}}</span>
+                            </div>
+                        </div>
 
-                                    <div class="mini-product-sizes">
-                                        {{#each (split this.sizes ',')}}
-                                        <span class="size-pill">{{this}}</span>
-                                        {{/each}}
-                                    </div>
-                                </div>
-
-                                <div class="mini-product-actions">
-                                    <a 
-                                        href="/admin/campanhas/detalhes/{{../campaign.id}}?editShirt={{this.id}}" 
-                                        class="btn-mini btn-edit-product"
-                                    >
-                                        <i class="fas fa-pen-to-square"></i>
-                                        <span>Editar</span>
+                        <div class="data-item">
+                            <div class="data-icon pink">
+                                <i class="fab fa-instagram"></i>
+                            </div>
+                            <div class="data-content">
+                                <span class="data-label">Instagram</span>
+                                <span class="data-value">
+                                    {{#if campaign.clientInstagram}}
+                                    <a href="https://instagram.com/{{campaign.clientInstagram}}" target="_blank" style="color: #d62976; text-decoration: none; font-weight: 600; display: flex; align-items: center; gap: 5px;">
+                                        @{{campaign.clientInstagram}} <i class="fas fa-external-link-alt" style="font-size: 0.7rem;"></i>
                                     </a>
-                                    <form action="/admin/campanhas/{{../campaign.id}}/camisas/deletar/{{this.id}}" method="POST" class="inline-delete" onsubmit="return confirm('Deseja realmente apagar este modelo?');">
-                                        <button type="submit" class="btn-mini delete">
-                                            <i class="fas fa-trash"></i>
-                                            <span>Apagar</span>
-                                        </button>
-                                    </form>
-                                </div>
+                                    {{else}}
+                                    <span style="color: #94a3b8;">Não informado</span>
+                                    {{/if}}
+                                </span>
                             </div>
-                            {{/each}}
                         </div>
-                    </div>
-                </div>
-
-                <div class="details-card">
-                    <div class="card-header">
-                        <h3><i class="fas fa-receipt"></i> Pedidos da Campanha</h3>
-                    </div>
-                    <div class="card-body">
-                        {{#if orders.length}}
-                        <div class="table-responsive">
-                            <table class="admin-table">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Data</th>
-                                        <th>Cliente</th>
-                                        <th>Contato</th>
-                                        <th>Valor</th>
-                                        <th>Status</th>
-                                        <th>Método</th>
-                                        <th style="text-align:right;">Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {{#each orders}}
-                                    <tr>
-                                        <td>#{{this.id}}</td>
-                                        <td>{{formatDate this.createdAt}}</td>
-                                        <td>{{this.customerName}}</td>
-                                        <td>
-                                            {{#if this.customerEmail}}<div>{{this.customerEmail}}</div>{{/if}}
-                                            {{#if this.customerPhone}}<div>{{this.customerPhone}}</div>{{/if}}
-                                        </td>
-                                        <td>R$ {{this.finalAmount}}</td>
-                                        <td>
-                                            <span class="badge badge-{{this.status}}">
-                                                {{#if (eq this.status 'approved')}}Aprovado{{/if}}
-                                                {{#if (eq this.status 'pending')}}Pendente{{/if}}
-                                                {{#if (eq this.status 'rejected')}}Rejeitado{{/if}}
-                                                {{#if (eq this.status 'cancelled')}}Cancelado{{/if}}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            {{#if this.paymentMethod}}{{this.paymentMethod}}{{else}}-{{/if}}
-                                        </td>
-                                        <td style="text-align:right;">
-                                            <div class="action-buttons">
-                                                {{#if (eq this.status 'pending')}}
-                                                <form action="/admin/pedidos/{{this.id}}/sincronizar" method="POST" style="display:inline;">
-                                                    <button type="submit" class="btn-icon" title="Checar status no Mercado Pago">
-                                                        <i class="fas fa-sync-alt"></i>
-                                                    </button>
-                                                </form>
-                                                <form action="/admin/pedidos/{{this.id}}/aprovar-manual" method="POST" style="display:inline;" onsubmit="return confirm('Confirmar este pedido como pago manualmente?');">
-                                                    <button type="submit" class="btn-icon edit" title="Confirmar manualmente">
-                                                        <i class="fas fa-check-circle"></i>
-                                                    </button>
-                                                </form>
-                                                <form action="/admin/pedidos/{{this.id}}/cancelar" method="POST" style="display:inline;" onsubmit="return confirm('Cancelar este pedido?');">
-                                                    <button type="submit" class="btn-icon delete" title="Cancelar pedido">
-                                                        <i class="fas fa-times-circle"></i>
-                                                    </button>
-                                                </form>
-                                                {{else}}
-                                                <span style="font-size:0.8rem; color:#64748b;">Sem ações</span>
-                                                {{/if}}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {{/each}}
-                                </tbody>
-                            </table>
-                        </div>
-                        {{else}}
-                        <div class="empty-state">
-                            <div class="empty-icon"><i class="fas fa-receipt"></i></div>
-                            <h3>Nenhum pedido encontrado</h3>
-                            <p>Os pedidos desta campanha aparecerão aqui conforme forem realizados.</p>
-                        </div>
-                        {{/if}}
                     </div>
                 </div>
             </div>
 
-            <!-- Right Column: Campaign Leader & Actions -->
-            <div class="right-col">
-                <!-- Campaign Leader Info Card -->
-                <div class="details-card">
-                    <div class="card-header">
-                        <h3><i class="fas fa-user-tie"></i> Dados do Líder da Campanha</h3>
+            <!-- Quick Actions / Export -->
+            <div class="details-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-bolt"></i> Ações Rápidas</h3>
+                </div>
+                <div class="card-body">
+                    <div class="quick-actions-grid">
+                        <button class="action-tile-btn word" id="btnExportWord">
+                            <i class="fas fa-file-word"></i>
+                            <span>Exportar Pedidos</span>
+                        </button>
+                        <button 
+                            class="action-tile-btn share" 
+                            data-share-url="/c/{{campaign.accessCode}}"
+                            data-campaign-title="{{campaign.title}}"
+                            data-campaign-leader="{{campaign.clientName}}"
+                            data-campaign-description="{{campaign.description}}"
+                        >
+                            <i class="fas fa-share-alt"></i>
+                            <span>Compartilhar Link</span>
+                        </button>
                     </div>
-                    <div class="card-body">
-                        <div class="details-data-grid" style="grid-template-columns: 1fr;">
-                            <div class="data-item">
-                                <div class="data-icon blue">
-                                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="details-card">
+            <div class="card-header">
+                <h3><i class="fas fa-tshirt"></i> Produtos Disponíveis</h3>
+                <button 
+                    type="button" 
+                    class="btn-mini btn-add-product" 
+                    id="addProductBtn"
+                    data-campaign-id="{{campaign.id}}"
+                >
+                    <i class="fas fa-plus"></i>
+                    <span>Novo produto</span>
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="products-grid-mini">
+                    {{#each campaign.shirts}}
+                    <div class="mini-product-card">
+                        <div class="mini-product-image-wrapper" data-images='{{json this.images}}' data-index="0">
+                            {{#if this.images.[0]}}
+                                <img src="{{this.images.[0]}}" alt="{{this.name}}" class="mini-product-image">
+                                {{#if this.images.[1]}}
+                                <div class="mini-product-multi">
+                                    <span class="multi-count">{{this.images.length}} fotos</span>
                                 </div>
-                                <div class="data-content">
-                                    <span class="data-label">Nome</span>
-                                    <span class="data-value">{{campaign.clientName}}</span>
+                                <button type="button" class="mini-image-nav prev"><i class="fas fa-chevron-left"></i></button>
+                                <button type="button" class="mini-image-nav next"><i class="fas fa-chevron-right"></i></button>
+                                {{/if}}
+                            {{else}}
+                                <div class="mini-product-placeholder">
+                                    <i class="fas fa-tshirt"></i>
                                 </div>
+                            {{/if}}
+                            <div class="product-price-badge">
+                                R$ {{this.price}}
                             </div>
+                        </div>
+                        
+                        <div class="mini-product-details">
+                            <h4 class="mini-product-title" title="{{this.name}}">{{this.name}}</h4>
                             
-                            <div class="data-item">
-                                <div class="data-icon green">
-                                    <i class="fas fa-phone"></i>
+                            <div class="mini-product-specs">
+                                <div class="spec-item">
+                                    <i class="fas fa-tag"></i> <span>{{this.type}}</span>
                                 </div>
-                                <div class="data-content">
-                                    <span class="data-label">Telefone</span>
-                                    <span class="data-value">{{campaign.clientPhone}}</span>
+                                <div class="spec-item">
+                                    <i class="fas fa-palette"></i> <span>{{this.color}}</span>
                                 </div>
                             </div>
 
-                            <div class="data-item">
-                                <div class="data-icon pink">
-                                    <i class="fab fa-instagram"></i>
-                                </div>
-                                <div class="data-content">
-                                    <span class="data-label">Instagram</span>
-                                    <span class="data-value">
-                                        {{#if campaign.clientInstagram}}
-                                        <a href="https://instagram.com/{{campaign.clientInstagram}}" target="_blank" style="color: #d62976; text-decoration: none; font-weight: 600; display: flex; align-items: center; gap: 5px;">
-                                            @{{campaign.clientInstagram}} <i class="fas fa-external-link-alt" style="font-size: 0.7rem;"></i>
-                                        </a>
-                                        {{else}}
-                                        <span style="color: #94a3b8;">Não informado</span>
-                                        {{/if}}
-                                    </span>
-                                </div>
+                            <div class="mini-product-sizes">
+                                {{#each (split this.sizes ',')}}
+                                <span class="size-pill">{{this}}</span>
+                                {{/each}}
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Quick Actions / Export -->
-                <div class="details-card">
-                    <div class="card-header">
-                        <h3><i class="fas fa-bolt"></i> Ações Rápidas</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="quick-actions-grid">
-                            <button class="action-tile-btn word" id="btnExportWord">
-                                <i class="fas fa-file-word"></i>
-                                <span>Exportar Pedidos</span>
-                            </button>
-                            <button 
-                                class="action-tile-btn share" 
-                                data-share-url="/c/{{campaign.accessCode}}"
-                                data-campaign-title="{{campaign.title}}"
-                                data-campaign-leader="{{campaign.clientName}}"
-                                data-campaign-description="{{campaign.description}}"
+                        <div class="mini-product-actions">
+                            <a 
+                                href="/admin/campanhas/detalhes/{{../campaign.id}}?editShirt={{this.id}}" 
+                                class="btn-mini btn-edit-product"
                             >
-                                <i class="fas fa-share-alt"></i>
-                                <span>Compartilhar Link</span>
-                            </button>
+                                <i class="fas fa-pen-to-square"></i>
+                                <span>Editar</span>
+                            </a>
+                            <form action="/admin/campanhas/{{../campaign.id}}/camisas/deletar/{{this.id}}" method="POST" class="inline-delete" onsubmit="return confirm('Deseja realmente apagar este modelo?');">
+                                <button type="submit" class="btn-mini delete">
+                                    <i class="fas fa-trash"></i>
+                                    <span>Apagar</span>
+                                </button>
+                            </form>
                         </div>
                     </div>
+                    {{/each}}
                 </div>
+            </div>
+        </div>
+
+        <div class="details-card">
+            <div class="card-header">
+                <h3><i class="fas fa-receipt"></i> Pedidos da Campanha</h3>
+            </div>
+            <div class="card-body">
+                {{#if orders.length}}
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Data</th>
+                                <th>Cliente</th>
+                                <th>Contato</th>
+                                <th>Valor</th>
+                                <th>Status</th>
+                                <th>Método</th>
+                                <th style="text-align:right;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#each orders}}
+                            <tr>
+                                <td>#{{this.id}}</td>
+                                <td>{{formatDate this.createdAt}}</td>
+                                <td>{{this.customerName}}</td>
+                                <td>
+                                    {{#if this.customerEmail}}<div>{{this.customerEmail}}</div>{{/if}}
+                                    {{#if this.customerPhone}}<div>{{this.customerPhone}}</div>{{/if}}
+                                </td>
+                                <td>R$ {{this.finalAmount}}</td>
+                                <td>
+                                    <span class="badge badge-{{this.status}}">
+                                        {{#if (eq this.status 'approved')}}Aprovado{{/if}}
+                                        {{#if (eq this.status 'pending')}}Pendente{{/if}}
+                                        {{#if (eq this.status 'rejected')}}Rejeitado{{/if}}
+                                        {{#if (eq this.status 'cancelled')}}Cancelado{{/if}}
+                                    </span>
+                                </td>
+                                <td>
+                                    {{#if this.paymentMethod}}{{this.paymentMethod}}{{else}}-{{/if}}
+                                </td>
+                                <td style="text-align:right;">
+                                    <div class="action-buttons">
+                                        {{#if (eq this.status 'pending')}}
+                                        <form action="/admin/pedidos/{{this.id}}/sincronizar" method="POST" style="display:inline;">
+                                            <button type="submit" class="btn-icon" title="Checar status no Mercado Pago">
+                                                <i class="fas fa-sync-alt"></i>
+                                            </button>
+                                        </form>
+                                        <form action="/admin/pedidos/{{this.id}}/aprovar-manual" method="POST" style="display:inline;" onsubmit="return confirm('Confirmar este pedido como pago manualmente?');">
+                                            <button type="submit" class="btn-icon edit" title="Confirmar manualmente">
+                                                <i class="fas fa-check-circle"></i>
+                                            </button>
+                                        </form>
+                                        <form action="/admin/pedidos/{{this.id}}/cancelar" method="POST" style="display:inline;" onsubmit="return confirm('Cancelar este pedido?');">
+                                            <button type="submit" class="btn-icon delete" title="Cancelar pedido">
+                                                <i class="fas fa-times-circle"></i>
+                                            </button>
+                                        </form>
+                                        {{else}}
+                                        <span style="font-size:0.8rem; color:#64748b;">Sem ações</span>
+                                        {{/if}}
+                                    </div>
+                                </td>
+                            </tr>
+                            {{/each}}
+                        </tbody>
+                    </table>
+                </div>
+                {{else}}
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fas fa-receipt"></i></div>
+                    <h3>Nenhum pedido encontrado</h3>
+                    <p>Os pedidos desta campanha aparecerão aqui conforme forem realizados.</p>
+                </div>
+                {{/if}}
             </div>
         </div>
     </main>

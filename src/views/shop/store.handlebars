@@ -814,7 +814,7 @@
                     </div>
 
                     <button class="btn-add" id="btn-add-{{this.id}}" 
-                            onclick="addToCart({{this.id}}, '{{this.name}}', {{this.price}}, '{{this.images.[0]}}')" disabled>
+                            onclick="addToCart({{this.id}}, '{{this.name}}', {{this.price}}, '{{this.images.[0]}}', '{{this.type}}')" disabled>
                         COMPRAR
                     </button>
                 </div>
@@ -984,7 +984,7 @@
     }
 
     // Add to Cart
-    function addToCart(id, name, price, image) {
+    function addToCart(id, name, price, image, type) {
         const size = selectedSizes[id];
         if(!size) return alert('Selecione um tamanho');
 
@@ -1001,7 +1001,7 @@
         if(existing) {
             existing.qty += qtyToAdd;
         } else {
-            cart.push({ id, name, price, image, size, qty: qtyToAdd });
+            cart.push({ id, name, price, image, size, type: type || 'Tradicional', qty: qtyToAdd });
         }
 
         updateCartUI();

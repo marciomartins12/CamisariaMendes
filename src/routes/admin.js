@@ -1556,8 +1556,16 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                 .filter(it => {
                     const pid = Number(it.id || it.productId || it.shirtId);
                     return shirtIds.includes(pid) || shirtNames.includes((it.name || '').trim());
-                })
-                .map(it => `• ${it.qty || 1}x ${it.name} [${it.size}]`);
+            })
+            .map(it => {
+                let type = it.type;
+                if (!type) {
+                    const pid = Number(it.id || it.productId || it.shirtId);
+                    const shirt = (campaign.shirts || []).find(s => s.id === pid);
+                    if (shirt) type = shirt.type;
+                }
+                return `• ${it.qty || 1}x ${it.name} [${it.size}] - ${type || 'Tradicional'}`;
+            });
 
             // Add formatting to items
             const itemParagraphs = itemsLines.map(line => new Paragraph({ text: line, spacing: { after: 40 } }));
