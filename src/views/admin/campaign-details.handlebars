@@ -203,6 +203,40 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Sales Summary -->
+            <div class="details-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-chart-pie"></i> Resumo de Vendas</h3>
+                </div>
+                <div class="card-body">
+                    <div class="sales-summary-list">
+                        {{#if salesSummary}}
+                            {{#each salesSummary}}
+                            <div class="sales-summary-item">
+                                <div class="sales-item-header">
+                                    <span class="sales-item-name">{{@key}}</span>
+                                    <span class="sales-item-type badge badge-info">{{this.type}}</span>
+                                </div>
+                                <div class="sales-item-stats">
+                                    <div class="sales-total">
+                                        <span class="label">Total:</span>
+                                        <span class="value">{{this.total}}</span>
+                                    </div>
+                                    <div class="sales-sizes">
+                                        {{#each this.sizes}}
+                                        <span class="size-badge">{{@key}}: {{this}}</span>
+                                        {{/each}}
+                                    </div>
+                                </div>
+                            </div>
+                            {{/each}}
+                        {{else}}
+                            <p class="text-muted">Nenhuma venda registrada.</p>
+                        {{/if}}
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="details-card">

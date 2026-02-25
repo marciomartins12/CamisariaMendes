@@ -1231,9 +1231,10 @@
 }
 
 /* Nova linha de detalhes da campanha */
+/* Updated Details Info Row - 4 Cards */
 .details-info-row {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 1.5rem;
     margin-bottom: 1.5rem;
 }
@@ -1242,4 +1243,73 @@
     .details-info-row {
         grid-template-columns: 1fr;
     }
+}
+
+/* Sales Summary Styles */
+.sales-summary-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.sales-summary-item {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.5rem;
+}
+
+.sales-summary-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.sales-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.sales-item-name {
+    font-weight: 600;
+    color: #333;
+}
+
+.sales-item-type {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    background-color: #e3f2fd;
+    color: #1976d2;
+    border-radius: 4px;
+}
+
+.sales-item-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.sales-total .label {
+    color: #666;
+    margin-right: 0.25rem;
+}
+
+.sales-total .value {
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.sales-sizes {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.size-badge {
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 0.1rem 0.4rem;
+    font-size: 0.8rem;
+    color: #555;
 }

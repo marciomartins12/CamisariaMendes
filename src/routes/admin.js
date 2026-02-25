@@ -1012,6 +1012,50 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
             campaignPlain.totalRevenueFormatted = `${totalRevenue.toFixed(2)}`;
         }
 
+        // Calculate Sales Summary for View
+        const salesSummary = {}; // { 'Shirt Name': { total: 0, sizes: {}, type: 'Tradicional', image: null } }
+        
+        ordersForCampaign.forEach(order => {
+            const items = order.items || [];
+            items.forEach(item => {
+                const pid = Number(item.id || item.productId || item.shirtId);
+                const name = (item.name || '').trim();
+                
+                // Check if this item belongs to campaign
+                if (shirtIds.includes(pid) || shirtNames.includes(name)) {
+                    const key = name || `Produto #${pid}`;
+                    if (!salesSummary[key]) {
+                        // Try to find image/type from campaign shirts
+                        let productImg = null;
+                        let productType = item.type || 'Padrão';
+                        
+                        const matchingShirt = (campaignPlain.shirts || []).find(s => Number(s.id) === pid || s.name === name);
+                        if (matchingShirt) {
+                            productType = matchingShirt.type;
+                            try {
+                                const imgs = matchingShirt.images || []; // already parsed above
+                                if (imgs.length > 0) productImg = imgs[0];
+                            } catch(e) {}
+                        }
+                        
+                        salesSummary[key] = { 
+                            total: 0, 
+                            sizes: {}, 
+                            type: productType,
+                            image: productImg
+                        };
+                    }
+                    
+                    const qty = Number(item.qty || item.quantity || 1);
+                    salesSummary[key].total += qty;
+                    
+                    const size = item.size || 'N/A';
+                    if (!salesSummary[key].sizes[size]) salesSummary[key].sizes[size] = 0;
+                    salesSummary[key].sizes[size] += qty;
+                }
+            });
+        });
+
         let editingShirt = null;
         const editShirtId = req.query.editShirt;
         if (editShirtId && campaignPlain.shirts && campaignPlain.shirts.length) {
@@ -1026,7 +1070,8 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
             isCampaigns: true,
             campaign: campaignPlain,
             editingShirt,
-            orders: ordersForCampaign
+            orders: ordersForCampaign,
+            salesSummary
         });
     } catch (error) {
         console.error(error);
