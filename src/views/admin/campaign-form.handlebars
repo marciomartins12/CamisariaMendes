@@ -262,7 +262,8 @@
     let currentUploadWrapper = null;
 
     const SIZE_PRESETS = {
-        Tradicional: ['P', 'M', 'G', 'GG', 'XG', 'ExGG', 'P baby look', 'M baby look', 'G baby look'],
+        Tradicional: ['P', 'M', 'G', 'GG', 'ExGG', 'P baby look', 'M baby look', 'G baby look'],
+        Oversized: ['PP', 'P', 'M', 'G', 'XG'],
         Infant: ['2', '4', '6', '8', '10', '12', '14'],
         Default: ['P', 'M', 'G', 'GG', 'XG']
     };
@@ -480,6 +481,8 @@
         let preset = SIZE_PRESETS.Default;
         if (type === 'Tradicional') {
             preset = SIZE_PRESETS.Tradicional;
+        } else if (type === 'Oversized') {
+            preset = SIZE_PRESETS.Oversized;
         } else if (type === 'Infant') {
             preset = SIZE_PRESETS.Infant;
         }
