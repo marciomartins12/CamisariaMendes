@@ -6,9 +6,12 @@ module.exports = {
     loginPage: async (req, res) => {
         const { code } = req.query; // Campaign access code passed as query param
         
-        // If user is already logged in, redirect back to campaign
-        if (req.session && req.session.user && code) {
-            return res.redirect(`/c/${code}`);
+        // If user is already logged in
+        if (req.session && req.session.user) {
+            if (code) {
+                return res.redirect(`/c/${code}`);
+            }
+            return res.redirect('/campanhas');
         }
 
         res.render('user/auth', {
@@ -55,7 +58,7 @@ module.exports = {
                     if (campaignCode) {
                         return res.redirect(`/c/${campaignCode}`);
                     }
-                    return res.redirect('/');
+                    return res.redirect('/campanhas');
                 }
             }
 
@@ -124,7 +127,7 @@ module.exports = {
             if (campaignCode) {
                 return res.redirect(`/c/${campaignCode}`);
             }
-            return res.redirect('/');
+            return res.redirect('/campanhas');
 
         } catch (error) {
             console.error(error);
