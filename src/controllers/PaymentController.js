@@ -1,5 +1,6 @@
 const mercadopago = require('mercadopago');
 const { Order, Coupon } = require('../models');
+const EmailService = require('../services/EmailService');
 
 // Configure Mercado Pago
 // In production, use process.env.MP_ACCESS_TOKEN
@@ -115,8 +116,13 @@ const PaymentController = {
                 couponCode: appliedCouponCode, // Only save if actually applied
                 userId,
                 customerEmail: payer.email,
+                customerName: payer.name ? `${payer.name} ${payer.surname || ''}`.trim() : 'Cliente',
+                customerPhone: payer.phone ? `${payer.phone.area_code || ''}${payer.phone.number || ''}` : null,
                 status: 'pending'
             });
+
+            // Enviar e-mail de confirmação de pedido recebido (Assíncrono para não travar a resposta)
+            EmailService.sendOrderReceived(newOrder).catch(err => console.error('Falha ao enviar e-mail inicial:', err));
 
             res.json({ 
                 orderId: newOrder.id,
@@ -341,6 +347,9 @@ const PaymentController = {
             order.paymentMethod = paymentInfo.payment_method_id;
             order.transactionId = paymentInfo.id.toString();
             await order.save();
+
+            // Enviar e-mail de pagamento aprovado
+            EmailService.sendPaymentConfirmation(order).catch(err => console.error('Falha ao enviar e-mail de pagamento:', err));
 
             // Increment Coupon Usage
             if (order.couponCode) {
