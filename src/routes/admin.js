@@ -528,6 +528,7 @@ router.get('/campanhas', requireAdmin, async (req, res) => {
                 plain.status = computedStatus;
             }
             plain.productCount = plain.shirts ? plain.shirts.length : 0;
+            plain.formattedId = `CAMP${String(plain.id).padStart(3, '0')}`;
             plain.totalRevenue = 0;
             plain.totalOrders = 0;
             return plain;
