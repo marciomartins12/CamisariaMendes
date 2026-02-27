@@ -90,6 +90,18 @@ module.exports = {
         const { name, email, phone, password, confirmPassword, campaignCode } = req.body;
 
         try {
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email || !emailRegex.test(email)) {
+                return res.render('user/auth', {
+                    title: 'Identifique-se - Camisaria Mendes',
+                    campaignCode,
+                    error: 'Por favor, insira um e-mail válido.',
+                    activeTab: 'register',
+                    oldData: req.body
+                });
+            }
+
             if (password !== confirmPassword) {
                 return res.render('user/auth', {
                     title: 'Identifique-se - Camisaria Mendes',
