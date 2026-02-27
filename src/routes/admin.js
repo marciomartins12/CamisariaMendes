@@ -1377,12 +1377,9 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                                         children: [new TextRun({ text: "CAMPANHA:", bold: true, size: 24 })],
                                         spacing: { before: 100 }
                                     }),
+                                    new Paragraph({ text: campaign.title, spacing: { after: 100 } }),
                                     new Paragraph({ 
-                                        children: [
-                                            new TextRun({ text: `${formattedId} - `, bold: true, color: "2E74B5" }),
-                                            new TextRun({ text: campaign.title })
-                                        ],
-                                        spacing: { after: 100 } 
+                                        children: [new TextRun({ text: "N° da campanha: ", bold: true }), new TextRun({ text: formattedId, color: "2E74B5", bold: true })] 
                                     }),
                                     new Paragraph({ 
                                         children: [new TextRun({ text: "Líder da campanha: ", bold: true }), new TextRun(campaign.clientName)] 
@@ -1642,6 +1639,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             if (itemParagraphs.length === 0) itemParagraphs.push(new Paragraph({ text: "(Sem itens desta campanha)", italics: true }));
 
             const rowColor = index % 2 === 0 ? "FFFFFF" : "F9F9F9"; // Striped rows
+            const sequentialNumber = String(index + 1).padStart(2, '0');
             
             // Resolve Phone (Order > User)
             let phone = order.customerPhone;
@@ -1655,7 +1653,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                     children: [
                         new TableCell({ 
                             children: [
-                                new Paragraph({ text: `Ref: #${order.id}`, bold: true }),
+                                new Paragraph({ text: `Ref: #${sequentialNumber}`, bold: true }),
                                 new Paragraph({ text: order.customerName, bold: true, size: 22 }),
                                 new Paragraph({ text: phoneText, size: 18 }),
                                 new Paragraph({ text: order.customerEmail || '', size: 18 })
