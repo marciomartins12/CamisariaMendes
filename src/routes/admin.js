@@ -1653,7 +1653,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                     children: [
                         new TableCell({ 
                             children: [
-                                new Paragraph({ text: `Ref: #${sequentialNumber}`, bold: true }),
+                                new Paragraph({ text: `Número do pedido: #${sequentialNumber}`, bold: true }),
                                 new Paragraph({ text: order.customerName, bold: true, size: 22 }),
                                 new Paragraph({ text: phoneText, size: 18 }),
                                 new Paragraph({ text: order.customerEmail || '', size: 18 })
