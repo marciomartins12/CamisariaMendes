@@ -914,6 +914,8 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
             campaignPlain.daysRemaining = 0;
         }
 
+        campaignPlain.formattedId = `CAMP${String(campaignPlain.id).padStart(3, '0')}`;
+
         const shirtIds = campaignPlain.shirts
             ? campaignPlain.shirts
                 .map(s => Number(s.id))
