@@ -48,8 +48,10 @@
                         <input type="password" name="password" class="form-control" required placeholder="Sua senha">
                     </div>
                 </div>
-                <div class="text-right mb-3">
-                    <a href="#" onclick="switchTab('forgot'); return false;" style="font-size: 0.9rem; color: #666;">Esqueci minha senha</a>
+                <div class="d-flex justify-content-end mb-3">
+                    <a href="#" onclick="switchTab('forgot'); return false;" class="forgot-link">
+                        <i class="fas fa-question-circle mr-1"></i> Esqueci minha senha
+                    </a>
                 </div>
                 <button type="submit" class="btn btn-primary btn-block">
                     <i class="fas fa-sign-in-alt"></i> Acessar
@@ -89,8 +91,10 @@
                 <button type="submit" class="btn btn-primary btn-block">
                     <i class="fas fa-paper-plane"></i> Enviar Nova Senha
                 </button>
-                <div class="text-center mt-3">
-                    <a href="#" onclick="switchTab('login'); return false;" style="font-size: 0.9rem;">Voltar para Login</a>
+                <div class="mt-3">
+                    <button type="button" class="btn btn-outline-secondary btn-block" onclick="switchTab('login')">
+                        <i class="fas fa-arrow-left mr-2"></i> Voltar para Login
+                    </button>
                 </div>
             </form>
 
@@ -264,6 +268,22 @@
         transform: rotate(0deg) scale(1.05);
     }
 
+    .forgot-link {
+        font-size: 0.9rem;
+        color: #64748b;
+        text-decoration: none;
+        transition: all 0.3s;
+        padding: 5px 10px;
+        border-radius: 4px;
+        background-color: transparent;
+    }
+    
+    .forgot-link:hover {
+        color: #0047AB;
+        background-color: #f1f5f9;
+        text-decoration: none;
+    }
+</style>
     .auth-header h2 {
         margin: 0;
         font-size: 1.8rem;
