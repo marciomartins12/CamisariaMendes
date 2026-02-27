@@ -933,7 +933,8 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
             try {
                 const allOrders = await Order.findAll({
                     where: { status: 'approved' },
-                    attributes: ['id', 'status', 'finalAmount', 'items', 'customerName', 'customerEmail', 'customerPhone', 'paymentMethod', 'createdAt']
+                    attributes: ['id', 'status', 'finalAmount', 'items', 'customerName', 'customerEmail', 'customerPhone', 'paymentMethod', 'createdAt', 'userId'],
+                    include: [{ model: User, attributes: ['phone', 'name'] }]
                 });
 
                 ordersForCampaign = allOrders
@@ -966,7 +967,10 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
 
                         const customerName = plain.customerName || 'Cliente';
                         const customerEmail = plain.customerEmail || '';
-                        const customerPhone = plain.customerPhone || '';
+                        let customerPhone = plain.customerPhone || '';
+                        if (!customerPhone && plain.User && plain.User.phone) {
+                            customerPhone = plain.User.phone;
+                        }
 
                         return {
                             ...plain,
@@ -1179,7 +1183,8 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
         // Fetch all approved orders
         const allOrders = await Order.findAll({
             where: { status: 'approved' },
-            attributes: ['id', 'status', 'finalAmount', 'items', 'customerName', 'customerEmail', 'customerPhone', 'createdAt', 'paymentMethod']
+            attributes: ['id', 'status', 'finalAmount', 'items', 'customerName', 'customerEmail', 'customerPhone', 'createdAt', 'paymentMethod', 'userId'],
+            include: [{ model: User, attributes: ['phone', 'name'] }] 
         });
         
         // Filter orders for this campaign
@@ -1626,6 +1631,13 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             if (itemParagraphs.length === 0) itemParagraphs.push(new Paragraph({ text: "(Sem itens desta campanha)", italics: true }));
 
             const rowColor = index % 2 === 0 ? "FFFFFF" : "F9F9F9"; // Striped rows
+            
+            // Resolve Phone (Order > User)
+            let phone = order.customerPhone;
+            if (!phone && order.User && order.User.phone) {
+                phone = order.User.phone;
+            }
+            const phoneText = phone ? phone.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3') : 'Tel não inf.';
 
             ordersTableRows.push(
                 new TableRow({
@@ -1634,7 +1646,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                             children: [
                                 new Paragraph({ text: `Ref: #${order.id}`, bold: true }),
                                 new Paragraph({ text: order.customerName, bold: true, size: 22 }),
-                                new Paragraph({ text: order.customerPhone ? order.customerPhone.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3') : 'Tel não inf.', size: 18 }),
+                                new Paragraph({ text: phoneText, size: 18 }),
                                 new Paragraph({ text: order.customerEmail || '', size: 18 })
                             ],
                             shading: { fill: rowColor },
