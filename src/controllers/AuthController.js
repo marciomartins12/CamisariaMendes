@@ -102,6 +102,43 @@ module.exports = {
                 });
             }
 
+            // Check for common typos in domains
+            const domain = email.split('@')[1].toLowerCase();
+            const typos = {
+                'gmai.com': 'gmail.com',
+                'gmial.com': 'gmail.com',
+                'gmil.com': 'gmail.com',
+                'gmal.com': 'gmail.com',
+                'yaho.com': 'yahoo.com',
+                'yahoo.com.br.br': 'yahoo.com.br',
+                'hotmai.com': 'hotmail.com',
+                'hotmal.com': 'hotmail.com',
+                'hotmali.com': 'hotmail.com',
+                'outlok.com': 'outlook.com',
+                'iclod.com': 'icloud.com'
+            };
+
+            if (typos[domain]) {
+                return res.render('user/auth', {
+                    title: 'Identifique-se - Camisaria Mendes',
+                    campaignCode,
+                    error: `Você quis dizer ${email.replace(domain, typos[domain])}? Por favor, corrija seu e-mail.`,
+                    activeTab: 'register',
+                    oldData: req.body
+                });
+            }
+
+            // Additional strict check for TLD (must be at least 2 chars)
+            if (domain.split('.').pop().length < 2) {
+                 return res.render('user/auth', {
+                    title: 'Identifique-se - Camisaria Mendes',
+                    campaignCode,
+                    error: 'O domínio do e-mail parece inválido.',
+                    activeTab: 'register',
+                    oldData: req.body
+                });
+            }
+
             if (password !== confirmPassword) {
                 return res.render('user/auth', {
                     title: 'Identifique-se - Camisaria Mendes',
