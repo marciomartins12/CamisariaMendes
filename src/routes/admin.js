@@ -1369,7 +1369,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                                     }),
                                     new Paragraph({ text: campaign.title, spacing: { after: 100 } }),
                                     new Paragraph({ 
-                                        children: [new TextRun({ text: "Responsável: ", bold: true }), new TextRun(campaign.clientName)] 
+                                        children: [new TextRun({ text: "Líder da campanha: ", bold: true }), new TextRun(campaign.clientName)] 
                                     }),
                                     new Paragraph({ 
                                         children: [new TextRun({ text: "Telefone: ", bold: true }), new TextRun(campaign.clientPhone || "Não informado")] 
