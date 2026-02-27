@@ -251,7 +251,7 @@ const EmailService = {
             await transporter.sendMail(mailOptions);
             console.log(`E-mail de pagamento aprovado enviado para ${order.customerEmail}`);
         } catch (error) {
-            console.error('Erro ao enviar e-mail de pagamento aprovado:', error);
+            console.error('Erro ao enviar e-mail de pagamento aprovado: por favor verifique as configurações do SMTP.', error); 
         }
     }
 };

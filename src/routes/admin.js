@@ -1372,6 +1372,12 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                                         children: [new TextRun({ text: "Responsável: ", bold: true }), new TextRun(campaign.clientName)] 
                                     }),
                                     new Paragraph({ 
+                                        children: [new TextRun({ text: "Telefone: ", bold: true }), new TextRun(campaign.clientPhone || "Não informado")] 
+                                    }),
+                                    new Paragraph({ 
+                                        children: [new TextRun({ text: "Instagram: ", bold: true }), new TextRun(campaign.clientInstagram ? `@${campaign.clientInstagram.replace('@', '')}` : "Não informado")] 
+                                    }),
+                                    new Paragraph({ 
                                         children: [new TextRun({ text: "Código: ", bold: true }), new TextRun(campaign.accessCode)] 
                                     }),
                                 ]
