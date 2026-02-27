@@ -28,6 +28,12 @@
                 {{/if}}
                 {{/if}}
 
+                {{#if success}}
+                {{#if (eq activeTab 'login')}}
+                <div class="alert alert-success"><i class="fas fa-check-circle"></i> {{success}}</div>
+                {{/if}}
+                {{/if}}
+
                 <div class="form-group">
                     <label>E-mail</label>
                     <div class="input-group">
@@ -42,9 +48,50 @@
                         <input type="password" name="password" class="form-control" required placeholder="Sua senha">
                     </div>
                 </div>
+                <div class="text-right mb-3">
+                    <a href="#" onclick="switchTab('forgot'); return false;" style="font-size: 0.9rem; color: #666;">Esqueci minha senha</a>
+                </div>
                 <button type="submit" class="btn btn-primary btn-block">
                     <i class="fas fa-sign-in-alt"></i> Acessar
                 </button>
+            </form>
+
+            <!-- Forgot Password Form -->
+            <form id="forgot-form" action="/auth/forgot-password" method="POST" class="auth-form hidden">
+                {{#if campaignCode}}
+                <input type="hidden" name="campaignCode" value="{{campaignCode}}">
+                {{/if}}
+                
+                <div class="text-center mb-4">
+                    <h5 style="color: #333;">Recuperar Senha</h5>
+                    <p style="font-size: 0.9rem; color: #666;">Digite seu e-mail para receber uma nova senha.</p>
+                </div>
+
+                {{#if error}}
+                {{#if (eq activeTab 'forgot')}}
+                <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> {{error}}</div>
+                {{/if}}
+                {{/if}}
+
+                {{#if success}}
+                {{#if (eq activeTab 'forgot')}}
+                <div class="alert alert-success"><i class="fas fa-check-circle"></i> {{success}}</div>
+                {{/if}}
+                {{/if}}
+
+                <div class="form-group">
+                    <label>E-mail cadastrado</label>
+                    <div class="input-group">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" name="email" class="form-control" required placeholder="seu@email.com">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-paper-plane"></i> Enviar Nova Senha
+                </button>
+                <div class="text-center mt-3">
+                    <a href="#" onclick="switchTab('login'); return false;" style="font-size: 0.9rem;">Voltar para Login</a>
+                </div>
             </form>
 
             <!-- Register Form -->
@@ -106,20 +153,38 @@
     function switchTab(tab) {
         const loginForm = document.getElementById('login-form');
         const registerForm = document.getElementById('register-form');
+        const forgotForm = document.getElementById('forgot-form');
         const tabs = document.querySelectorAll('.tab-btn');
 
         if (tab === 'login') {
             loginForm.classList.remove('hidden');
             registerForm.classList.add('hidden');
+            forgotForm.classList.add('hidden');
             tabs[0].classList.add('active');
             tabs[1].classList.remove('active');
-        } else {
+        } else if (tab === 'register') {
             loginForm.classList.add('hidden');
             registerForm.classList.remove('hidden');
+            forgotForm.classList.add('hidden');
             tabs[0].classList.remove('active');
             tabs[1].classList.add('active');
+        } else if (tab === 'forgot') {
+            loginForm.classList.add('hidden');
+            registerForm.classList.add('hidden');
+            forgotForm.classList.remove('hidden');
+            tabs[0].classList.add('active'); // Keep Login tab active or remove both? Let's keep Login active as it's a sub-feature
+            tabs[1].classList.remove('active');
         }
     }
+    
+    // Check for active tab from server
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const activeTab = '{{activeTab}}';
+        if (activeTab === 'forgot') {
+            switchTab('forgot');
+        }
+    });
 </script>
 
 <style>

@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
 const { User, Campaign, Shirt, Admin } = require('../models');
+const EmailService = require('../services/EmailService');
 
 module.exports = {
     // Show Login/Register Page
@@ -139,6 +140,62 @@ module.exports = {
                 error: 'Erro ao criar conta.',
                 activeTab: 'register',
                 oldData: req.body
+            });
+        }
+    },
+
+    // Forgot Password
+    forgotPassword: async (req, res) => {
+        const { email, campaignCode } = req.body;
+
+        try {
+            const user = await User.findOne({ where: { email } });
+
+            if (!user) {
+                return res.render('user/auth', {
+                    title: 'Identifique-se - Camisaria Mendes',
+                    campaignCode,
+                    error: 'E-mail não encontrado.',
+                    activeTab: 'forgot'
+                });
+            }
+
+            // Generate random password (8 chars)
+            const newPassword = Math.random().toString(36).slice(-8).toUpperCase();
+            
+            // Hash password
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+            // Update user
+            user.password = hashedPassword;
+            await user.save();
+
+            // Send email
+            const emailSent = await EmailService.sendNewPassword(user.email, newPassword);
+
+            if (emailSent) {
+                return res.render('user/auth', {
+                    title: 'Identifique-se - Camisaria Mendes',
+                    campaignCode,
+                    success: 'Uma nova senha foi enviada para o seu e-mail.',
+                    activeTab: 'login'
+                });
+            } else {
+                return res.render('user/auth', {
+                    title: 'Identifique-se - Camisaria Mendes',
+                    campaignCode,
+                    error: 'Erro ao enviar e-mail. Tente novamente mais tarde.',
+                    activeTab: 'forgot'
+                });
+            }
+
+        } catch (error) {
+            console.error(error);
+            return res.render('user/auth', {
+                title: 'Identifique-se - Camisaria Mendes',
+                campaignCode,
+                error: 'Erro ao processar solicitação.',
+                activeTab: 'forgot'
             });
         }
     },

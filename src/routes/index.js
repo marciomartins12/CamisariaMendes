@@ -62,6 +62,7 @@ router.post('/campanha/entrar', HomeController.accessCampaign);
 router.get('/auth/login', AuthController.loginPage);
 router.post('/auth/login', AuthController.login);
 router.post('/auth/register', AuthController.register);
+router.post('/auth/forgot-password', AuthController.forgotPassword);
 router.get('/auth/logout', AuthController.logout);
 
 // Campaign Store (Protected)

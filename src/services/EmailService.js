@@ -25,6 +25,70 @@ const EmailService = {
         }).format(value);
     },
 
+    // Enviar nova senha (Recuperação de Senha)
+    async sendNewPassword(email, newPassword) {
+        if (!email) return;
+
+        try {
+            const logoPath = path.join(__dirname, '../public/images/logoSemFundo.png');
+
+            const mailOptions = {
+                from: `"Camisaria Mendes" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+                to: email,
+                subject: `Nova Senha - Camisaria Mendes`,
+                html: `
+                    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+                        <!-- Header -->
+                        <div style="background-color: #1e293b; padding: 30px 20px; text-align: center;">
+                            <img src="cid:logo_camisaria" alt="Camisaria Mendes" style="max-height: 80px; width: auto; display: block; margin: 0 auto;">
+                        </div>
+                        
+                        <!-- Body -->
+                        <div style="padding: 30px;">
+                            <div style="text-align: center; margin-bottom: 30px;">
+                                <h2 style="color: #1e293b; margin-top: 0; font-size: 24px;">Recuperação de Senha</h2>
+                                <p style="color: #64748b; font-size: 16px; line-height: 1.5;">Recebemos uma solicitação para redefinir sua senha.</p>
+                            </div>
+                            
+                            <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #e2e8f0; text-align: center;">
+                                <p style="margin: 0 0 10px 0; color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Sua nova senha é:</p>
+                                <div style="font-size: 32px; font-weight: bold; color: #0f172a; letter-spacing: 2px; padding: 10px; background: white; border-radius: 6px; display: inline-block; border: 2px dashed #cbd5e1;">
+                                    ${newPassword}
+                                </div>
+                                <p style="margin: 15px 0 0 0; color: #ef4444; font-size: 13px;">Recomendamos que você altere esta senha após fazer login.</p>
+                            </div>
+
+                            <p style="color: #64748b; font-size: 14px; line-height: 1.5; text-align: center;">
+                                Se você não solicitou esta alteração, entre em contato conosco imediatamente.
+                            </p>
+                            
+                            <div style="text-align: center; margin-top: 30px;">
+                                <a href="${process.env.BASE_URL || 'http://localhost:3000'}/auth/login" style="background-color: #0f172a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Fazer Login</a>
+                            </div>
+                        </div>
+                        
+                        <!-- Footer -->
+                        <div style="background-color: #f1f5f9; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
+                            <p style="color: #94a3b8; font-size: 12px; margin: 0;">&copy; ${new Date().getFullYear()} Camisaria Mendes. Todos os direitos reservados.</p>
+                        </div>
+                    </div>
+                `,
+                attachments: [{
+                    filename: 'logo.png',
+                    path: logoPath,
+                    cid: 'logo_camisaria'
+                }]
+            };
+
+            const info = await transporter.sendMail(mailOptions);
+            console.log('Email de nova senha enviado: %s', info.messageId);
+            return true;
+        } catch (error) {
+            console.error('Erro ao enviar email de nova senha:', error);
+            return false;
+        }
+    },
+
     // Enviar confirmação de Pedido Recebido (Pendente de Pagamento)
     async sendOrderReceived(order) {
         if (!order || !order.customerEmail) return;
