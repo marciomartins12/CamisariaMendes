@@ -63,7 +63,7 @@ const EmailService = {
                             </p>
                             
                             <div style="text-align: center; margin-top: 30px;">
-                                <a href="${process.env.BASE_URL || 'http://localhost:3000'}/auth/login" style="background-color: #0f172a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Fazer Login</a>
+                                <a href="${process.env.APP_URL || 'http://localhost:3000'}/auth/login" style="background-color: #0f172a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Fazer Login</a>
                             </div>
                         </div>
                         
