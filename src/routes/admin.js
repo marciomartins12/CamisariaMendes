@@ -1634,7 +1634,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                             children: [
                                 new Paragraph({ text: `Ref: #${order.id}`, bold: true }),
                                 new Paragraph({ text: order.customerName, bold: true, size: 22 }),
-                                new Paragraph({ text: order.customerPhone || '', size: 18 }),
+                                new Paragraph({ text: order.customerPhone ? order.customerPhone.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3') : 'Tel não inf.', size: 18 }),
                                 new Paragraph({ text: order.customerEmail || '', size: 18 })
                             ],
                             shading: { fill: rowColor },

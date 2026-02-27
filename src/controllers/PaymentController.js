@@ -108,6 +108,17 @@ const PaymentController = {
             // --- 3. Create Order in Database (Pending) ---
             const userId = req.session && req.session.user ? req.session.user.id : null;
 
+            // Handle phone number (object or string)
+            let phoneStr = null;
+            if (payer.phone) {
+                if (typeof payer.phone === 'object') {
+                    phoneStr = `${payer.phone.area_code || ''}${payer.phone.number || ''}`;
+                } else {
+                    // It's a string from the simple checkout form
+                    phoneStr = String(payer.phone).replace(/\D/g, '');
+                }
+            }
+
             const newOrder = await Order.create({
                 items: items,
                 totalAmount: totalAmount,
@@ -117,7 +128,7 @@ const PaymentController = {
                 userId,
                 customerEmail: payer.email,
                 customerName: payer.name ? `${payer.name} ${payer.surname || ''}`.trim() : 'Cliente',
-                customerPhone: payer.phone ? `${payer.phone.area_code || ''}${payer.phone.number || ''}` : null,
+                customerPhone: phoneStr,
                 status: 'pending'
             });
 
