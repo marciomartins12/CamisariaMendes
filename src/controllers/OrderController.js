@@ -3,8 +3,23 @@ const { Op } = require('sequelize');
 
 const OrderController = {
     // Render Checkout Page
-    checkoutPage(req, res) {
-        const user = req.session.user || null;
+    async checkoutPage(req, res) {
+        let user = req.session.user || null;
+        
+        // If user is logged in but phone is missing in session (legacy session), fetch from DB
+        if (user && !user.phone) {
+             try {
+                 const dbUser = await User.findByPk(user.id);
+                 if (dbUser) {
+                     user.phone = dbUser.phone;
+                     // Update session
+                     req.session.user.phone = dbUser.phone;
+                 }
+             } catch (e) {
+                 console.error('Error fetching user phone for checkout:', e);
+             }
+        }
+
         res.render('shop/checkout', {
             title: 'Finalizar Compra',
             layout: 'main',

@@ -52,7 +52,8 @@ module.exports = {
                     req.session.user = {
                         id: user.id,
                         name: user.name,
-                        email: user.email
+                        email: user.email,
+                        phone: user.phone
                     };
                     
                     if (campaignCode) {
@@ -121,7 +122,8 @@ module.exports = {
             req.session.user = {
                 id: newUser.id,
                 name: newUser.name,
-                email: newUser.email
+                email: newUser.email,
+                phone: newUser.phone
             };
 
             if (campaignCode) {
