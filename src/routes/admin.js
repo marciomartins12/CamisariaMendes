@@ -1180,6 +1180,8 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
         
         if (!campaign) return res.status(404).send('Campanha não encontrada');
 
+        const formattedId = `CAMP${String(campaign.id).padStart(3, '0')}`;
+
         const shirtIds = (campaign.shirts || []).map(s => Number(s.id));
         const shirtNames = (campaign.shirts || []).map(s => (s.name || '').trim());
         
@@ -1375,7 +1377,13 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                                         children: [new TextRun({ text: "CAMPANHA:", bold: true, size: 24 })],
                                         spacing: { before: 100 }
                                     }),
-                                    new Paragraph({ text: campaign.title, spacing: { after: 100 } }),
+                                    new Paragraph({ 
+                                        children: [
+                                            new TextRun({ text: `${formattedId} - `, bold: true, color: "2E74B5" }),
+                                            new TextRun({ text: campaign.title })
+                                        ],
+                                        spacing: { after: 100 } 
+                                    }),
                                     new Paragraph({ 
                                         children: [new TextRun({ text: "Líder da campanha: ", bold: true }), new TextRun(campaign.clientName)] 
                                     }),
