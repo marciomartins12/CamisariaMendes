@@ -83,8 +83,54 @@ class BackupService {
 
     getNextBackupDate() {
         try {
-            const interval = cronParser.parseExpression(this.config.schedule);
-            const nextDate = interval.next().toDate();
+            const parts = this.config.schedule.split(' ');
+            if (parts.length < 5) return 'Configuração inválida';
+
+            const minute = parseInt(parts[0]);
+            const hour = parseInt(parts[1]);
+            const dayOfWeek = parts[4] === '*' ? null : parseInt(parts[4]);
+
+            let nextDate = new Date();
+            nextDate.setSeconds(0);
+            nextDate.setMilliseconds(0);
+
+            // Se já passou do horário hoje, avança para amanhã (base)
+            if (nextDate.getHours() > hour || (nextDate.getHours() === hour && nextDate.getMinutes() >= minute)) {
+                nextDate.setDate(nextDate.getDate() + 1);
+            }
+            
+            // Define o horário do backup
+            nextDate.setHours(hour, minute, 0, 0);
+
+            // Se for semanal, ajusta para o dia correto
+            if (dayOfWeek !== null) {
+                // Se hoje não é o dia do backup ou já passou do dia
+                // Vamos encontrar o próximo dia da semana correspondente
+                const currentDay = nextDate.getDay();
+                let daysUntilBackup = (dayOfWeek - currentDay + 7) % 7;
+                
+                // Se for o mesmo dia (0), mas a data calculada (amanhã) já passou do dia alvo (hoje), 
+                // então na verdade é daqui a 6 dias (porque já somamos 1 dia acima se passou da hora)
+                // Mas vamos simplificar:
+                
+                // Reiniciar cálculo para semanal para ser mais preciso
+                nextDate = new Date();
+                nextDate.setSeconds(0);
+                nextDate.setMilliseconds(0);
+                
+                // Encontrar o próximo dia da semana
+                const today = nextDate.getDay();
+                let diff = dayOfWeek - today;
+                
+                // Se o dia já passou nesta semana ou é hoje mas já passou da hora
+                if (diff < 0 || (diff === 0 && (nextDate.getHours() > hour || (nextDate.getHours() === hour && nextDate.getMinutes() >= minute)))) {
+                    diff += 7;
+                }
+                
+                nextDate.setDate(nextDate.getDate() + diff);
+                nextDate.setHours(hour, minute, 0, 0);
+            }
+
             return nextDate.toLocaleString('pt-BR');
         } catch (err) {
             console.error('Erro ao calcular próxima data de backup:', err);
