@@ -84,9 +84,11 @@ class BackupService {
     getNextBackupDate() {
         try {
             const interval = cronParser.parseExpression(this.config.schedule);
-            return interval.next().toString();
+            const nextDate = interval.next().toDate();
+            return nextDate.toLocaleString('pt-BR');
         } catch (err) {
-            return 'Erro ao calcular data';
+            console.error('Erro ao calcular próxima data de backup:', err);
+            return 'Data inválida ou não definida';
         }
     }
 
