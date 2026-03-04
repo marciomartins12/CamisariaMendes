@@ -273,14 +273,13 @@
                                 <img src="{{this.thumb}}" alt="{{this.displayName}}">
                             </div>
                             {{/if}}
-                            <div class="order-item-details">
-                                <div class="order-item-name">
-                                    {{this.qty}}x {{this.name}}
+                            <div class="order-item-text">
+                                <div class="order-item-title">
+                                    {{#if this.qty}}{{this.qty}}x {{/if}}{{#if this.displayName}}{{this.displayName}}{{else}}Item{{/if}}
                                 </div>
                                 <div class="order-item-meta">
-                                    {{#if this.color}}<small class="text-muted d-block">Cor: {{this.color}}</small>{{/if}}
-                                    {{#if this.size}}<small class="text-muted d-block">Tamanho: {{this.size}}</small>{{/if}}
-                                    <small class="text-muted d-block">R$ {{this.price}}</small>
+                                    {{#if this.size}}Tamanho: {{this.size}}{{/if}}
+                                    {{#if this.color}}{{#if this.size}} · {{/if}}Cor: {{this.color}}{{/if}}
                                 </div>
                             </div>
                         </li>

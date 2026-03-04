@@ -100,7 +100,6 @@ const EmailService = {
                     <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #334155;">
                         <strong>${item.name}</strong><br>
                         <span style="font-size: 12px; color: #64748b;">Corte: ${item.type || 'Tradicional'}</span><br>
-                        <span style="font-size: 12px; color: #64748b;">Cor: ${item.color || 'Padrão'}</span><br>
                         <span style="font-size: 12px; color: #64748b;">Tamanho: ${item.size || 'N/A'}</span>
                     </td>
                     <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #334155;">${item.qty}</td>
@@ -215,7 +214,6 @@ const EmailService = {
                     <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #334155;">
                         <strong>${item.name}</strong><br>
                         <span style="font-size: 12px; color: #64748b;">Corte: ${item.type || 'Tradicional'}</span><br>
-                        <span style="font-size: 12px; color: #64748b;">Cor: ${item.color || 'Padrão'}</span><br>
                         <span style="font-size: 12px; color: #64748b;">Tamanho: ${item.size || 'N/A'}</span>
                     </td>
                     <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #334155;">${item.qty}</td>

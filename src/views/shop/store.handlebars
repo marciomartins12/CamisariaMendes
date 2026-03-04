@@ -814,7 +814,7 @@
                     </div>
 
                     <button class="btn-add" id="btn-add-{{this.id}}" 
-                            onclick="addToCart({{this.id}}, '{{this.name}}', {{this.price}}, '{{this.images.[0]}}', '{{this.type}}', '{{this.color}}')" disabled>
+                            onclick="addToCart({{this.id}}, '{{this.name}}', {{this.price}}, '{{this.images.[0]}}', '{{this.type}}')" disabled>
                         COMPRAR
                     </button>
                 </div>
@@ -984,7 +984,7 @@
     }
 
     // Add to Cart
-    function addToCart(id, name, price, image, type, color) {
+    function addToCart(id, name, price, image, type) {
         const size = selectedSizes[id];
         if(!size) return alert('Selecione um tamanho');
 
@@ -1001,7 +1001,7 @@
         if(existing) {
             existing.qty += qtyToAdd;
         } else {
-            cart.push({ id, name, price, image, size, type: type || 'Tradicional', color: color || 'Padrão', qty: qtyToAdd });
+            cart.push({ id, name, price, image, size, type: type || 'Tradicional', qty: qtyToAdd });
         }
 
         updateCartUI();
@@ -1102,7 +1102,7 @@
                         <span style="font-weight:600">${formatMoney(item.price * item.qty)}</span>
                     </div>
                     <div class="item-row" style="align-items:center; margin-top:8px;">
-                        <span style="color:#666; font-size:0.9rem">Tam: ${item.size} | Cor: ${item.color || '-'}</span>
+                        <span style="color:#666; font-size:0.9rem">Tam: ${item.size}</span>
                         
                         <div class="qty-controls">
                             <button class="btn-qty" onclick="changeQty(${index}, -1)">−</button>

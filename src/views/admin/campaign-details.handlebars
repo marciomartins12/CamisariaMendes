@@ -222,6 +222,11 @@
                                 <div class="sales-item-header">
                                     <span class="sales-item-name">{{@key}}</span>
                                     <span class="sales-item-type badge badge-info">{{this.type}}</span>
+                                    {{#if this.color}}
+                                    <span class="sales-item-color badge badge-secondary" style="margin-left: 5px; background-color: #6c757d; color: white;">
+                                        <i class="fas fa-palette" style="font-size: 0.8em; margin-right: 3px;"></i> {{this.color}}
+                                    </span>
+                                    {{/if}}
                                 </div>
                                 <div class="sales-item-stats">
                                     <div class="sales-total">
