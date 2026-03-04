@@ -1027,15 +1027,20 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
                 
                 // Check if this item belongs to campaign
                 if (shirtIds.includes(pid) || shirtNames.includes(name)) {
-                    const key = name || `Produto #${pid}`;
+                    // Include color in key to split by color
+                    const colorLabel = item.color ? ` - ${item.color}` : '';
+                    const key = (name || `Produto #${pid}`) + colorLabel;
+                    
                     if (!salesSummary[key]) {
                         // Try to find image/type from campaign shirts
                         let productImg = null;
                         let productType = item.type || 'Padrão';
+                        let productColor = item.color || '';
                         
                         const matchingShirt = (campaignPlain.shirts || []).find(s => Number(s.id) === pid || s.name === name);
                         if (matchingShirt) {
                             productType = matchingShirt.type;
+                            if (!productColor) productColor = matchingShirt.color;
                             try {
                                 const imgs = matchingShirt.images || []; // already parsed above
                                 if (imgs.length > 0) productImg = imgs[0];
@@ -1046,6 +1051,7 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
                             total: 0, 
                             sizes: {}, 
                             type: productType,
+                            color: productColor,
                             image: productImg
                         };
                     }
@@ -1218,7 +1224,10 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                 
                 // Check if this item belongs to campaign
                 if (shirtIds.includes(pid) || shirtNames.includes(name)) {
-                    const key = name || `Produto #${pid}`;
+                    // Include color in key to split by color
+                    const colorLabel = item.color ? ` [${item.color}]` : '';
+                    const key = (name || `Produto #${pid}`) + colorLabel;
+                    
                     if (!summary[key]) {
                         // Try to find image/type from campaign shirts
                         let productImg = null;
@@ -1628,7 +1637,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                     const shirt = (campaign.shirts || []).find(s => s.id === pid);
                     if (shirt) type = shirt.type;
                 }
-                return `• ${it.qty || 1}x ${it.name} [${it.size}] - ${type || 'Tradicional'}`;
+                return `• ${it.qty || 1}x ${it.name} [${it.size}] [${it.color || 'Padrão'}] - ${type || 'Tradicional'}`;
             });
 
             // Add formatting to items
@@ -1726,15 +1735,81 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
 // Export Orders (CSV)
 router.get('/campanhas/:id/exportar-pedidos', requireAdmin, async (req, res) => {
     try {
-        const campaign = await Campaign.findByPk(req.params.id);
+        const campaign = await Campaign.findByPk(req.params.id, {
+            include: [{ model: Shirt, as: 'shirts' }]
+        });
+        
         if (!campaign) return res.redirect('/admin/campanhas');
 
-        // Note: Order model does not exist yet. Returning template CSV.
-        const headers = ['Data', 'Nome do Cliente', 'Telefone', 'Produto', 'Tipo', 'Tamanho', 'Preço', 'Status'];
+        const shirtIds = (campaign.shirts || []).map(s => Number(s.id));
+        const shirtNames = (campaign.shirts || []).map(s => (s.name || '').trim());
+        
+        // Fetch all approved orders
+        const allOrders = await Order.findAll({
+            where: { status: 'approved' },
+            attributes: ['id', 'status', 'finalAmount', 'items', 'customerName', 'customerEmail', 'customerPhone', 'createdAt', 'paymentMethod', 'userId'],
+            include: [{ model: User, attributes: ['phone', 'name'] }] 
+        });
+        
+        // Filter orders for this campaign
+        const campaignOrders = allOrders.filter(order => {
+            const plain = order.get({ plain: true });
+            let items = plain.items;
+            try {
+                if (typeof items === 'string') items = JSON.parse(items);
+                if (typeof items === 'string') items = JSON.parse(items);
+            } catch(e) { items = []; }
+            if (!Array.isArray(items)) items = [];
+            
+            // Attach parsed items to order object for later use
+            order.parsedItems = items;
+            
+            return items.some(it => {
+                const pid = Number(it.id || it.productId || it.shirtId);
+                return shirtIds.includes(pid) || shirtNames.includes((it.name || '').trim());
+            });
+        });
+
+        const headers = ['Data', 'Nome do Cliente', 'Telefone', 'Produto', 'Tipo', 'Cor', 'Tamanho', 'Qtde', 'Preço Unit.', 'Total Item', 'Status'];
         let csvContent = headers.join(';') + '\n';
         
-        // Mock data or empty
-        // csvContent += `2023-10-27;João Silva;11999999999;Camiseta A;Tradicional;M;50.00;Pago\n`;
+        campaignOrders.forEach(order => {
+            const date = new Date(order.createdAt).toLocaleDateString('pt-BR');
+            const clientName = order.User ? order.User.name : (order.customerName || 'Cliente');
+            const phone = order.User ? order.User.phone : (order.customerPhone || '');
+            const status = order.status === 'approved' ? 'Pago' : order.status;
+            
+            order.parsedItems.forEach(item => {
+                const pid = Number(item.id || item.productId || item.shirtId);
+                const name = (item.name || '').trim();
+                
+                // Check if this item belongs to campaign
+                if (shirtIds.includes(pid) || shirtNames.includes(name)) {
+                    const type = item.type || 'Tradicional';
+                    const color = item.color || 'Padrão';
+                    const size = item.size || 'N/A';
+                    const qty = Number(item.qty || 1);
+                    const price = Number(item.price || 0);
+                    const total = price * qty;
+                    
+                    const row = [
+                        date,
+                        clientName,
+                        phone,
+                        name,
+                        type,
+                        color,
+                        size,
+                        qty,
+                        price.toFixed(2).replace('.', ','),
+                        total.toFixed(2).replace('.', ','),
+                        status
+                    ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(';');
+                    
+                    csvContent += row + '\n';
+                }
+            });
+        });
 
         res.setHeader('Content-Type', 'text/csv');
         res.setHeader('Content-Disposition', `attachment; filename=pedidos-${campaign.accessCode}.csv`);
@@ -2244,8 +2319,13 @@ router.get('/clientes-campanhas', requireAdmin, async (req, res) => {
                             thumb = it.imageUrl;
                         }
                         const name = it && it.name ? it.name : (shirt ? shirt.name : 'Item');
+                        
+                        // Ensure color is available
+                        const color = it.color || (shirt ? shirt.color : '');
+
                         return {
                             ...it,
+                            color,
                             displayName: name,
                             thumb
                         };
