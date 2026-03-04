@@ -22,16 +22,51 @@
             <div class="admin-card" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                 <form action="/admin/backups/config" method="POST" class="admin-form">
                     <div class="form-group" style="margin-bottom: 1rem;">
-                        <label for="schedule" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Agendamento (Cron)</label>
-                        <input type="text" id="schedule" name="schedule" value="{{config.schedule}}" class="form-control" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" required>
-                        <small class="form-text text-muted" style="color: #6b7280; font-size: 0.85rem;">Exemplo: <code>0 3 * * 0</code> (Todo domingo às 03:00)</small>
+                        <label for="frequency" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Frequência do Backup</label>
+                        <select id="frequency" name="frequency" class="form-control" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" onchange="toggleDayField()">
+                            <option value="daily" {{#if (eq frequency 'daily')}}selected{{/if}}>Diário (Todos os dias)</option>
+                            <option value="weekly" {{#if (eq frequency 'weekly')}}selected{{/if}}>Semanal (Uma vez por semana)</option>
+                        </select>
                     </div>
+
+                    <div id="dayField" class="form-group" style="margin-bottom: 1rem; {{#if (eq frequency 'daily')}}display: none;{{/if}}">
+                        <label for="backupDay" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Dia da Semana</label>
+                        <select id="backupDay" name="backupDay" class="form-control" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="0" {{#if (eq backupDay '0')}}selected{{/if}}>Domingo</option>
+                            <option value="1" {{#if (eq backupDay '1')}}selected{{/if}}>Segunda-feira</option>
+                            <option value="2" {{#if (eq backupDay '2')}}selected{{/if}}>Terça-feira</option>
+                            <option value="3" {{#if (eq backupDay '3')}}selected{{/if}}>Quarta-feira</option>
+                            <option value="4" {{#if (eq backupDay '4')}}selected{{/if}}>Quinta-feira</option>
+                            <option value="5" {{#if (eq backupDay '5')}}selected{{/if}}>Sexta-feira</option>
+                            <option value="6" {{#if (eq backupDay '6')}}selected{{/if}}>Sábado</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label for="backupTime" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Horário</label>
+                        <input type="time" id="backupTime" name="backupTime" value="{{backupTime}}" class="form-control" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" required>
+                    </div>
+
                     <div class="form-group" style="margin-bottom: 1rem;">
                         <label for="maxBackups" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Máximo de Backups (Rotação)</label>
                         <input type="number" id="maxBackups" name="maxBackups" value="{{config.maxBackups}}" class="form-control" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" min="1" required>
+                        <small class="form-text text-muted" style="color: #6b7280; font-size: 0.85rem;">Quantidade de arquivos de backup recentes a serem mantidos.</small>
                     </div>
+                    
                     <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; background: #3b82f6; color: white;">Salvar Configuração</button>
                 </form>
+
+                <script>
+                function toggleDayField() {
+                    const frequency = document.getElementById('frequency').value;
+                    const dayField = document.getElementById('dayField');
+                    if (frequency === 'daily') {
+                        dayField.style.display = 'none';
+                    } else {
+                        dayField.style.display = 'block';
+                    }
+                }
+                </script>
                 <div class="mt-3" style="margin-top: 1rem;">
                     <p><strong>Próximo Backup Automático:</strong> {{nextBackup}}</p>
                 </div>

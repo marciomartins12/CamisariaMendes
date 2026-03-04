@@ -2734,13 +2734,35 @@ router.get('/backups', async (req, res) => {
         const config = BackupService.config;
         const nextBackup = BackupService.getNextBackupDate();
         
+        // Parse current schedule for UI
+        // Expected format: "minute hour * * dayOfWeek"
+        const parts = config.schedule.split(' ');
+        let frequency = 'daily';
+        let backupDay = '0'; // Sunday default
+        let backupTime = '03:00';
+
+        if (parts.length >= 5) {
+            const minute = parts[0].padStart(2, '0');
+            const hour = parts[1].padStart(2, '0');
+            backupTime = `${hour}:${minute}`;
+            
+            if (parts[4] !== '*') {
+                frequency = 'weekly';
+                backupDay = parts[4];
+            }
+        }
+
         res.render('admin/backups', {
             title: 'Gerenciar Backups',
             backups,
             config,
             nextBackup,
             admin: req.session.admin,
-            isBackups: true
+            isBackups: true,
+            // UI Helpers
+            frequency,
+            backupDay,
+            backupTime
         });
     } catch (error) {
         console.error('Erro ao carregar backups:', error);
@@ -2751,8 +2773,21 @@ router.get('/backups', async (req, res) => {
 
 router.post('/backups/config', async (req, res) => {
     try {
-        const { schedule, maxBackups } = req.body;
-        if (!schedule) throw new Error('Agendamento (cron) é obrigatório.');
+        const { frequency, backupDay, backupTime, maxBackups } = req.body;
+        
+        if (!backupTime) throw new Error('Horário é obrigatório.');
+        
+        const [hour, minute] = backupTime.split(':');
+        
+        let schedule = '';
+        if (frequency === 'daily') {
+            // Minute Hour * * *
+            schedule = `${Number(minute)} ${Number(hour)} * * *`;
+        } else {
+            // Weekly
+            // Minute Hour * * DayWeek
+            schedule = `${Number(minute)} ${Number(hour)} * * ${backupDay}`;
+        }
         
         BackupService.updateConfig(schedule, maxBackups);
         req.flash('success', 'Configuração atualizada com sucesso.');
