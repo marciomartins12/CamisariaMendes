@@ -61,7 +61,7 @@ const requireAdmin = (req, res, next) => {
     if (req.session && req.session.admin) {
         return next();
     }
-    return res.redirect('/admin/login');
+    return res.redirect('/auth/login');
 };
 
 // Middleware to require super admin
@@ -77,10 +77,7 @@ router.get('/login', (req, res) => {
     if (req.session && req.session.admin) {
         return res.redirect('/admin/dashboard');
     }
-    res.render('admin/login', { 
-        title: 'Login Admin - Camisaria Mendes',
-        layout: 'main'
-    });
+    res.redirect('/auth/login');
 });
 
 // Login POST
@@ -123,7 +120,7 @@ router.post('/login', async (req, res) => {
 // Logout
 router.get('/logout', (req, res) => {
     req.session.admin = null;
-    res.redirect('/admin/login');
+    res.redirect('/auth/login');
 });
 
 // Dashboard
@@ -2342,7 +2339,7 @@ router.get('/', (req, res) => {
     if (req.session && req.session.admin) {
         res.redirect('/admin/dashboard');
     } else {
-        res.redirect('/admin/login');
+        res.redirect('/auth/login');
     }
 });
 

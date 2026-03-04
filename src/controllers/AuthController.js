@@ -15,6 +15,11 @@ module.exports = {
             return res.redirect('/campanhas');
         }
 
+        // If admin is already logged in
+        if (req.session && req.session.admin) {
+            return res.redirect('/admin/dashboard');
+        }
+
         res.render('user/auth', {
             title: 'Identifique-se - Camisaria Mendes',
             campaignCode: code,
