@@ -99,6 +99,7 @@ const EmailService = {
                 <tr>
                     <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #334155;">
                         <strong>${item.name}</strong><br>
+                        <span style="font-size: 12px; color: #64748b;">Cor: ${item.color || 'N/A'}</span><br>
                         <span style="font-size: 12px; color: #64748b;">Corte: ${item.type || 'Tradicional'}</span><br>
                         <span style="font-size: 12px; color: #64748b;">Tamanho: ${item.size || 'N/A'}</span>
                     </td>
@@ -213,6 +214,7 @@ const EmailService = {
                 <tr>
                     <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #334155;">
                         <strong>${item.name}</strong><br>
+                        <span style="font-size: 12px; color: #64748b;">Cor: ${item.color || 'N/A'}</span><br>
                         <span style="font-size: 12px; color: #64748b;">Corte: ${item.type || 'Tradicional'}</span><br>
                         <span style="font-size: 12px; color: #64748b;">Tamanho: ${item.size || 'N/A'}</span>
                     </td>
