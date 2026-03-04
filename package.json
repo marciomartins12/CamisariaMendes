@@ -15,6 +15,7 @@
     "bcrypt": "^6.0.0",
     "compression": "^1.8.1",
     "connect-session-sequelize": "^8.0.5",
+    "cron-parser": "^5.5.0",
     "docx": "^9.6.0",
     "dotenv": "^17.2.4",
     "express": "^5.2.1",
@@ -24,6 +25,7 @@
     "helmet": "^8.1.0",
     "mercadopago": "^2.12.0",
     "mysql2": "^3.16.3",
+    "node-cron": "^4.2.1",
     "nodemailer": "^8.0.1",
     "sequelize": "^6.37.7"
   },

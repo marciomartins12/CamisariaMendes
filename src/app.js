@@ -5,6 +5,7 @@ const applyMiddlewares = require('./middlewares');
 const routes = require('./routes');
 const helmet = require('helmet');
 const compression = require('compression');
+const BackupService = require('./services/BackupService');
 
 const app = express();
 // Enable trust proxy for Nginx/Heroku/Reverse Proxy
@@ -23,6 +24,10 @@ configureViewEngine(app);
 
 (async () => {
   await applyMiddlewares(app);
+  
+  // Initialize Backup Service
+  BackupService.start();
+
   app.use('/', routes);
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);

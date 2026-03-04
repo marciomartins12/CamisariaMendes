@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const { Admin, Campaign, Shirt, Coupon, sequelize, User, Order } = require('../models');
+const BackupService = require('../services/BackupService');
 
 // Middleware to mark as admin area for all routes in this file
 router.use((req, res, next) => {
@@ -2723,6 +2724,85 @@ router.post('/usuarios/deletar/:id', requireSuperAdmin, async (req, res) => {
         req.flash('error', 'Erro ao remover administrador.');
         res.redirect('/admin/usuarios');
     }
+});
+
+// --- Backup Management Routes ---
+
+router.get('/backups', async (req, res) => {
+    try {
+        const backups = BackupService.getBackups();
+        const config = BackupService.config;
+        const nextBackup = BackupService.getNextBackupDate();
+        
+        res.render('admin/backups', {
+            title: 'Gerenciar Backups',
+            backups,
+            config,
+            nextBackup,
+            admin: req.session.admin,
+            isBackups: true
+        });
+    } catch (error) {
+        console.error('Erro ao carregar backups:', error);
+        req.flash('error', 'Erro ao carregar página de backups.');
+        res.redirect('/admin/dashboard');
+    }
+});
+
+router.post('/backups/config', async (req, res) => {
+    try {
+        const { schedule, maxBackups } = req.body;
+        if (!schedule) throw new Error('Agendamento (cron) é obrigatório.');
+        
+        BackupService.updateConfig(schedule, maxBackups);
+        req.flash('success', 'Configuração atualizada com sucesso.');
+    } catch (error) {
+        console.error('Erro ao atualizar config de backup:', error);
+        req.flash('error', 'Erro ao atualizar configuração: ' + error.message);
+    }
+    res.redirect('/admin/backups');
+});
+
+router.post('/backups/create', async (req, res) => {
+    try {
+        await BackupService.performBackup();
+        req.flash('success', 'Backup manual criado com sucesso.');
+    } catch (error) {
+        console.error('Erro ao criar backup manual:', error);
+        req.flash('error', 'Erro ao criar backup manual: ' + error.message);
+    }
+    res.redirect('/admin/backups');
+});
+
+router.get('/backups/download/:filename', (req, res) => {
+    const filename = req.params.filename;
+    if (!filename || !filename.match(/^backup-[\w.-]+\.sql$/)) {
+        req.flash('error', 'Nome de arquivo inválido.');
+        return res.redirect('/admin/backups');
+    }
+    
+    const filePath = require('path').join(BackupService.backupDir, filename);
+    if (require('fs').existsSync(filePath)) {
+        res.download(filePath);
+    } else {
+        req.flash('error', 'Arquivo não encontrado.');
+        res.redirect('/admin/backups');
+    }
+});
+
+router.post('/backups/delete/:filename', (req, res) => {
+    try {
+        const filename = req.params.filename;
+        if (BackupService.deleteBackup(filename)) {
+            req.flash('success', 'Backup removido com sucesso.');
+        } else {
+            req.flash('error', 'Falha ao remover backup (arquivo não encontrado ou inválido).');
+        }
+    } catch (error) {
+        console.error('Erro ao deletar backup:', error);
+        req.flash('error', 'Erro ao deletar backup.');
+    }
+    res.redirect('/admin/backups');
 });
 
 module.exports = router;

@@ -14,6 +14,10 @@ module.exports = (app) => {
           if (!date) return '';
           return new Date(date).toLocaleDateString('pt-BR');
         },
+        formatDateTime: (date) => {
+          if (!date) return '';
+          return new Date(date).toLocaleString('pt-BR');
+        },
         json: (context) => {
           return JSON.stringify(context).replace(/'/g, "&#39;");
         },
