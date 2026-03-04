@@ -1226,10 +1226,12 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                         // Try to find image/type from campaign shirts
                         let productImg = null;
                         let productType = item.type || 'Padrão';
+                        let productColor = item.color || '';
 
                         const matchingShirt = (campaign.shirts || []).find(s => s.id === pid || s.name === name);
                         if (matchingShirt) {
                             productType = matchingShirt.type;
+                            productColor = matchingShirt.color;
                             try {
                                 const imgs = JSON.parse(matchingShirt.imagesJSON || '[]');
                                 if (imgs.length > 0) productImg = imgs[0];
@@ -1240,6 +1242,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                             total: 0, 
                             sizes: {}, 
                             type: productType,
+                            color: productColor,
                             image: productImg
                         };
                     }
@@ -1453,7 +1456,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                 new Paragraph({
                     children: [
                         new TextRun({ text: "• " + name, bold: true, size: 24, color: "333333" }),
-                        new TextRun({ text: ` (${data.type})`, italics: true, color: "666666" })
+                        new TextRun({ text: ` (${data.type}${data.color ? ' - ' + data.color : ''})`, italics: true, color: "666666" })
                     ],
                     spacing: { before: 200, after: 100 }
                 })
@@ -1626,12 +1629,17 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             })
             .map(it => {
                 let type = it.type;
-                if (!type) {
+                let color = it.color;
+                
+                if (!type || !color) {
                     const pid = Number(it.id || it.productId || it.shirtId);
                     const shirt = (campaign.shirts || []).find(s => s.id === pid);
-                    if (shirt) type = shirt.type;
+                    if (shirt) {
+                        if (!type) type = shirt.type;
+                        if (!color) color = shirt.color;
+                    }
                 }
-                return `• ${it.qty || 1}x ${it.name} [${it.size}] - ${type || 'Tradicional'}`;
+                return `• ${it.qty || 1}x ${it.name} [${it.size}] - ${type || 'Tradicional'}${color ? ' - ' + color : ''}`;
             });
 
             // Add formatting to items
