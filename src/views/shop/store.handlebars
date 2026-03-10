@@ -780,8 +780,26 @@
                     <div class="option-group">
                         <span class="option-label">Informações do modelo</span>
                         <div class="info-chips">
-                            <span class="info-chip">Cor: {{this.color}}</span>
                             <span class="info-chip">Corte: {{this.type}}</span>
+                        </div>
+                    </div>
+
+                    <div class="option-group">
+                        <span class="option-label">Cor</span>
+                        <div class="sizes" id="colors-{{this.id}}">
+                            {{#if (eq (typeof this.color) 'object')}}
+                                {{#each this.color}}
+                                <label>
+                                    <input type="radio" name="color-{{../this.id}}" value="{{this}}" class="size-radio" onchange="selectColor({{../this.id}}, '{{this}}')">
+                                    <span class="size-lbl" style="width: auto; padding: 0 10px;">{{this}}</span>
+                                </label>
+                                {{/each}}
+                            {{else}}
+                                <label>
+                                    <input type="radio" name="color-{{this.id}}" value="{{this.color}}" class="size-radio" checked onchange="selectColor({{this.id}}, '{{this.color}}')">
+                                    <span class="size-lbl" style="width: auto; padding: 0 10px;">{{this.color}}</span>
+                                </label>
+                            {{/if}}
                         </div>
                     </div>
 
@@ -894,6 +912,7 @@
     // State
     let cart = [];
     const selectedSizes = {};
+    const selectedColors = {};
     const whatsappNumber = "{{whatsappNumber}}"; // Ensure this is passed from backend
     
     // Coupon State
@@ -962,10 +981,30 @@
     // Select Size
     function selectSize(id, size) {
         selectedSizes[id] = size;
+        updateAddButton(id);
+    }
+
+    // Select Color
+    function selectColor(id, color) {
+        selectedColors[id] = color;
+        updateAddButton(id);
+    }
+
+    function updateAddButton(id) {
+        const size = selectedSizes[id];
+        const color = selectedColors[id];
         const btn = document.getElementById(`btn-add-${id}`);
         if(btn) {
-            btn.disabled = false;
-            btn.innerHTML = `COMPRAR Tam. ${size}`;
+            if (size && color) {
+                btn.disabled = false;
+                btn.innerHTML = `COMPRAR ${color} - Tam. ${size}`;
+            } else {
+                btn.disabled = true;
+                let text = 'COMPRAR';
+                if (color) text += ` ${color}`;
+                if (size) text += ` Tam. ${size}`;
+                btn.innerHTML = text;
+            }
         }
     }
 
@@ -986,7 +1025,9 @@
     // Add to Cart
     function addToCart(id, name, price, image, type) {
         const size = selectedSizes[id];
+        const color = selectedColors[id];
         if(!size) return alert('Selecione um tamanho');
+        if(!color) return alert('Selecione uma cor');
 
         const wasEmpty = cart.length === 0;
 
@@ -997,11 +1038,11 @@
             qtyToAdd = (!isNaN(parsed) && parsed > 0) ? parsed : 1;
         }
 
-        const existing = cart.find(item => item.id === id && item.size === size);
+        const existing = cart.find(item => item.id === id && item.size === size && item.color === color);
         if(existing) {
             existing.qty += qtyToAdd;
         } else {
-            cart.push({ id, name, price, image, size, type: type || 'Tradicional', qty: qtyToAdd });
+            cart.push({ id, name, price, image, size, color, type: type || 'Tradicional', qty: qtyToAdd });
         }
 
         updateCartUI();
@@ -1102,7 +1143,7 @@
                         <span style="font-weight:600">${formatMoney(item.price * item.qty)}</span>
                     </div>
                     <div class="item-row" style="align-items:center; margin-top:8px;">
-                        <span style="color:#666; font-size:0.9rem">Tam: ${item.size}</span>
+                        <span style="color:#666; font-size:0.9rem">Cor: ${item.color} | Tam: ${item.size}</span>
                         
                         <div class="qty-controls">
                             <button class="btn-qty" onclick="changeQty(${index}, -1)">−</button>

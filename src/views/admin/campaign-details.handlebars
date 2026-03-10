@@ -220,11 +220,11 @@
                             {{#each salesSummary}}
                             <div class="sales-summary-item">
                                 <div class="sales-item-header">
-                                    <span class="sales-item-name">{{@key}}</span>
+                                    <span class="sales-item-name">{{#if this.baseName}}{{this.baseName}}{{else}}{{@key}}{{/if}}</span>
                                     <span class="sales-item-type badge badge-info">{{this.type}}</span>
                                     {{#if this.color}}
                                     <span class="sales-item-color" style="margin-left: 10px; font-weight: 500; color: #64748b; font-size: 0.9rem;">
-                                        <i class="fas fa-palette" style="margin-right: 4px; color: #94a3b8;"></i> {{this.color}}
+                                        <i class="fas fa-palette" style="margin-right: 4px; color: #94a3b8;"></i> {{#if (eq (typeof this.color) 'object')}}{{join this.color ', '}}{{else}}{{this.color}}{{/if}}
                                     </span>
                                     {{/if}}
                                 </div>
@@ -294,7 +294,7 @@
                                     <i class="fas fa-tag"></i> <span>{{this.type}}</span>
                                 </div>
                                 <div class="spec-item">
-                                    <i class="fas fa-palette"></i> <span>{{this.color}}</span>
+                                    <i class="fas fa-palette"></i> <span>{{#if this.color}}{{join this.color ', '}}{{else}}-{{/if}}</span>
                                 </div>
                             </div>
 
@@ -422,8 +422,9 @@
                 </div>
                 <div class="mini-edit-row">
                     <div class="mini-edit-group">
-                        <label>Cor</label>
-                        <input type="text" name="color" class="form-control" placeholder="Ex: Preto">
+                        <label>Cores disponíveis</label>
+                        <input type="text" name="color" class="form-control" placeholder="Ex: Preto, Branco, Azul (separados por vírgula)">
+                        <small class="text-muted">Separe as cores por vírgula.</small>
                     </div>
                     <div class="mini-edit-group">
                         <label>Corte</label>
@@ -485,8 +486,9 @@
                 </div>
                 <div class="mini-edit-row">
                     <div class="mini-edit-group">
-                        <label>Cor</label>
-                        <input type="text" name="color" class="form-control" value="{{editingShirt.color}}">
+                        <label>Cores disponíveis</label>
+                        <input type="text" name="color" class="form-control" value="{{#if editingShirt.color}}{{join editingShirt.color ', '}}{{/if}}" placeholder="Ex: Preto, Branco, Azul">
+                        <small class="text-muted">Separe as cores por vírgula.</small>
                     </div>
                     <div class="mini-edit-group">
                         <label>Corte</label>

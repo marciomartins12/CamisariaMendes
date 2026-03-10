@@ -10,6 +10,7 @@ module.exports = (app) => {
       partialsDir: path.join(__dirname, '..', 'views', 'partials'),
       helpers: {
         eq: (a, b) => a === b,
+        typeof: (val) => typeof val,
         formatDate: (date) => {
           if (!date) return '';
           return new Date(date).toLocaleDateString('pt-BR');
@@ -21,9 +22,13 @@ module.exports = (app) => {
         json: (context) => {
           return JSON.stringify(context).replace(/'/g, "&#39;");
         },
-        split: (str, separator) => {
+        join: (array, separator) => {
+          if (!Array.isArray(array)) return array;
+          return array.join(separator);
+        },
+        split: (str, ch) => {
           if (typeof str !== 'string') return [];
-          return str.split(separator);
+          return str.split(ch);
         }
       }
     })

@@ -848,7 +848,7 @@ router.post('/campanhas/nova', requireAdmin, async (req, res) => {
 
                 return {
                     name,
-                    color: colors[index] || '',
+                    color: colors[index] || [],
                     type: types[index] || 'Tradicional',
                     price: prices[index] || 0,
                     sizes: sizes[index] || '',
@@ -1028,17 +1028,17 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
                 
                 // Check if this item belongs to campaign
                 if (shirtIds.includes(pid) || shirtNames.includes(name)) {
-                    const key = name || `Produto #${pid}`;
+                    const productColor = item.color || 'N/A';
+                    const key = `${name || `Produto #${pid}`} (${productColor})`;
+                    
                     if (!salesSummary[key]) {
                         // Try to find image/type from campaign shirts
                         let productImg = null;
                         let productType = item.type || 'Padrão';
-                        let productColor = item.color || '';
                         
                         const matchingShirt = (campaignPlain.shirts || []).find(s => Number(s.id) === pid || s.name === name);
                         if (matchingShirt) {
                             productType = matchingShirt.type;
-                            productColor = matchingShirt.color;
                             try {
                                 const imgs = matchingShirt.images || []; // already parsed above
                                 if (imgs.length > 0) productImg = imgs[0];
@@ -1050,7 +1050,8 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
                             sizes: {}, 
                             type: productType,
                             color: productColor,
-                            image: productImg
+                            image: productImg,
+                            baseName: name
                         };
                     }
                     
@@ -1118,7 +1119,7 @@ router.post('/campanhas/:campaignId/camisas/editar/:shirtId', requireAdmin, asyn
 
         await shirt.update({
             name: name || shirt.name,
-            color: color || '',
+            color: color || [],
             type: type || 'Tradicional',
             price: price || 0,
             sizes: sizes || '',
@@ -1152,7 +1153,7 @@ router.post('/campanhas/:campaignId/camisas/criar', requireAdmin, async (req, re
 
         await Shirt.create({
             name,
-            color: color || '',
+            color: color || [],
             type: type || 'Tradicional',
             price: price || 0,
             sizes: sizes || '',
@@ -1219,31 +1220,32 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             order.parsedItems.forEach(item => {
                 const pid = Number(item.id || item.productId || item.shirtId);
                 const name = (item.name || '').trim();
+                const itemType = (item.type || '').trim();
+                const itemColor = (item.color || '').trim();
                 
                 // Check if this item belongs to campaign
                 if (shirtIds.includes(pid) || shirtNames.includes(name)) {
-                    const key = name || `Produto #${pid}`;
+                    // Unique key based on name, type and color
+                    const key = `${name} | ${itemType} | ${itemColor}`;
+                    
                     if (!summary[key]) {
-                        // Try to find image/type from campaign shirts
+                        // Try to find image from campaign shirts
                         let productImg = null;
-                        let productType = item.type || 'Padrão';
-                        let productColor = item.color || '';
-
+                        
                         const matchingShirt = (campaign.shirts || []).find(s => s.id === pid || s.name === name);
                         if (matchingShirt) {
-                            productType = matchingShirt.type;
-                            productColor = matchingShirt.color;
                             try {
-                                const imgs = JSON.parse(matchingShirt.imagesJSON || '[]');
-                                if (imgs.length > 0) productImg = imgs[0];
+                                const imgs = matchingShirt.images; // Já é parseado pelo model getter
+                                if (Array.isArray(imgs) && imgs.length > 0) productImg = imgs[0];
                             } catch(e) {}
                         }
                         
                         summary[key] = { 
+                            name: name,
                             total: 0, 
                             sizes: {}, 
-                            type: productType,
-                            color: productColor,
+                            type: itemType,
+                            color: itemColor,
                             image: productImg
                         };
                     }
@@ -1442,7 +1444,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
         // One unified table for all products? Or separate tables? 
         // Let's do separate tables per product for clarity, as requested "bem mais dividido".
         
-        Object.entries(summary).forEach(([name, data]) => {
+        Object.entries(summary).forEach(([key, data]) => {
             // Sort sizes
             const sortedSizes = Object.entries(data.sizes).sort((a, b) => {
                 const order = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'XXG', 'EXG', 'Infantil'];
@@ -1456,7 +1458,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             children.push(
                 new Paragraph({
                     children: [
-                        new TextRun({ text: "• " + name, bold: true, size: 24, color: "333333" }),
+                        new TextRun({ text: "• " + data.name, bold: true, size: 24, color: "333333" }),
                         new TextRun({ text: ` (${data.type}${data.color ? ' - ' + data.color : ''})`, italics: true, color: "666666" })
                     ],
                     spacing: { before: 200, after: 100 }
@@ -1885,7 +1887,7 @@ router.post('/campanhas/editar/:id', requireAdmin, async (req, res) => {
                 
                 return {
                     name,
-                    color: colors[index] || '',
+                    color: colors[index] || [],
                     type: types[index] || 'Tradicional',
                     price: prices[index] || 0,
                     sizes: sizes[index] || '',

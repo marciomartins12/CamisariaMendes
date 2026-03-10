@@ -13,7 +13,28 @@ const Shirt = sequelize.define('Shirt', {
   },
   color: {
     type: DataTypes.STRING,
-    allowNull: true
+    allowNull: true,
+    // Support multiple colors stored as JSON or comma-separated string
+    get() {
+      const rawValue = this.getDataValue('color');
+      if (!rawValue) return [];
+      // If it looks like JSON, parse it. Otherwise, split by comma.
+      if (rawValue.startsWith('[') || rawValue.startsWith('{')) {
+        try {
+          return JSON.parse(rawValue);
+        } catch (e) {
+          return rawValue.split(',').map(c => c.trim()).filter(Boolean);
+        }
+      }
+      return rawValue.split(',').map(c => c.trim()).filter(Boolean);
+    },
+    set(value) {
+      if (Array.isArray(value)) {
+        this.setDataValue('color', JSON.stringify(value));
+      } else {
+        this.setDataValue('color', value);
+      }
+    }
   },
   price: {
     type: DataTypes.DECIMAL(10, 2),
