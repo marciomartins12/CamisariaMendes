@@ -1029,16 +1029,19 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
                 // Check if this item belongs to campaign
                 if (shirtIds.includes(pid) || shirtNames.includes(name)) {
                     const productColor = item.color || 'N/A';
-                    const key = `${name || `Produto #${pid}`} (${productColor})`;
+                    // Use ID + Color as the unique key to handle same names but different products
+                    const key = `${pid}_${productColor}`;
                     
                     if (!salesSummary[key]) {
                         // Try to find image/type from campaign shirts
                         let productImg = null;
                         let productType = item.type || 'Padrão';
+                        let productName = name;
                         
-                        const matchingShirt = (campaignPlain.shirts || []).find(s => Number(s.id) === pid || s.name === name);
+                        const matchingShirt = (campaignPlain.shirts || []).find(s => Number(s.id) === pid);
                         if (matchingShirt) {
                             productType = matchingShirt.type;
+                            productName = matchingShirt.name;
                             try {
                                 const imgs = matchingShirt.images || []; // already parsed above
                                 if (imgs.length > 0) productImg = imgs[0];
@@ -1051,7 +1054,7 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
                             type: productType,
                             color: productColor,
                             image: productImg,
-                            baseName: name
+                            baseName: productName
                         };
                     }
                     
@@ -1225,15 +1228,17 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                 
                 // Check if this item belongs to campaign
                 if (shirtIds.includes(pid) || shirtNames.includes(name)) {
-                    // Unique key based on name, type and color
-                    const key = `${name} | ${itemType} | ${itemColor}`;
+                    // Unique key based on ID, type and color
+                    const key = `${pid}_${itemType}_${itemColor}`;
                     
                     if (!summary[key]) {
                         // Try to find image from campaign shirts
                         let productImg = null;
+                        let productName = name;
                         
-                        const matchingShirt = (campaign.shirts || []).find(s => s.id === pid || s.name === name);
+                        const matchingShirt = (campaign.shirts || []).find(s => s.id === pid);
                         if (matchingShirt) {
+                            productName = matchingShirt.name;
                             try {
                                 const imgs = matchingShirt.images; // Já é parseado pelo model getter
                                 if (Array.isArray(imgs) && imgs.length > 0) productImg = imgs[0];
@@ -1241,7 +1246,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                         }
                         
                         summary[key] = { 
-                            name: name,
+                            name: productName,
                             total: 0, 
                             sizes: {}, 
                             type: itemType,
