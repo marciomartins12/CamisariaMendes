@@ -359,22 +359,30 @@
         .product-purchase {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            margin-top: 12px;
-        }
-
-        .product-qty {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
             gap: 8px;
             margin-top: 8px;
         }
 
-        .qty-label {
-            font-size: 0.8rem;
+        .purchase-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .purchase-qty {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            flex: 0 0 auto;
+        }
+
+        .qty-inline-label {
+            font-size: 0.78rem;
             color: #6b7280;
-            font-weight: 600;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
         }
 
         .qty-input-group {
@@ -419,11 +427,11 @@
         .price-block {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 2px;
         }
 
         .price-label {
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             color: #6b7280;
             font-weight: 700;
             letter-spacing: 0.04em;
@@ -812,28 +820,13 @@
         <span class="campaign-mini-name" title="{{campaign.title}}">{{campaign.title}}</span>
     </div>
 
-    {{#if campaign.startDate}}
+    {{#if campaign.endDate}}
     <div class="campaign-dates">
-        <span class="campaign-dates-item">
-            <i class="far fa-calendar-alt"></i>
-            {{formatDate campaign.startDate}} — {{formatDate campaign.endDate}}
-        </span>
-        {{#if campaign.endDate}}
         <span class="campaign-dates-item">
             <i class="far fa-clock"></i>
             Pedidos até {{formatDate campaign.endDate}}
         </span>
-        {{/if}}
     </div>
-    {{else}}
-        {{#if campaign.endDate}}
-        <div class="campaign-dates">
-            <span class="campaign-dates-item">
-                <i class="far fa-clock"></i>
-                Pedidos até {{formatDate campaign.endDate}}
-            </span>
-        </div>
-        {{/if}}
     {{/if}}
 
     <div class="section-separator">
@@ -905,21 +898,22 @@
                             </div>
                         </div>
                     </div>
-
-                    <div class="option-group option-group-inline">
-                        <span class="option-label">Qtd</span>
-                        <div class="qty-input-group">
-                            <button type="button" class="qty-btn" onclick="changeProductQty({{this.id}}, -1)">−</button>
-                            <span id="qty-{{this.id}}" class="qty-display">1</span>
-                            <button type="button" class="qty-btn" onclick="changeProductQty({{this.id}}, 1)">+</button>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="product-purchase">
-                    <div class="price-block">
-                        <span class="price-label">Valor</span>
-                        <div class="price-main">R$ {{this.price}}</div>
+                    <div class="purchase-top">
+                        <div class="price-block">
+                            <span class="price-label">Valor</span>
+                            <div class="price-main">R$ {{this.price}}</div>
+                        </div>
+                        <div class="purchase-qty">
+                            <span class="qty-inline-label">Qtd</span>
+                            <div class="qty-input-group">
+                                <button type="button" class="qty-btn" onclick="changeProductQty({{this.id}}, -1)">−</button>
+                                <span id="qty-{{this.id}}" class="qty-display">1</span>
+                                <button type="button" class="qty-btn" onclick="changeProductQty({{this.id}}, 1)">+</button>
+                            </div>
+                        </div>
                     </div>
 
                     <button class="btn-add" id="btn-add-{{this.id}}" 
