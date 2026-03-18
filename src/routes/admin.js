@@ -1475,14 +1475,14 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             if (!variant) {
                 return new TableCell({
                     width: { size: 50, type: WidthType.PERCENTAGE },
-                    children: [new Paragraph({ text: "" })],
+                    children: [new Paragraph({ text: "", spacing: { after: 320 } })],
                 });
             }
 
             const colorLabel = (variant.color || 'Sem cor').toString().trim() || 'Sem cor';
             const sizeLines = sortSizes(variant.sizes).map(([size, qty]) => {
                 const label = `${size}-${qty}`;
-                return new Paragraph({ text: label, spacing: { after: 40 } });
+                return new Paragraph({ text: label, spacing: { after: 60 } });
             });
 
             return new TableCell({
@@ -1492,9 +1492,10 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                         children: [
                             new TextRun({ text: `${colorLabel} (${variant.total})`, bold: true, size: 22, color: "333333" }),
                         ],
-                        spacing: { after: 120 },
+                        spacing: { before: 120, after: 200 },
                     }),
                     ...sizeLines,
+                    new Paragraph({ text: "", spacing: { after: 320 } }),
                 ],
             });
         };
