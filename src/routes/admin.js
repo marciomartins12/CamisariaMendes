@@ -1177,7 +1177,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
     try {
         const fs = require('fs');
         const path = require('path');
-        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, BorderStyle, Header, Footer, ImageRun } = require('docx');
+        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, BorderStyle, Header, Footer, ImageRun, TabStopType } = require('docx');
         
         const campaign = await Campaign.findByPk(req.params.id, {
             include: [{ model: Shirt, as: 'shirts' }]
@@ -1446,149 +1446,185 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             })
         );
 
-        // One unified table for all products? Or separate tables? 
-        // Let's do separate tables per product for clarity, as requested "bem mais dividido".
-        
-        Object.entries(summary).forEach(([key, data]) => {
-            // Sort sizes
-            const sortedSizes = Object.entries(data.sizes).sort((a, b) => {
-                const order = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'XXG', 'EXG', 'Infantil'];
-                const idxA = order.indexOf(a[0]);
-                const idxB = order.indexOf(b[0]);
-                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-                return a[0].localeCompare(b[0]);
-            });
-
-            // Product Header
-            children.push(
-                new Paragraph({
-                    children: [
-                        new TextRun({ text: "• " + data.name, bold: true, size: 24, color: "333333" }),
-                        new TextRun({ text: ` (${data.type}${data.color ? ' - ' + data.color : ''})`, italics: true, color: "666666" })
-                    ],
-                    spacing: { before: 200, after: 100 }
-                })
-            );
-
-            // Table with 2 columns: Image (Left) | Sizes Table (Right)
-            // If image exists, we split. If not, just sizes table.
-            
-            let productImageRun = null;
-            if (data.image) {
-                const imgBuffer = getImageBuffer(data.image);
-                if (imgBuffer) {
+        const normalizeKeyText = (value) => {
+            if (!value) return 'N/A';
+            if (Array.isArray(value)) return value.map(v => String(v).trim()).filter(Boolean).join(', ') || 'N/A';
+            if (typeof value === 'string') {
+                const trimmed = value.trim();
+                if (!trimmed) return 'N/A';
+                if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
                     try {
-                        productImageRun = new ImageRun({
-                            data: imgBuffer,
-                            transformation: { width: 150, height: 150 }
-                        });
-                    } catch(e) {}
+                        const parsed = JSON.parse(trimmed);
+                        if (Array.isArray(parsed)) {
+                            return parsed.map(v => String(v).trim()).filter(Boolean).join(', ') || 'N/A';
+                        }
+                    } catch (e) {}
                 }
+                return trimmed;
             }
+            return String(value);
+        };
 
-            // Sizes Table Logic
-            const tableHeaderColor = "F2F2F2";
-            const sizeTableRows = [
-                new TableRow({
-                    children: [
-                        new TableCell({ 
-                            children: [new Paragraph({ text: "TAMANHO", bold: true, alignment: AlignmentType.CENTER })],
-                            shading: { fill: tableHeaderColor },
-                            width: { size: 50, type: WidthType.PERCENTAGE }
-                        }),
-                        new TableCell({ 
-                            children: [new Paragraph({ text: "QUANTIDADE", bold: true, alignment: AlignmentType.CENTER })],
-                            shading: { fill: tableHeaderColor },
-                            width: { size: 50, type: WidthType.PERCENTAGE }
-                        })
-                    ]
-                })
-            ];
+        const getBaseSize = (sizeValue) => {
+            const raw = normalizeKeyText(sizeValue);
+            if (raw === 'N/A') return 'N/A';
+            return raw.split(/\s+/)[0].trim() || 'N/A';
+        };
 
-            sortedSizes.forEach(([size, qty]) => {
-                sizeTableRows.push(
-                    new TableRow({
-                        children: [
-                            new TableCell({ children: [new Paragraph({ text: size, alignment: AlignmentType.CENTER })] }),
-                            new TableCell({ children: [new Paragraph({ text: String(qty), alignment: AlignmentType.CENTER })] })
-                        ]
-                    })
-                );
-            });
+        const isBabyLookSize = (sizeValue) => {
+            const raw = normalizeKeyText(sizeValue).toLowerCase();
+            return raw.includes('baby');
+        };
 
-            // Total Row
-            sizeTableRows.push(
-                new TableRow({
-                    children: [
-                        new TableCell({ 
-                            children: [new Paragraph({ text: "TOTAL", bold: true, alignment: AlignmentType.RIGHT })],
-                            shading: { fill: "E6E6E6" }
-                        }),
-                        new TableCell({ 
-                            children: [new Paragraph({ text: String(data.total), bold: true, alignment: AlignmentType.CENTER })],
-                            shading: { fill: "E6E6E6" }
-                        })
-                    ]
-                })
-            );
+        const baseSizeOrder = [
+            'PP', 'P', 'M', 'G', 'GG', 'XG', 'XXG', 'EXG',
+            'INFANTIL',
+            '2', '4', '6', '8', '10', '12', '14'
+        ];
 
-            const sizesTable = new Table({
-                width: { size: 100, type: WidthType.PERCENTAGE },
-                alignment: AlignmentType.CENTER,
-                rows: sizeTableRows,
-                borders: {
-                    top: { style: BorderStyle.SINGLE, size: 1, color: "999999" },
-                    bottom: { style: BorderStyle.SINGLE, size: 1, color: "999999" },
-                    left: { style: BorderStyle.SINGLE, size: 1, color: "999999" },
-                    right: { style: BorderStyle.SINGLE, size: 1, color: "999999" },
-                    insideHorizontal: { style: BorderStyle.DOTTED, size: 1, color: "CCCCCC" },
-                    insideVertical: { style: BorderStyle.SINGLE, size: 1, color: "999999" }
+        const compareBaseSizes = (a, b) => {
+            const keyA = String(a || '').toUpperCase();
+            const keyB = String(b || '').toUpperCase();
+            const idxA = baseSizeOrder.indexOf(keyA);
+            const idxB = baseSizeOrder.indexOf(keyB);
+            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+            if (idxA !== -1) return -1;
+            if (idxB !== -1) return 1;
+            const numA = Number(keyA);
+            const numB = Number(keyB);
+            if (Number.isFinite(numA) && Number.isFinite(numB)) return numA - numB;
+            return keyA.localeCompare(keyB, 'pt-BR');
+        };
+
+        const makeBabyAbbr = (baseSize) => {
+            const base = String(baseSize || '').trim();
+            if (!base) return 'b';
+            return `${base.toLowerCase()}b`;
+        };
+
+        const products = {};
+        Object.values(summary).forEach((data) => {
+            const productName = normalizeKeyText(data.name);
+            const colorName = normalizeKeyText(data.color);
+            if (!products[productName]) {
+                products[productName] = { name: productName, colors: {} };
+            }
+            if (!products[productName].colors[colorName]) {
+                products[productName].colors[colorName] = { total: 0, normal: {}, baby: {} };
+            }
+            const bucket = products[productName].colors[colorName];
+            bucket.total += Number(data.total || 0);
+            Object.entries(data.sizes || {}).forEach(([size, qty]) => {
+                const base = getBaseSize(size);
+                const amount = Number(qty || 0);
+                if (!Number.isFinite(amount) || amount <= 0) return;
+                if (isBabyLookSize(size)) {
+                    bucket.baby[base] = (bucket.baby[base] || 0) + amount;
+                } else {
+                    bucket.normal[base] = (bucket.normal[base] || 0) + amount;
                 }
             });
-
-            if (productImageRun) {
-                // Layout: [ Image Cell (30%) ] [ Sizes Table Cell (70%) ]
-                children.push(
-                    new Table({
-                        width: { size: 100, type: WidthType.PERCENTAGE },
-                        borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE }, insideVertical: { style: BorderStyle.NONE } },
-                        rows: [
-                            new TableRow({
-                                children: [
-                                    new TableCell({
-                                        width: { size: 30, type: WidthType.PERCENTAGE },
-                                        children: [new Paragraph({ children: [productImageRun], alignment: AlignmentType.CENTER })],
-                                        verticalAlign: AlignmentType.CENTER
-                                    }),
-                                    new TableCell({
-                                        width: { size: 70, type: WidthType.PERCENTAGE },
-                                        children: [sizesTable],
-                                        verticalAlign: AlignmentType.TOP
-                                    })
-                                ]
-                            })
-                        ]
-                    })
-                );
-            } else {
-                 const sizesTableStandalone = new Table({
-                    width: { size: 80, type: WidthType.PERCENTAGE },
-                    alignment: AlignmentType.CENTER,
-                    rows: sizeTableRows,
-                    borders: {
-                        top: { style: BorderStyle.SINGLE, size: 1, color: "999999" },
-                        bottom: { style: BorderStyle.SINGLE, size: 1, color: "999999" },
-                        left: { style: BorderStyle.SINGLE, size: 1, color: "999999" },
-                        right: { style: BorderStyle.SINGLE, size: 1, color: "999999" },
-                        insideHorizontal: { style: BorderStyle.DOTTED, size: 1, color: "CCCCCC" },
-                        insideVertical: { style: BorderStyle.SINGLE, size: 1, color: "999999" }
-                    }
-                });
-                children.push(sizesTableStandalone);
-            }
-
-            children.push(new Paragraph({ text: "", spacing: { after: 300 } }));
         });
+
+        const tabStopsSingle = [
+            { type: TabStopType.LEFT, position: 1800 }
+        ];
+
+        const tabStopsDouble = [
+            { type: TabStopType.LEFT, position: 1800 },
+            { type: TabStopType.LEFT, position: 3600 },
+            { type: TabStopType.LEFT, position: 5400 }
+        ];
+
+        Object.values(products)
+            .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+            .forEach((product) => {
+                children.push(
+                    new Paragraph({
+                        children: [
+                            new TextRun({ text: `${formattedId} ${product.name}`, bold: true, size: 24, color: "333333" })
+                        ],
+                        spacing: { before: 200, after: 140 }
+                    })
+                );
+
+                const colors = Object.entries(product.colors)
+                    .map(([color, data]) => ({ color, ...data }))
+                    .sort((a, b) => b.total - a.total || a.color.localeCompare(b.color, 'pt-BR'));
+
+                for (let i = 0; i < colors.length; i += 2) {
+                    const left = colors[i];
+                    const right = colors[i + 1] || null;
+
+                    if (right) {
+                        children.push(
+                            new Paragraph({
+                                tabStops: [{ type: TabStopType.LEFT, position: 3600 }],
+                                children: [
+                                    new TextRun({ text: `${left.color} (${left.total})\t${right.color} (${right.total})`, bold: true })
+                                ],
+                                spacing: { after: 60 }
+                            })
+                        );
+                    } else {
+                        children.push(
+                            new Paragraph({
+                                children: [new TextRun({ text: `${left.color} (${left.total})`, bold: true })],
+                                spacing: { after: 60 }
+                            })
+                        );
+                    }
+
+                    const sizesSet = new Set();
+                    Object.keys(left.normal || {}).forEach(s => sizesSet.add(s));
+                    Object.keys(left.baby || {}).forEach(s => sizesSet.add(s));
+                    if (right) {
+                        Object.keys(right.normal || {}).forEach(s => sizesSet.add(s));
+                        Object.keys(right.baby || {}).forEach(s => sizesSet.add(s));
+                    }
+                    if (sizesSet.size === 0) sizesSet.add('N/A');
+
+                    const sortedBaseSizes = Array.from(sizesSet).sort(compareBaseSizes);
+
+                    sortedBaseSizes.forEach((baseSize) => {
+                        const leftNormal = Number(left.normal?.[baseSize] || 0);
+                        const leftBaby = Number(left.baby?.[baseSize] || 0);
+                        const leftBabyLabel = makeBabyAbbr(baseSize);
+
+                        if (right) {
+                            const rightNormal = Number(right.normal?.[baseSize] || 0);
+                            const rightBaby = Number(right.baby?.[baseSize] || 0);
+                            const rightBabyLabel = makeBabyAbbr(baseSize);
+
+                            children.push(
+                                new Paragraph({
+                                    tabStops: tabStopsDouble,
+                                    children: [
+                                        new TextRun({
+                                            text: `${baseSize}-${leftNormal}\t${leftBabyLabel}-${leftBaby}\t${baseSize}-${rightNormal}\t${rightBabyLabel}-${rightBaby}`
+                                        })
+                                    ]
+                                })
+                            );
+                        } else {
+                            children.push(
+                                new Paragraph({
+                                    tabStops: tabStopsSingle,
+                                    children: [
+                                        new TextRun({
+                                            text: `${baseSize}-${leftNormal}\t${leftBabyLabel}-${leftBaby}`
+                                        })
+                                    ]
+                                })
+                            );
+                        }
+                    });
+
+                    children.push(new Paragraph({ text: "", spacing: { after: 140 } }));
+                }
+
+                children.push(new Paragraph({ text: "", spacing: { after: 200 } }));
+            });
 
         // 3. ORDERS LIST SECTION
         children.push(
