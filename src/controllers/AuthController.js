@@ -281,7 +281,7 @@ module.exports = {
             };
 
             res.render('user/profile', {
-                title: 'Meu Perfil - Camisaria Mendes',
+                title: 'Meus Dados - Camisaria Mendes',
                 layout: 'main',
                 user: req.session.user
             });
@@ -309,7 +309,7 @@ module.exports = {
             const trimmedName = (name || '').trim();
             if (!trimmedName) {
                 return res.render('user/profile', {
-                    title: 'Meu Perfil - Camisaria Mendes',
+                    title: 'Meus Dados - Camisaria Mendes',
                     layout: 'main',
                     user: req.session.user,
                     error: 'O nome não pode ficar em branco.'
@@ -324,7 +324,7 @@ module.exports = {
             if (wantsPasswordChange) {
                 if (!currentPassword) {
                     return res.render('user/profile', {
-                        title: 'Meu Perfil - Camisaria Mendes',
+                        title: 'Meus Dados - Camisaria Mendes',
                         layout: 'main',
                         user: req.session.user,
                         error: 'Informe sua senha atual para alterar a senha.'
@@ -333,7 +333,7 @@ module.exports = {
 
                 if (!newPassword || newPassword !== confirmNewPassword) {
                     return res.render('user/profile', {
-                        title: 'Meu Perfil - Camisaria Mendes',
+                        title: 'Meus Dados - Camisaria Mendes',
                         layout: 'main',
                         user: req.session.user,
                         error: 'As senhas novas não coincidem.'
@@ -343,7 +343,7 @@ module.exports = {
                 const match = await bcrypt.compare(currentPassword, user.password);
                 if (!match) {
                     return res.render('user/profile', {
-                        title: 'Meu Perfil - Camisaria Mendes',
+                        title: 'Meus Dados - Camisaria Mendes',
                         layout: 'main',
                         user: req.session.user,
                         error: 'Senha atual incorreta.'
@@ -364,18 +364,18 @@ module.exports = {
             };
 
             res.render('user/profile', {
-                title: 'Meu Perfil - Camisaria Mendes',
+                title: 'Meus Dados - Camisaria Mendes',
                 layout: 'main',
                 user: req.session.user,
-                success: 'Perfil atualizado com sucesso!'
+                success: 'Dados atualizados com sucesso!'
             });
         } catch (error) {
             console.error(error);
             res.render('user/profile', {
-                title: 'Meu Perfil - Camisaria Mendes',
+                title: 'Meus Dados - Camisaria Mendes',
                 layout: 'main',
                 user: (req.session && req.session.user) ? req.session.user : null,
-                error: 'Erro ao atualizar perfil.'
+                error: 'Erro ao atualizar dados.'
             });
         }
     }
