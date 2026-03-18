@@ -1507,7 +1507,10 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             const productName = normalizeKeyText(data.name);
             const colorName = normalizeKeyText(data.color);
             if (!products[productName]) {
-                products[productName] = { name: productName, colors: {} };
+                products[productName] = { name: productName, image: null, colors: {} };
+            }
+            if (!products[productName].image && data.image) {
+                products[productName].image = data.image;
             }
             if (!products[productName].colors[colorName]) {
                 products[productName].colors[colorName] = { total: 0, normal: {}, baby: {} };
@@ -1536,9 +1539,29 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             { type: TabStopType.LEFT, position: 5400 }
         ];
 
+        const productImageSize = { width: 120, height: 120 };
+
         Object.values(products)
             .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
             .forEach((product) => {
+                if (product.image) {
+                    const imgBuffer = getImageBuffer(product.image);
+                    if (imgBuffer) {
+                        try {
+                            children.push(
+                                new Paragraph({
+                                    children: [
+                                        new ImageRun({
+                                            data: imgBuffer,
+                                            transformation: productImageSize
+                                        })
+                                    ],
+                                    spacing: { before: 100, after: 80 }
+                                })
+                            );
+                        } catch (e) {}
+                    }
+                }
                 children.push(
                     new Paragraph({
                         children: [
