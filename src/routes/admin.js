@@ -1465,85 +1465,38 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             return String(value);
         };
 
-        const getBaseSize = (sizeValue) => {
-            const raw = normalizeKeyText(sizeValue);
-            if (raw === 'N/A') return 'N/A';
-            return raw.split(/\s+/)[0].trim() || 'N/A';
-        };
-
-        const isBabyLookSize = (sizeValue) => {
-            const raw = normalizeKeyText(sizeValue).toLowerCase();
-            return raw.includes('baby');
-        };
-
-        const baseSizeOrder = [
-            'PP', 'P', 'M', 'G', 'GG', 'XG', 'XXG', 'EXG',
-            'INFANTIL',
-            '2', '4', '6', '8', '10', '12', '14'
-        ];
-
-        const compareBaseSizes = (a, b) => {
-            const keyA = String(a || '').toUpperCase();
-            const keyB = String(b || '').toUpperCase();
-            const idxA = baseSizeOrder.indexOf(keyA);
-            const idxB = baseSizeOrder.indexOf(keyB);
-            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-            if (idxA !== -1) return -1;
-            if (idxB !== -1) return 1;
-            const numA = Number(keyA);
-            const numB = Number(keyB);
-            if (Number.isFinite(numA) && Number.isFinite(numB)) return numA - numB;
-            return keyA.localeCompare(keyB, 'pt-BR');
-        };
-
-        const makeBabyAbbr = (baseSize) => {
-            const base = String(baseSize || '').trim();
-            if (!base) return 'b';
-            return `${base.toLowerCase()}b`;
-        };
-
         const products = {};
         Object.values(summary).forEach((data) => {
             const productName = normalizeKeyText(data.name);
-            const colorName = normalizeKeyText(data.color);
             if (!products[productName]) {
-                products[productName] = { name: productName, image: null, colors: {} };
+                products[productName] = { name: productName, image: null, cuts: {} };
             }
             if (!products[productName].image && data.image) {
                 products[productName].image = data.image;
             }
-            if (!products[productName].colors[colorName]) {
-                products[productName].colors[colorName] = { total: 0, normal: {}, baby: {} };
-            }
-            const bucket = products[productName].colors[colorName];
-            bucket.total += Number(data.total || 0);
-            Object.entries(data.sizes || {}).forEach(([size, qty]) => {
-                const base = getBaseSize(size);
-                const amount = Number(qty || 0);
-                if (!Number.isFinite(amount) || amount <= 0) return;
-                if (isBabyLookSize(size)) {
-                    bucket.baby[base] = (bucket.baby[base] || 0) + amount;
-                } else {
-                    bucket.normal[base] = (bucket.normal[base] || 0) + amount;
-                }
-            });
+            const cutName = normalizeKeyText(data.type);
+            const amount = Number(data.total || 0);
+            if (!Number.isFinite(amount) || amount <= 0) return;
+            if (!cutName || cutName === 'N/A') return;
+            products[productName].cuts[cutName] = (products[productName].cuts[cutName] || 0) + amount;
         });
 
-        const tabStopsSingle = [
-            { type: TabStopType.LEFT, position: 1800 }
-        ];
-
-        const tabStopsDouble = [
-            { type: TabStopType.LEFT, position: 1800 },
-            { type: TabStopType.LEFT, position: 3600 },
-            { type: TabStopType.LEFT, position: 5400 }
-        ];
+        const cutTwoColumnTabStops = [{ type: TabStopType.LEFT, position: 3600 }];
 
         const productImageSize = { width: 120, height: 120 };
 
         Object.values(products)
             .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
             .forEach((product) => {
+                const cuts = Object.entries(product.cuts || {})
+                    .map(([cut, total]) => ({ cut, total: Number(total || 0) }))
+                    .filter(c => Number.isFinite(c.total) && c.total > 0)
+                    .sort((a, b) => b.total - a.total || a.cut.localeCompare(b.cut, 'pt-BR'));
+
+                if (cuts.length === 0) {
+                    return;
+                }
+
                 if (product.image) {
                     const imgBuffer = getImageBuffer(product.image);
                     if (imgBuffer) {
@@ -1571,20 +1524,15 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                     })
                 );
 
-                const colors = Object.entries(product.colors)
-                    .map(([color, data]) => ({ color, ...data }))
-                    .sort((a, b) => b.total - a.total || a.color.localeCompare(b.color, 'pt-BR'));
-
-                for (let i = 0; i < colors.length; i += 2) {
-                    const left = colors[i];
-                    const right = colors[i + 1] || null;
-
+                for (let i = 0; i < cuts.length; i += 2) {
+                    const left = cuts[i];
+                    const right = cuts[i + 1] || null;
                     if (right) {
                         children.push(
                             new Paragraph({
-                                tabStops: [{ type: TabStopType.LEFT, position: 3600 }],
+                                tabStops: cutTwoColumnTabStops,
                                 children: [
-                                    new TextRun({ text: `${left.color} (${left.total})\t${right.color} (${right.total})`, bold: true })
+                                    new TextRun({ text: `${left.cut} (${left.total})\t${right.cut} (${right.total})` })
                                 ],
                                 spacing: { after: 60 }
                             })
@@ -1592,58 +1540,11 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                     } else {
                         children.push(
                             new Paragraph({
-                                children: [new TextRun({ text: `${left.color} (${left.total})`, bold: true })],
+                                children: [new TextRun({ text: `${left.cut} (${left.total})` })],
                                 spacing: { after: 60 }
                             })
                         );
                     }
-
-                    const sizesSet = new Set();
-                    Object.keys(left.normal || {}).forEach(s => sizesSet.add(s));
-                    Object.keys(left.baby || {}).forEach(s => sizesSet.add(s));
-                    if (right) {
-                        Object.keys(right.normal || {}).forEach(s => sizesSet.add(s));
-                        Object.keys(right.baby || {}).forEach(s => sizesSet.add(s));
-                    }
-                    if (sizesSet.size === 0) sizesSet.add('N/A');
-
-                    const sortedBaseSizes = Array.from(sizesSet).sort(compareBaseSizes);
-
-                    sortedBaseSizes.forEach((baseSize) => {
-                        const leftNormal = Number(left.normal?.[baseSize] || 0);
-                        const leftBaby = Number(left.baby?.[baseSize] || 0);
-                        const leftBabyLabel = makeBabyAbbr(baseSize);
-
-                        if (right) {
-                            const rightNormal = Number(right.normal?.[baseSize] || 0);
-                            const rightBaby = Number(right.baby?.[baseSize] || 0);
-                            const rightBabyLabel = makeBabyAbbr(baseSize);
-
-                            children.push(
-                                new Paragraph({
-                                    tabStops: tabStopsDouble,
-                                    children: [
-                                        new TextRun({
-                                            text: `${baseSize}-${leftNormal}\t${leftBabyLabel}-${leftBaby}\t${baseSize}-${rightNormal}\t${rightBabyLabel}-${rightBaby}`
-                                        })
-                                    ]
-                                })
-                            );
-                        } else {
-                            children.push(
-                                new Paragraph({
-                                    tabStops: tabStopsSingle,
-                                    children: [
-                                        new TextRun({
-                                            text: `${baseSize}-${leftNormal}\t${leftBabyLabel}-${leftBaby}`
-                                        })
-                                    ]
-                                })
-                            );
-                        }
-                    });
-
-                    children.push(new Paragraph({ text: "", spacing: { after: 140 } }));
                 }
 
                 children.push(new Paragraph({ text: "", spacing: { after: 200 } }));
