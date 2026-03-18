@@ -257,5 +257,126 @@ module.exports = {
     logout: (req, res) => {
         req.session.user = null;
         res.redirect('/');
+    },
+
+    profilePage: async (req, res) => {
+        try {
+            if (!req.session || !req.session.user) {
+                return res.redirect('/auth/login');
+            }
+
+            const userId = req.session.user.id;
+            const user = await User.findByPk(userId);
+            if (!user) {
+                req.session.user = null;
+                return res.redirect('/auth/login');
+            }
+
+            const userPlain = user.get({ plain: true });
+            req.session.user = {
+                id: userPlain.id,
+                name: userPlain.name,
+                email: userPlain.email,
+                phone: userPlain.phone
+            };
+
+            res.render('user/profile', {
+                title: 'Meu Perfil - Camisaria Mendes',
+                layout: 'main',
+                user: req.session.user
+            });
+        } catch (error) {
+            console.error(error);
+            res.redirect('/campanhas');
+        }
+    },
+
+    updateProfile: async (req, res) => {
+        try {
+            if (!req.session || !req.session.user) {
+                return res.redirect('/auth/login');
+            }
+
+            const { name, currentPassword, newPassword, confirmNewPassword } = req.body;
+            const userId = req.session.user.id;
+
+            const user = await User.findByPk(userId);
+            if (!user) {
+                req.session.user = null;
+                return res.redirect('/auth/login');
+            }
+
+            const trimmedName = (name || '').trim();
+            if (!trimmedName) {
+                return res.render('user/profile', {
+                    title: 'Meu Perfil - Camisaria Mendes',
+                    layout: 'main',
+                    user: req.session.user,
+                    error: 'O nome não pode ficar em branco.'
+                });
+            }
+
+            if (trimmedName !== user.name) {
+                user.name = trimmedName;
+            }
+
+            const wantsPasswordChange = (newPassword || '').trim().length > 0 || (confirmNewPassword || '').trim().length > 0;
+            if (wantsPasswordChange) {
+                if (!currentPassword) {
+                    return res.render('user/profile', {
+                        title: 'Meu Perfil - Camisaria Mendes',
+                        layout: 'main',
+                        user: req.session.user,
+                        error: 'Informe sua senha atual para alterar a senha.'
+                    });
+                }
+
+                if (!newPassword || newPassword !== confirmNewPassword) {
+                    return res.render('user/profile', {
+                        title: 'Meu Perfil - Camisaria Mendes',
+                        layout: 'main',
+                        user: req.session.user,
+                        error: 'As senhas novas não coincidem.'
+                    });
+                }
+
+                const match = await bcrypt.compare(currentPassword, user.password);
+                if (!match) {
+                    return res.render('user/profile', {
+                        title: 'Meu Perfil - Camisaria Mendes',
+                        layout: 'main',
+                        user: req.session.user,
+                        error: 'Senha atual incorreta.'
+                    });
+                }
+
+                const hashedPassword = await bcrypt.hash(newPassword, 10);
+                user.password = hashedPassword;
+            }
+
+            await user.save();
+
+            req.session.user = {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                phone: user.phone
+            };
+
+            res.render('user/profile', {
+                title: 'Meu Perfil - Camisaria Mendes',
+                layout: 'main',
+                user: req.session.user,
+                success: 'Perfil atualizado com sucesso!'
+            });
+        } catch (error) {
+            console.error(error);
+            res.render('user/profile', {
+                title: 'Meu Perfil - Camisaria Mendes',
+                layout: 'main',
+                user: (req.session && req.session.user) ? req.session.user : null,
+                error: 'Erro ao atualizar perfil.'
+            });
+        }
     }
 };

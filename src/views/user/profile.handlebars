@@ -1,0 +1,96 @@
+<div class="admin-layout">
+    <main class="admin-main-content" style="padding-left: 0;">
+        <header class="page-header">
+            <div class="header-content">
+                <h1>Meu Perfil</h1>
+                <p>Veja seus dados e atualize sua senha</p>
+            </div>
+        </header>
+
+        <div class="profile-grid">
+            {{#if success}}
+            <div class="alert alert-success full-width">
+                <i class="fas fa-check-circle"></i> {{success}}
+            </div>
+            {{/if}}
+
+            {{#if error}}
+            <div class="alert alert-danger full-width">
+                <i class="fas fa-exclamation-circle"></i> {{error}}
+            </div>
+            {{/if}}
+
+            <form action="/perfil" method="POST" class="profile-form-container">
+                <div class="details-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-user-circle"></i> Informações Pessoais</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="profile-avatar-section">
+                            <div class="avatar-circle">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="avatar-info">
+                                <h4>{{user.name}}</h4>
+                                <span class="badge badge-primary">Cliente</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Nome</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-user"></i>
+                                <input type="text" name="name" class="form-control" value="{{user.name}}" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Email</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-envelope"></i>
+                                <input type="email" class="form-control" value="{{user.email}}" readonly disabled>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="details-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-lock"></i> Segurança</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>Senha atual</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-key"></i>
+                                <input type="password" name="currentPassword" class="form-control" placeholder="Digite sua senha atual">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Nova senha</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" name="newPassword" class="form-control" placeholder="Deixe em branco para manter a atual">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Confirmar nova senha</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-check-double"></i>
+                                <input type="password" name="confirmNewPassword" class="form-control" placeholder="Confirme a nova senha">
+                            </div>
+                        </div>
+
+                        <div class="form-actions" style="margin-top: 2rem;">
+                            <button type="submit" class="btn-primary-action">
+                                <i class="fas fa-save"></i> Salvar Alterações
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>

@@ -65,6 +65,10 @@ router.post('/auth/register', AuthController.register);
 router.post('/auth/forgot-password', AuthController.forgotPassword);
 router.get('/auth/logout', AuthController.logout);
 
+// User Profile
+router.get('/perfil', AuthController.profilePage);
+router.post('/perfil', AuthController.updateProfile);
+
 // Campaign Store (Protected)
 router.get('/c/:code', HomeController.viewCampaign);
 
