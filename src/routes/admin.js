@@ -1177,7 +1177,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
     try {
         const fs = require('fs');
         const path = require('path');
-        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, BorderStyle, Header, Footer, ImageRun, TabStopType } = require('docx');
+        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, BorderStyle, Header, Footer, ImageRun } = require('docx');
         
         const campaign = await Campaign.findByPk(req.params.id, {
             include: [{ model: Shirt, as: 'shirts' }]
@@ -1446,109 +1446,100 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             })
         );
 
-        const normalizeKeyText = (value) => {
-            if (!value) return 'N/A';
-            if (Array.isArray(value)) return value.map(v => String(v).trim()).filter(Boolean).join(', ') || 'N/A';
-            if (typeof value === 'string') {
-                const trimmed = value.trim();
-                if (!trimmed) return 'N/A';
-                if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
-                    try {
-                        const parsed = JSON.parse(trimmed);
-                        if (Array.isArray(parsed)) {
-                            return parsed.map(v => String(v).trim()).filter(Boolean).join(', ') || 'N/A';
-                        }
-                    } catch (e) {}
-                }
-                return trimmed;
-            }
-            return String(value);
-        };
+        // One unified table for all products? Or separate tables? 
+        // Let's do separate tables per product for clarity, as requested "bem mais dividido".
+        
+        const sizeOrder = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'XXG', 'EXG', 'Infantil'];
+        const sortSizes = (sizesObj) =>
+            Object.entries(sizesObj || {}).sort((a, b) => {
+                const idxA = sizeOrder.indexOf(a[0]);
+                const idxB = sizeOrder.indexOf(b[0]);
+                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                if (idxA !== -1) return -1;
+                if (idxB !== -1) return 1;
+                return String(a[0]).localeCompare(String(b[0]), 'pt-BR');
+            });
 
-        const products = {};
+        const grouped = new Map();
         Object.values(summary).forEach((data) => {
-            const productName = normalizeKeyText(data.name);
-            if (!products[productName]) {
-                products[productName] = { name: productName, image: null, cuts: {} };
+            const groupKey = `${(data.name || '').trim()}__${(data.type || '').trim()}`;
+            if (!grouped.has(groupKey)) {
+                grouped.set(groupKey, { name: (data.name || '').trim(), type: (data.type || '').trim(), variants: [] });
             }
-            if (!products[productName].image && data.image) {
-                products[productName].image = data.image;
-            }
-            const cutName = normalizeKeyText(data.type);
-            const amount = Number(data.total || 0);
-            if (!Number.isFinite(amount) || amount <= 0) return;
-            if (!cutName || cutName === 'N/A') return;
-            products[productName].cuts[cutName] = (products[productName].cuts[cutName] || 0) + amount;
+            grouped.get(groupKey).variants.push(data);
         });
 
-        const cutTwoColumnTabStops = [{ type: TabStopType.LEFT, position: 3600 }];
+        const groups = Array.from(grouped.values()).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
 
-        const productImageSize = { width: 120, height: 120 };
+        const makeVariantCell = (variant) => {
+            if (!variant) {
+                return new TableCell({
+                    width: { size: 50, type: WidthType.PERCENTAGE },
+                    children: [new Paragraph({ text: "" })],
+                });
+            }
 
-        Object.values(products)
-            .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
-            .forEach((product) => {
-                const cuts = Object.entries(product.cuts || {})
-                    .map(([cut, total]) => ({ cut, total: Number(total || 0) }))
-                    .filter(c => Number.isFinite(c.total) && c.total > 0)
-                    .sort((a, b) => b.total - a.total || a.cut.localeCompare(b.cut, 'pt-BR'));
+            const colorLabel = (variant.color || 'Sem cor').toString().trim() || 'Sem cor';
+            const sizeLines = sortSizes(variant.sizes).map(([size, qty]) => {
+                const label = `${size}-${qty}`;
+                return new Paragraph({ text: label, spacing: { after: 40 } });
+            });
 
-                if (cuts.length === 0) {
-                    return;
-                }
-
-                if (product.image) {
-                    const imgBuffer = getImageBuffer(product.image);
-                    if (imgBuffer) {
-                        try {
-                            children.push(
-                                new Paragraph({
-                                    children: [
-                                        new ImageRun({
-                                            data: imgBuffer,
-                                            transformation: productImageSize
-                                        })
-                                    ],
-                                    spacing: { before: 100, after: 80 }
-                                })
-                            );
-                        } catch (e) {}
-                    }
-                }
-                children.push(
+            return new TableCell({
+                width: { size: 50, type: WidthType.PERCENTAGE },
+                children: [
                     new Paragraph({
                         children: [
-                            new TextRun({ text: `${formattedId} ${product.name}`, bold: true, size: 24, color: "333333" })
+                            new TextRun({ text: `${colorLabel} (${variant.total})`, bold: true, size: 22, color: "333333" }),
                         ],
-                        spacing: { before: 200, after: 140 }
+                        spacing: { after: 120 },
+                    }),
+                    ...sizeLines,
+                ],
+            });
+        };
+
+        groups.forEach((group) => {
+            children.push(
+                new Paragraph({
+                    children: [
+                        new TextRun({ text: "• " + group.name, bold: true, size: 24, color: "333333" }),
+                        new TextRun({ text: group.type ? ` (${group.type})` : "", italics: true, color: "666666" }),
+                    ],
+                    spacing: { before: 200, after: 120 },
+                })
+            );
+
+            const variants = (group.variants || [])
+                .slice()
+                .sort((a, b) => String(a.color || '').localeCompare(String(b.color || ''), 'pt-BR'));
+
+            const rows = [];
+            for (let i = 0; i < variants.length; i += 2) {
+                rows.push(
+                    new TableRow({
+                        children: [makeVariantCell(variants[i]), makeVariantCell(variants[i + 1])],
                     })
                 );
+            }
 
-                for (let i = 0; i < cuts.length; i += 2) {
-                    const left = cuts[i];
-                    const right = cuts[i + 1] || null;
-                    if (right) {
-                        children.push(
-                            new Paragraph({
-                                tabStops: cutTwoColumnTabStops,
-                                children: [
-                                    new TextRun({ text: `${left.cut} (${left.total})\t${right.cut} (${right.total})` })
-                                ],
-                                spacing: { after: 60 }
-                            })
-                        );
-                    } else {
-                        children.push(
-                            new Paragraph({
-                                children: [new TextRun({ text: `${left.cut} (${left.total})` })],
-                                spacing: { after: 60 }
-                            })
-                        );
-                    }
-                }
+            children.push(
+                new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    rows,
+                    borders: {
+                        top: { style: BorderStyle.NONE },
+                        bottom: { style: BorderStyle.NONE },
+                        left: { style: BorderStyle.NONE },
+                        right: { style: BorderStyle.NONE },
+                        insideHorizontal: { style: BorderStyle.NONE },
+                        insideVertical: { style: BorderStyle.NONE },
+                    },
+                })
+            );
 
-                children.push(new Paragraph({ text: "", spacing: { after: 200 } }));
-            });
+            children.push(new Paragraph({ text: "", spacing: { after: 300 } }));
+        });
 
         // 3. ORDERS LIST SECTION
         children.push(
