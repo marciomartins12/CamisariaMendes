@@ -1475,7 +1475,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             if (!variant) {
                 return new TableCell({
                     width: { size: 50, type: WidthType.PERCENTAGE },
-                    children: [new Paragraph({ text: "", spacing: { after: 320 } })],
+                    children: [new Paragraph({ text: "", spacing: { after: 720 } })],
                 });
             }
 
@@ -1495,7 +1495,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                         spacing: { before: 120, after: 200 },
                     }),
                     ...sizeLines,
-                    new Paragraph({ text: "", spacing: { after: 320 } }),
+                    new Paragraph({ text: "", spacing: { after: 720 } }),
                 ],
             });
         };
