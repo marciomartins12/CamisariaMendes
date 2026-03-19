@@ -1216,51 +1216,73 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             });
         });
         
-        // Aggregate data for summary
-        const summary = {}; // { 'Shirt Name': { total: 0, sizes: { 'M': 2, 'L': 1 }, type: 'Tradicional', image: 'url' } }
-        
+        const shirtsById = new Map((campaign.shirts || []).map(s => [Number(s.id), s]));
+        const shirtsByName = new Map((campaign.shirts || []).map(s => [String(s.name || '').trim(), s]));
+
+        const normalizeColor = (raw) => {
+            if (Array.isArray(raw)) return raw.map(v => String(v || '').trim()).filter(Boolean).join(' / ') || 'Sem cor';
+            const c = String(raw || '').trim();
+            return c || 'Sem cor';
+        };
+
+        const normalizeNormalSize = (raw) => {
+            const s = String(raw || '').trim();
+            if (!s) return 'N/A';
+            const upper = s.toUpperCase().replace(/\s+/g, '');
+            if (upper === 'EXGG') return 'ExGG';
+            if (upper === 'INFANTIL') return 'Infantil';
+            return s.replace(/\s+/g, '');
+        };
+
+        const normalizeBabySize = (raw) => {
+            const s = String(raw || '').trim().toLowerCase();
+            if (!s) return null;
+            if (s.startsWith('p')) return 'pb';
+            if (s.startsWith('m')) return 'mb';
+            if (s.startsWith('g')) return 'gb';
+            return null;
+        };
+
+        const isBabyLookSize = (raw) => /baby/i.test(String(raw || '')) || /^(pb|mb|gb)\b/i.test(String(raw || '').trim());
+
+        const summaryByProduct = new Map();
+        const addCount = (obj, key, qty) => {
+            obj[key] = (obj[key] || 0) + qty;
+        };
+
         campaignOrders.forEach(order => {
             order.parsedItems.forEach(item => {
                 const pid = Number(item.id || item.productId || item.shirtId);
                 const name = (item.name || '').trim();
-                const itemType = (item.type || '').trim();
-                const itemColor = (item.color || '').trim();
-                
-                // Check if this item belongs to campaign
-                if (shirtIds.includes(pid) || shirtNames.includes(name)) {
-                    // Unique key based on ID, type and color
-                    const key = `${pid}_${itemType}_${itemColor}`;
-                    
-                    if (!summary[key]) {
-                        // Try to find image from campaign shirts
-                        let productImg = null;
-                        let productName = name;
-                        
-                        const matchingShirt = (campaign.shirts || []).find(s => s.id === pid);
-                        if (matchingShirt) {
-                            productName = matchingShirt.name;
-                            try {
-                                const imgs = matchingShirt.images; // Já é parseado pelo model getter
-                                if (Array.isArray(imgs) && imgs.length > 0) productImg = imgs[0];
-                            } catch(e) {}
-                        }
-                        
-                        summary[key] = { 
-                            name: productName,
-                            total: 0, 
-                            sizes: {}, 
-                            type: itemType,
-                            color: itemColor,
-                            image: productImg
-                        };
-                    }
-                    
-                    const qty = Number(item.qty || item.quantity || 1);
-                    summary[key].total += qty;
-                    
-                    const size = item.size || 'N/A';
-                    if (!summary[key].sizes[size]) summary[key].sizes[size] = 0;
-                    summary[key].sizes[size] += qty;
+
+                if (!(shirtIds.includes(pid) || shirtNames.includes(name))) return;
+
+                const matchingShirt = shirtsById.get(pid) || shirtsByName.get(name) || null;
+                const productName = matchingShirt ? matchingShirt.name : name;
+                const productKey = String(pid || productName || name || '').trim() || String(productName || name || '').trim();
+
+                if (!summaryByProduct.has(productKey)) {
+                    summaryByProduct.set(productKey, { name: productName, colors: new Map() });
+                }
+
+                const product = summaryByProduct.get(productKey);
+                const colorLabel = normalizeColor(item.color);
+
+                if (!product.colors.has(colorLabel)) {
+                    product.colors.set(colorLabel, { color: colorLabel, total: 0, normalSizes: {}, babySizes: {} });
+                }
+
+                const colorSummary = product.colors.get(colorLabel);
+                const qty = Number(item.qty || item.quantity || 1);
+                colorSummary.total += qty;
+
+                const rawSize = item.size || 'N/A';
+                if (isBabyLookSize(rawSize)) {
+                    const babyKey = normalizeBabySize(rawSize);
+                    if (babyKey) addCount(colorSummary.babySizes, babyKey, qty);
+                } else {
+                    const normalKey = normalizeNormalSize(rawSize);
+                    addCount(colorSummary.normalSizes, normalKey, qty);
                 }
             });
         });
@@ -1449,40 +1471,59 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
         // One unified table for all products? Or separate tables? 
         // Let's do separate tables per product for clarity, as requested "bem mais dividido".
         
-        const sizeOrder = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'XXG', 'EXG', 'Infantil'];
-        const sortSizes = (sizesObj) =>
-            Object.entries(sizesObj || {}).sort((a, b) => {
-                const idxA = sizeOrder.indexOf(a[0]);
-                const idxB = sizeOrder.indexOf(b[0]);
-                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-                if (idxA !== -1) return -1;
-                if (idxB !== -1) return 1;
-                return String(a[0]).localeCompare(String(b[0]), 'pt-BR');
+        const normalSizeOrder = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'XXG', 'ExGG', 'Infantil'];
+        const babySizeOrder = ['pb', 'mb', 'gb'];
+
+        const sortEntries = (entries, order) => {
+            const orderIndex = new Map(order.map((k, i) => [k, i]));
+            return entries.slice().sort((a, b) => {
+                const aKey = a[0];
+                const bKey = b[0];
+                const idxA = orderIndex.has(aKey) ? orderIndex.get(aKey) : Infinity;
+                const idxB = orderIndex.has(bKey) ? orderIndex.get(bKey) : Infinity;
+                if (idxA !== idxB) return idxA - idxB;
+                return String(aKey).localeCompare(String(bKey), 'pt-BR');
             });
+        };
 
-        const grouped = new Map();
-        Object.values(summary).forEach((data) => {
-            const groupKey = `${(data.name || '').trim()}__${(data.type || '').trim()}`;
-            if (!grouped.has(groupKey)) {
-                grouped.set(groupKey, { name: (data.name || '').trim(), type: (data.type || '').trim(), variants: [] });
-            }
-            grouped.get(groupKey).variants.push(data);
-        });
-
-        const groups = Array.from(grouped.values()).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
-
-        const makeVariantCell = (variant) => {
-            if (!variant) {
+        const makeColorCell = (colorData) => {
+            if (!colorData) {
                 return new TableCell({
                     width: { size: 50, type: WidthType.PERCENTAGE },
                     children: [new Paragraph({ text: "", spacing: { after: 720 } })],
                 });
             }
 
-            const colorLabel = (variant.color || 'Sem cor').toString().trim() || 'Sem cor';
-            const sizeLines = sortSizes(variant.sizes).map(([size, qty]) => {
-                const label = `${size}-${qty}`;
-                return new Paragraph({ text: label, spacing: { after: 60 } });
+            const leftEntries = sortEntries(Object.entries(colorData.normalSizes || {}).filter(([, qty]) => Number(qty) > 0), normalSizeOrder);
+            const rightEntries = sortEntries(Object.entries(colorData.babySizes || {}).filter(([, qty]) => Number(qty) > 0), babySizeOrder);
+
+            const leftLines = leftEntries.map(([size, qty]) => new Paragraph({ text: `${size}-${qty}`, spacing: { after: 60 } }));
+            const rightLines = rightEntries.map(([size, qty]) => new Paragraph({ text: `${size}-${qty}`, spacing: { after: 60 } }));
+
+            const innerTable = new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                borders: {
+                    top: { style: BorderStyle.NONE },
+                    bottom: { style: BorderStyle.NONE },
+                    left: { style: BorderStyle.NONE },
+                    right: { style: BorderStyle.NONE },
+                    insideHorizontal: { style: BorderStyle.NONE },
+                    insideVertical: { style: BorderStyle.NONE },
+                },
+                rows: [
+                    new TableRow({
+                        children: [
+                            new TableCell({
+                                width: { size: 60, type: WidthType.PERCENTAGE },
+                                children: leftLines.length ? leftLines : [new Paragraph({ text: "" })],
+                            }),
+                            new TableCell({
+                                width: { size: 40, type: WidthType.PERCENTAGE },
+                                children: rightLines.length ? rightLines : [new Paragraph({ text: "" })],
+                            }),
+                        ],
+                    }),
+                ],
             });
 
             return new TableCell({
@@ -1490,36 +1531,31 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                 children: [
                     new Paragraph({
                         children: [
-                            new TextRun({ text: `${colorLabel} (${variant.total})`, bold: true, size: 22, color: "333333" }),
+                            new TextRun({ text: `${colorData.color} (${colorData.total})`, bold: true, size: 22, color: "333333" }),
                         ],
-                        spacing: { before: 120, after: 200 },
+                        spacing: { before: 120, after: 160 },
                     }),
-                    ...sizeLines,
+                    innerTable,
                     new Paragraph({ text: "", spacing: { after: 720 } }),
                 ],
             });
         };
 
-        groups.forEach((group) => {
+        const products = Array.from(summaryByProduct.values()).sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'pt-BR'));
+        products.forEach((product) => {
             children.push(
                 new Paragraph({
-                    children: [
-                        new TextRun({ text: "• " + group.name, bold: true, size: 24, color: "333333" }),
-                        new TextRun({ text: group.type ? ` (${group.type})` : "", italics: true, color: "666666" }),
-                    ],
+                    children: [new TextRun({ text: "• " + String(product.name || '').trim(), bold: true, size: 24, color: "333333" })],
                     spacing: { before: 200, after: 120 },
                 })
             );
 
-            const variants = (group.variants || [])
-                .slice()
-                .sort((a, b) => String(a.color || '').localeCompare(String(b.color || ''), 'pt-BR'));
-
+            const colors = Array.from((product.colors || new Map()).values()).sort((a, b) => String(a.color || '').localeCompare(String(b.color || ''), 'pt-BR'));
             const rows = [];
-            for (let i = 0; i < variants.length; i += 2) {
+            for (let i = 0; i < colors.length; i += 2) {
                 rows.push(
                     new TableRow({
-                        children: [makeVariantCell(variants[i]), makeVariantCell(variants[i + 1])],
+                        children: [makeColorCell(colors[i]), makeColorCell(colors[i + 1])],
                     })
                 );
             }
