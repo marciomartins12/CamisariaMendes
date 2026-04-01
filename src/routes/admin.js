@@ -1190,8 +1190,19 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
 
         const formattedId = `CAMP${String(campaign.id).padStart(3, '0')}`;
 
-        const shirtIds = (campaign.shirts || []).map(s => Number(s.id));
-        const shirtNames = (campaign.shirts || []).map(s => (s.name || '').trim());
+        const orderedShirts = (campaign.shirts || [])
+            .slice()
+            .sort((a, b) => {
+                const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                if (aTime !== bTime) return aTime - bTime;
+                return Number(a.id) - Number(b.id);
+            });
+
+        const shirtIds = orderedShirts.map(s => Number(s.id));
+        const shirtNames = orderedShirts.map(s => (s.name || '').trim());
+        const shirtOrderById = new Map(orderedShirts.map((s, idx) => [Number(s.id), idx]));
+        const shirtOrderByName = new Map(orderedShirts.map((s, idx) => [String(s.name || '').trim(), idx]));
         
         // Fetch all approved orders
         const allOrders = await Order.findAll({
@@ -1263,13 +1274,21 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                 const matchingShirt = shirtsById.get(pid) || shirtsByName.get(name) || null;
                 const productName = matchingShirt ? matchingShirt.name : name;
                 const productType = matchingShirt ? matchingShirt.type : (item.type || '').trim();
+                const orderIndex = matchingShirt
+                    ? (shirtOrderById.get(Number(matchingShirt.id)) ?? shirtOrderByName.get(String(matchingShirt.name || '').trim()))
+                    : (shirtOrderByName.get(productName) ?? Infinity);
                 const productKey = String(pid || productName || name || '').trim() || String(productName || name || '').trim();
 
                 if (!summaryByProduct.has(productKey)) {
-                    summaryByProduct.set(productKey, { name: productName, type: productType, colors: new Map() });
+                    summaryByProduct.set(productKey, { name: productName, type: productType, orderIndex, colors: new Map() });
                 } else {
                     const prod = summaryByProduct.get(productKey);
                     if (!prod.type && productType) prod.type = productType;
+                    if (prod.orderIndex === undefined || prod.orderIndex === null) {
+                        prod.orderIndex = orderIndex;
+                    } else if (Number.isFinite(orderIndex)) {
+                        prod.orderIndex = Math.min(prod.orderIndex, orderIndex);
+                    }
                 }
 
                 const product = summaryByProduct.get(productKey);
@@ -1548,7 +1567,12 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             });
         };
 
-        const products = Array.from(summaryByProduct.values()).sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'pt-BR'));
+        const products = Array.from(summaryByProduct.values()).sort((a, b) => {
+            const idxA = Number.isFinite(a.orderIndex) ? a.orderIndex : Infinity;
+            const idxB = Number.isFinite(b.orderIndex) ? b.orderIndex : Infinity;
+            if (idxA !== idxB) return idxA - idxB;
+            return String(a.name || '').localeCompare(String(b.name || ''), 'pt-BR');
+        });
         products.forEach((product) => {
             children.push(
                 new Paragraph({
