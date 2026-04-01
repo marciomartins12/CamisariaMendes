@@ -1188,7 +1188,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
         
         if (!campaign) return res.status(404).send('Campanha não encontrada');
 
-        const formattedId = `CAMP${String(campaign.id).padStart(3, '0')}`;
+        const formattedId = `CAMP${String(campaign.id).padStart(4, '0')}`;
 
         const orderedShirts = (campaign.shirts || [])
             .slice()
@@ -1755,7 +1755,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
         const buffer = await Packer.toBuffer(doc);
         
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-        res.setHeader('Content-Disposition', `attachment; filename=pedidos-${campaign.accessCode}.docx`);
+        res.setHeader('Content-Disposition', `attachment; filename=${formattedId}-pedidos-${campaign.accessCode}.docx`);
         res.send(buffer);
         
     } catch (error) {
