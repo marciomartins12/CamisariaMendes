@@ -4,7 +4,6 @@ const bcrypt = require('bcrypt');
 const { Admin, Campaign, Shirt, Coupon, sequelize, User, Order } = require('../models');
 const BackupService = require('../services/BackupService');
 
-// Middleware to mark as admin area for all routes in this file
 router.use((req, res, next) => {
     res.locals.isAdminArea = true;
     next();
@@ -20,6 +19,10 @@ const generateAccessCode = async () => {
     }
     return code;
 };
+
+
+
+
 
 const parseBrazilianDateToISO = (value) => {
     if (!value) return null;
@@ -1259,10 +1262,14 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
 
                 const matchingShirt = shirtsById.get(pid) || shirtsByName.get(name) || null;
                 const productName = matchingShirt ? matchingShirt.name : name;
+                const productType = matchingShirt ? matchingShirt.type : (item.type || '').trim();
                 const productKey = String(pid || productName || name || '').trim() || String(productName || name || '').trim();
 
                 if (!summaryByProduct.has(productKey)) {
-                    summaryByProduct.set(productKey, { name: productName, colors: new Map() });
+                    summaryByProduct.set(productKey, { name: productName, type: productType, colors: new Map() });
+                } else {
+                    const prod = summaryByProduct.get(productKey);
+                    if (!prod.type && productType) prod.type = productType;
                 }
 
                 const product = summaryByProduct.get(productKey);
@@ -1545,7 +1552,10 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
         products.forEach((product) => {
             children.push(
                 new Paragraph({
-                    children: [new TextRun({ text: "• " + String(product.name || '').trim(), bold: true, size: 24, color: "333333" })],
+                    children: [
+                        new TextRun({ text: "• " + String(product.name || '').trim(), bold: true, size: 24, color: "333333" }),
+                        new TextRun({ text: product.type ? " - " + String(product.type) : "", italics: true, color: "666666" })
+                    ],
                     spacing: { before: 200, after: 120 },
                 })
             );
