@@ -537,8 +537,9 @@
         }
 
         .size-lbl {
-            width: 32px;
+            min-width: 32px;
             height: 32px;
+            padding: 0 8px;
             border-radius: 8px; /* Softer square */
             border: 1px solid #e0e0e0;
             display: flex;
@@ -546,6 +547,8 @@
             justify-content: center;
             font-size: 0.82rem;
             font-weight: 500;
+            line-height: 1;
+            white-space: nowrap;
             cursor: pointer;
             transition: all 0.2s;
             color: #666;
