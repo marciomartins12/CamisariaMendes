@@ -60,6 +60,33 @@ const getFeePercentByPaymentMethod = (paymentMethod) => {
     return 0.0499;
 };
 
+const normalizeSizesList = (rawSizes) => {
+    if (!rawSizes) return [];
+    if (Array.isArray(rawSizes)) {
+        return rawSizes.map(s => String(s).trim()).filter(Boolean);
+    }
+    if (typeof rawSizes !== 'string') return [];
+
+    const value = rawSizes.trim();
+    if (!value) return [];
+
+    if (value.startsWith('[')) {
+        try {
+            const parsed = JSON.parse(value);
+            if (Array.isArray(parsed)) {
+                return parsed.map(s => String(s).trim()).filter(Boolean);
+            }
+        } catch (e) {
+            // Fallback to separator parsing
+        }
+    }
+
+    return value
+        .split(/[,;\n]+/)
+        .map(s => s.trim())
+        .filter(Boolean);
+};
+
 // Middleware to require login
 const requireAdmin = (req, res, next) => {
     if (req.session && req.session.admin) {
@@ -902,6 +929,7 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
                         shirt.images = [];
                     }
                 }
+                shirt.sizesList = normalizeSizesList(shirt.sizes);
             });
         }
 

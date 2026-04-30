@@ -889,7 +889,7 @@
                         <div class="option-column">
                             <span class="option-label">Tamanho</span>
                             <div class="sizes" id="sizes-{{this.id}}">
-                                {{#each (sizesList this.sizes)}}
+                                {{#each this.sizesList}}
                                 <label>
                                     <input type="radio" name="size-{{../this.id}}" value="{{this}}" class="size-radio" onchange="selectSize({{../this.id}}, '{{this}}')">
                                     <span class="size-lbl">{{this}}</span>

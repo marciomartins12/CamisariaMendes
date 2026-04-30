@@ -1,5 +1,32 @@
 const { Campaign, Shirt } = require('../models');
 
+const normalizeSizesList = (rawSizes) => {
+  if (!rawSizes) return [];
+  if (Array.isArray(rawSizes)) {
+    return rawSizes.map(s => String(s).trim()).filter(Boolean);
+  }
+  if (typeof rawSizes !== 'string') return [];
+
+  const value = rawSizes.trim();
+  if (!value) return [];
+
+  if (value.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed.map(s => String(s).trim()).filter(Boolean);
+      }
+    } catch (e) {
+      // Fallback to separator parsing
+    }
+  }
+
+  return value
+    .split(/[,;\n]+/)
+    .map(s => s.trim())
+    .filter(Boolean);
+};
+
 module.exports = {
   index: (req, res) => {
     res.render('home', {
@@ -132,6 +159,7 @@ module.exports = {
             // Any other type, wrap as single element
             shirt.images = [shirt.images];
           }
+          shirt.sizesList = normalizeSizesList(shirt.sizes);
         });
       }
 
