@@ -46,7 +46,27 @@ const Shirt = sequelize.define('Shirt', {
   },
   sizes: {
     type: DataTypes.STRING, // Stored as JSON or comma-separated string: "P,M,G,GG"
-    allowNull: false
+    allowNull: false,
+    get() {
+      const rawValue = this.getDataValue('sizes');
+      if (!rawValue) return [];
+      // If it looks like JSON, parse it. Otherwise, split by comma.
+      if (rawValue.startsWith('[') || rawValue.startsWith('{')) {
+        try {
+          return JSON.parse(rawValue);
+        } catch (e) {
+          return rawValue.split(',').map(c => c.trim()).filter(Boolean);
+        }
+      }
+      return rawValue.split(',').map(c => c.trim()).filter(Boolean);
+    },
+    set(value) {
+      if (Array.isArray(value)) {
+        this.setDataValue('sizes', JSON.stringify(value));
+      } else {
+        this.setDataValue('sizes', value);
+      }
+    }
   },
   // Storing images as a JSON string of Base64 strings.
   // Using TEXT/LONGTEXT for Base64 simplicity.
