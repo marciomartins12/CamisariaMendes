@@ -29,6 +29,39 @@ module.exports = (app) => {
         split: (str, ch) => {
           if (typeof str !== 'string') return [];
           return str.split(ch);
+        },
+        sizesList: (sizes) => {
+          if (!sizes) return [];
+
+          // Already normalized as array
+          if (Array.isArray(sizes)) {
+            return sizes.map(s => String(s).trim()).filter(Boolean);
+          }
+
+          if (typeof sizes !== 'string') {
+            return [];
+          }
+
+          const raw = sizes.trim();
+          if (!raw) return [];
+
+          // Support JSON string format: '["P","M","G"]'
+          if (raw.startsWith('[')) {
+            try {
+              const parsed = JSON.parse(raw);
+              if (Array.isArray(parsed)) {
+                return parsed.map(s => String(s).trim()).filter(Boolean);
+              }
+            } catch (e) {
+              // Fall through to separator-based parsing
+            }
+          }
+
+          // Support comma, semicolon or line break separated formats
+          return raw
+            .split(/[,;\n]+/)
+            .map(s => s.trim())
+            .filter(Boolean);
         }
       }
     })

@@ -299,7 +299,7 @@
                             </div>
 
                             <div class="mini-product-sizes">
-                                {{#each (split this.sizes ',')}}
+                                {{#each (sizesList this.sizes)}}
                                 <span class="size-pill">{{this}}</span>
                                 {{/each}}
                             </div>
