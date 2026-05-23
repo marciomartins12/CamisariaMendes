@@ -1640,17 +1640,19 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             children.push(new Paragraph({ text: "", spacing: { after: 300 } }));
         });
 
-        // 3. ORDERS LIST SECTION
+        // 3. ORDERS LIST SECTION - EXATO COMO A IMAGEM
         children.push(
             new Paragraph({
                 text: "DETALHAMENTO DE PEDIDOS",
                 heading: HeadingLevel.HEADING_1,
                 spacing: { before: 400, after: 200 },
-                pageBreakBefore: true
+                pageBreakBefore: true,
+                color: "1976D2",
+                size: 32
             }),
             new Paragraph({
                 text: "",
-                border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: "E0E0E0" } },
+                border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: "1976D2" } },
                 spacing: { after: 400 }
             })
         );
@@ -1716,8 +1718,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                 };
             });
 
-            // === CARD PRINCIPAL DO PEDIDO ===
-            // 1. Cabeçalho do card (PEDIDO #XX)
+            // 1. CABEÇALHO DO PEDIDO
             children.push(
                 new Table({
                     width: { size: 100, type: WidthType.PERCENTAGE },
@@ -1728,70 +1729,68 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                                     width: { size: 100, type: WidthType.PERCENTAGE },
                                     children: [
                                         new Paragraph({
-                                            children: [
-                                                new TextRun({ text: `PEDIDO #${sequentialNumber}`, bold: true, size: 40, color: "FFFFFF" })
-                                            ],
+                                            children: [new TextRun({ text: `PEDIDO #${sequentialNumber}`, bold: true, size: 28, color: "FFFFFF" })],
                                             alignment: AlignmentType.CENTER,
-                                            spacing: { before: 240, after: 240 }
+                                            spacing: { before: 160, after: 160 }
                                         })
                                     ],
-                                    shading: { fill: "1565C0" },
+                                    shading: { fill: "1976D2" },
                                     borders: {
-                                        top: { style: BorderStyle.SINGLE, size: 12, color: "0D47A1" },
-                                        bottom: { style: BorderStyle.SINGLE, size: 4, color: "0D47A1" },
-                                        left: { style: BorderStyle.SINGLE, size: 12, color: "0D47A1" },
-                                        right: { style: BorderStyle.SINGLE, size: 12, color: "0D47A1" }
+                                        top: { style: BorderStyle.SINGLE, size: 4, color: "1565C0" },
+                                        bottom: { style: BorderStyle.SINGLE, size: 2, color: "1565C0" },
+                                        left: { style: BorderStyle.SINGLE, size: 4, color: "1565C0" },
+                                        right: { style: BorderStyle.SINGLE, size: 4, color: "1565C0" }
                                     }
                                 })
                             ]
                         })
                     ],
-                    borders: {
-                        top: { style: BorderStyle.NONE },
-                        bottom: { style: BorderStyle.NONE },
-                        left: { style: BorderStyle.NONE },
-                        right: { style: BorderStyle.NONE },
-                        insideHorizontal: { style: BorderStyle.NONE },
-                        insideVertical: { style: BorderStyle.NONE }
-                    }
+                    borders: { top: BorderStyle.NONE, bottom: BorderStyle.NONE, left: BorderStyle.NONE, right: BorderStyle.NONE, insideHorizontal: BorderStyle.NONE, insideVertical: BorderStyle.NONE }
                 })
             );
 
             // 2. Corpo do card (2 colunas: Dados do Cliente + Itens)
             const clientContent = [
                 new Paragraph({
-                    children: [new TextRun({ text: "DADOS DO CLIENTE", bold: true, size: 28, color: "1565C0" })],
-                    spacing: { before: 240, after: 200 },
-                    border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: "E3F2FD" } }
-                }),
-                new Paragraph({
                     children: [
-                        new TextRun({ text: "Nome: ", bold: true, size: 26, color: "424242" }),
-                        new TextRun({ text: order.customerName || 'Cliente', size: 26, color: "212121" })
+                        new TextRun({ text: "👤  ", size: 24 }),
+                        new TextRun({ text: "DADOS DO CLIENTE", bold: true, size: 22, color: "1976D2" })
                     ],
                     spacing: { before: 160, after: 160 }
                 }),
                 new Paragraph({
                     children: [
-                        new TextRun({ text: "Telefone: ", bold: true, size: 26, color: "424242" }),
-                        new TextRun({ text: phoneText, size: 26, color: "212121" })
+                        new TextRun({ text: "👤  ", size: 20 }),
+                        new TextRun({ text: "Nome: ", bold: true, size: 20, color: "424242" }),
+                        new TextRun({ text: order.customerName || 'Cliente', size: 20, color: "212121" })
                     ],
-                    spacing: { before: 80, after: 160 }
+                    spacing: { before: 80, after: 80 }
                 }),
                 new Paragraph({
                     children: [
-                        new TextRun({ text: "E-mail: ", bold: true, size: 26, color: "424242" }),
-                        new TextRun({ text: emailText, size: 26, color: "212121" })
+                        new TextRun({ text: "📞  ", size: 20 }),
+                        new TextRun({ text: "Telefone: ", bold: true, size: 20, color: "424242" }),
+                        new TextRun({ text: phoneText, size: 20, color: "212121" })
                     ],
-                    spacing: { before: 80, after: 240 }
+                    spacing: { before: 40, after: 80 }
+                }),
+                new Paragraph({
+                    children: [
+                        new TextRun({ text: "✉️  ", size: 20 }),
+                        new TextRun({ text: "E-mail: ", bold: true, size: 20, color: "424242" }),
+                        new TextRun({ text: emailText, size: 20, color: "212121" })
+                    ],
+                    spacing: { before: 40, after: 160 }
                 })
             ];
 
             const itemsContent = [
                 new Paragraph({
-                    children: [new TextRun({ text: "ITENS DO PEDIDO", bold: true, size: 28, color: "1565C0" })],
-                    spacing: { before: 240, after: 200 },
-                    border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: "E3F2FD" } }
+                    children: [
+                        new TextRun({ text: "📦  ", size: 24 }),
+                        new TextRun({ text: "ITENS DO PEDIDO", bold: true, size: 22, color: "1976D2" })
+                    ],
+                    spacing: { before: 160, after: 160 }
                 })
             ];
 
@@ -1800,21 +1799,21 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                     itemsContent.push(
                         new Paragraph({
                             children: [
-                                new TextRun({ text: `${item.qty}x `, bold: true, size: 24, color: "1565C0" }),
-                                new TextRun({ text: item.name, bold: true, size: 24, color: "212121" })
+                                new TextRun({ text: "• ", bold: true, size: 20, color: "1976D2" }),
+                                new TextRun({ text: `${item.qty}x ${item.name}`, bold: true, size: 20, color: "212121" })
                             ],
-                            spacing: { before: idx > 0 ? 160 : 120, after: 80 }
+                            spacing: { before: idx > 0 ? 120 : 80, after: 40 }
                         }),
                         new Paragraph({
                             children: [
-                                new TextRun({ text: "  Tam: ", bold: true, size: 20, color: "757575" }),
-                                new TextRun({ text: item.size, size: 20, color: "424242" }),
-                                new TextRun({ text: "  |  Tipo: ", bold: true, size: 20, color: "757575" }),
-                                new TextRun({ text: item.type, size: 20, color: "424242" }),
-                                item.color ? new TextRun({ text: "  |  Cor: ", bold: true, size: 20, color: "757575" }) : new TextRun({ text: "" }),
-                                item.color ? new TextRun({ text: item.color, size: 20, color: "424242" }) : new TextRun({ text: "" })
+                                new TextRun({ text: "   Tam: ", bold: true, size: 18, color: "757575" }),
+                                new TextRun({ text: item.size, size: 18, color: "424242" }),
+                                new TextRun({ text: " | Tipo: ", bold: true, size: 18, color: "757575" }),
+                                new TextRun({ text: item.type, size: 18, color: "424242" }),
+                                item.color ? new TextRun({ text: " | Cor: ", bold: true, size: 18, color: "757575" }) : new TextRun({ text: "" }),
+                                item.color ? new TextRun({ text: item.color, size: 18, color: "424242" }) : new TextRun({ text: "" })
                             ],
-                            spacing: { after: 120 }
+                            spacing: { after: 80 }
                         })
                     );
                     if (idx < items.length - 1) {
@@ -1830,8 +1829,8 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             } else {
                 itemsContent.push(
                     new Paragraph({
-                        children: [new TextRun({ text: "(Sem itens desta campanha)", italics: true, size: 22, color: "9E9E9E" })],
-                        spacing: { before: 120, after: 240 }
+                        children: [new TextRun({ text: "(Sem itens desta campanha)", italics: true, size: 18, color: "9E9E9E" })],
+                        spacing: { before: 80, after: 160 }
                     })
                 );
             }
@@ -1843,26 +1842,26 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                         new TableRow({
                             children: [
                                 new TableCell({
-                                    width: { size: 6000, type: WidthType.DXA },
+                                    width: { size: 50, type: WidthType.PERCENTAGE },
                                     children: clientContent,
-                                    shading: { fill: "FAFAFA" },
+                                    shading: { fill: "FFFFFF" },
                                     borders: {
                                         top: { style: BorderStyle.NONE },
-                                        bottom: { style: BorderStyle.SINGLE, size: 4, color: "E0E0E0" },
-                                        left: { style: BorderStyle.SINGLE, size: 12, color: "0D47A1" },
-                                        right: { style: BorderStyle.SINGLE, size: 2, color: "E0E0E0" }
+                                        bottom: { style: BorderStyle.SINGLE, size: 2, color: "E0E0E0" },
+                                        left: { style: BorderStyle.SINGLE, size: 4, color: "1565C0" },
+                                        right: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" }
                                     },
                                     verticalAlign: AlignmentType.TOP
                                 }),
                                 new TableCell({
-                                    width: { size: 4000, type: WidthType.DXA },
+                                    width: { size: 50, type: WidthType.PERCENTAGE },
                                     children: itemsContent,
-                                    shading: { fill: "FFFFFF" },
+                                    shading: { fill: "FAFBFC" },
                                     borders: {
                                         top: { style: BorderStyle.NONE },
-                                        bottom: { style: BorderStyle.SINGLE, size: 4, color: "E0E0E0" },
-                                        left: { style: BorderStyle.SINGLE, size: 2, color: "E0E0E0" },
-                                        right: { style: BorderStyle.SINGLE, size: 12, color: "0D47A1" }
+                                        bottom: { style: BorderStyle.SINGLE, size: 2, color: "E0E0E0" },
+                                        left: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
+                                        right: { style: BorderStyle.SINGLE, size: 4, color: "1565C0" }
                                     },
                                     verticalAlign: AlignmentType.TOP
                                 })
@@ -1880,99 +1879,106 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                 })
             );
 
-            // 3. Rodapé do card (3 blocos: Data, Método, Valor)
+            // 3. RODAPÉ (DATA, MÉTODO, VALOR)
             children.push(
                 new Table({
                     width: { size: 100, type: WidthType.PERCENTAGE },
                     rows: [
                         new TableRow({
                             children: [
-                                // Data
                                 new TableCell({
-                                    width: { size: 3333, type: WidthType.DXA },
+                                    width: { size: 33, type: WidthType.PERCENTAGE },
                                     children: [
                                         new Paragraph({
-                                            children: [new TextRun({ text: "DATA", bold: true, size: 22, color: "616161" })],
+                                            children: [new TextRun({ text: "📅", size: 22 })],
                                             alignment: AlignmentType.CENTER,
-                                            spacing: { before: 240, after: 120 }
+                                            spacing: { before: 120, after: 40 }
                                         }),
                                         new Paragraph({
-                                            children: [new TextRun({ text: dateText, bold: true, size: 28, color: "212121" })],
+                                            children: [new TextRun({ text: "DATA", bold: true, size: 18, color: "1976D2" })],
                                             alignment: AlignmentType.CENTER,
-                                            spacing: { after: 240 }
+                                            spacing: { after: 60 }
+                                        }),
+                                        new Paragraph({
+                                            children: [new TextRun({ text: dateText, bold: true, size: 20, color: "212121" })],
+                                            alignment: AlignmentType.CENTER,
+                                            spacing: { after: 120 }
                                         })
                                     ],
-                                    shading: { fill: "F5F5F5" },
+                                    shading: { fill: "FFFFFF" },
                                     borders: {
                                         top: { style: BorderStyle.NONE },
-                                        bottom: { style: BorderStyle.SINGLE, size: 12, color: "0D47A1" },
-                                        left: { style: BorderStyle.SINGLE, size: 12, color: "0D47A1" },
-                                        right: { style: BorderStyle.SINGLE, size: 2, color: "E0E0E0" }
+                                        bottom: { style: BorderStyle.SINGLE, size: 4, color: "1565C0" },
+                                        left: { style: BorderStyle.SINGLE, size: 4, color: "1565C0" },
+                                        right: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" }
                                     }
                                 }),
-                                // Método de Pagamento
+                                
                                 new TableCell({
-                                    width: { size: 3334, type: WidthType.DXA },
+                                    width: { size: 34, type: WidthType.PERCENTAGE },
                                     children: [
                                         new Paragraph({
-                                            children: [new TextRun({ text: "MÉTODO", bold: true, size: 22, color: "616161" })],
+                                            children: [new TextRun({ text: "💳", size: 22 })],
                                             alignment: AlignmentType.CENTER,
-                                            spacing: { before: 240, after: 120 }
+                                            spacing: { before: 120, after: 40 }
                                         }),
                                         new Paragraph({
-                                            children: [new TextRun({ text: paymentText, bold: true, size: 28, color: "212121" })],
+                                            children: [new TextRun({ text: "MÉTODO DE PAGAMENTO", bold: true, size: 18, color: "1976D2" })],
                                             alignment: AlignmentType.CENTER,
-                                            spacing: { after: 240 }
+                                            spacing: { after: 60 }
+                                        }),
+                                        new Paragraph({
+                                            children: [new TextRun({ text: paymentText, bold: true, size: 20, color: "212121" })],
+                                            alignment: AlignmentType.CENTER,
+                                            spacing: { after: 120 }
                                         })
                                     ],
-                                    shading: { fill: "F5F5F5" },
+                                    shading: { fill: "FFFFFF" },
                                     borders: {
                                         top: { style: BorderStyle.NONE },
-                                        bottom: { style: BorderStyle.SINGLE, size: 12, color: "0D47A1" },
-                                        left: { style: BorderStyle.SINGLE, size: 2, color: "E0E0E0" },
-                                        right: { style: BorderStyle.SINGLE, size: 2, color: "E0E0E0" }
+                                        bottom: { style: BorderStyle.SINGLE, size: 4, color: "1565C0" },
+                                        left: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
+                                        right: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" }
                                     }
                                 }),
-                                // Valor Total
+                                
                                 new TableCell({
-                                    width: { size: 3333, type: WidthType.DXA },
+                                    width: { size: 33, type: WidthType.PERCENTAGE },
                                     children: [
                                         new Paragraph({
-                                            children: [new TextRun({ text: "VALOR TOTAL", bold: true, size: 22, color: "616161" })],
+                                            children: [new TextRun({ text: "💰", size: 22 })],
                                             alignment: AlignmentType.CENTER,
-                                            spacing: { before: 240, after: 120 }
+                                            spacing: { before: 120, after: 40 }
                                         }),
                                         new Paragraph({
-                                            children: [new TextRun({ text: valueText, bold: true, size: 36, color: "1565C0" })],
+                                            children: [new TextRun({ text: "VALOR TOTAL", bold: true, size: 18, color: "1976D2" })],
                                             alignment: AlignmentType.CENTER,
-                                            spacing: { after: 240 }
+                                            spacing: { after: 60 }
+                                        }),
+                                        new Paragraph({
+                                            children: [new TextRun({ text: valueText, bold: true, size: 24, color: "1976D2" })],
+                                            alignment: AlignmentType.CENTER,
+                                            spacing: { after: 120 }
                                         })
                                     ],
-                                    shading: { fill: "F5F5F5" },
+                                    shading: { fill: "FFFFFF" },
                                     borders: {
                                         top: { style: BorderStyle.NONE },
-                                        bottom: { style: BorderStyle.SINGLE, size: 12, color: "0D47A1" },
-                                        left: { style: BorderStyle.SINGLE, size: 2, color: "E0E0E0" },
-                                        right: { style: BorderStyle.SINGLE, size: 12, color: "0D47A1" }
+                                        bottom: { style: BorderStyle.SINGLE, size: 4, color: "1565C0" },
+                                        left: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
+                                        right: { style: BorderStyle.SINGLE, size: 4, color: "1565C0" }
                                     }
                                 })
                             ]
                         })
                     ],
-                    borders: {
-                        top: { style: BorderStyle.NONE },
-                        bottom: { style: BorderStyle.NONE },
-                        left: { style: BorderStyle.NONE },
-                        right: { style: BorderStyle.NONE },
-                        insideHorizontal: { style: BorderStyle.NONE },
-                        insideVertical: { style: BorderStyle.NONE }
-                    }
+                    borders: { top: BorderStyle.NONE, bottom: BorderStyle.NONE, left: BorderStyle.NONE, right: BorderStyle.NONE, insideHorizontal: BorderStyle.NONE, insideVertical: BorderStyle.NONE }
                 })
             );
 
             // Espaçador entre pedidos
             children.push(
-                new Paragraph({ text: "", spacing: { after: 1200 } })
+                new Paragraph({ text: "", spacing: { after: 1000 } })
             );
         });
 
