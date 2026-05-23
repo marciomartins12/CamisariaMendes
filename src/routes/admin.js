@@ -1644,15 +1644,44 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
         children.push(
             new Paragraph({
                 text: "DETALHAMENTO DE PEDIDOS",
-                heading: HeadingLevel.HEADING_2,
-                spacing: { before: 400, after: 300 },
-                pageBreakBefore: true,
-                border: { bottom: { style: BorderStyle.SINGLE, size: 12, color: "2E74B5" } }
+                heading: HeadingLevel.HEADING_1,
+                spacing: { before: 400, after: 200 },
+                pageBreakBefore: true
+            }),
+            new Paragraph({
+                text: "",
+                border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: "E0E0E0" } },
+                spacing: { after: 400 }
             })
         );
 
         campaignOrders.forEach((order, index) => {
-            const itemsLines = order.parsedItems
+            const sequentialNumber = String(index + 1).padStart(2, '0');
+            
+            // Processar dados do cliente
+            let phone = order.customerPhone;
+            if (!phone && order.User && order.User.phone) {
+                phone = order.User.phone;
+            }
+            const phoneText = phone ? phone.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3') : 'Não informado';
+            const emailText = order.customerEmail || 'Não informado';
+            const dateText = new Date(order.createdAt).toLocaleDateString('pt-BR');
+            
+            // Processar método de pagamento
+            let paymentText = 'N/A';
+            if (order.paymentMethod) {
+                const pm = String(order.paymentMethod).toLowerCase();
+                if (pm === 'pix') paymentText = 'PIX';
+                else if (pm === 'credit_card') paymentText = 'Cartão de Crédito';
+                else if (pm === 'debit_card') paymentText = 'Cartão de Débito';
+                else if (pm === 'bank_transfer') paymentText = 'Transferência';
+                else paymentText = order.paymentMethod.toUpperCase();
+            }
+            
+            const valueText = `R$ ${Number(order.finalAmount).toFixed(2)}`;
+
+            // Processar itens
+            const items = order.parsedItems
                 .filter(it => {
                     const pid = Number(it.id || it.productId || it.shirtId);
                     return shirtIds.includes(pid) || shirtNames.includes((it.name || '').trim());
@@ -1669,6 +1698,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                         if (!color) color = shirt.color;
                     }
                 }
+                
                 const qty = it.qty || 1;
                 const sizeText = it.size || 'N/A';
                 const typeText = type || 'Tradicional';
@@ -1676,36 +1706,22 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                 if (color) {
                     colorText = Array.isArray(color) ? color.join(' / ') : color;
                 }
-                return `• ${qty}x ${it.name || 'Produto'} | Tam: ${sizeText} | Tipo: ${typeText}${colorText ? ` | Cor: ${colorText}` : ''}`;
+                
+                return {
+                    qty,
+                    name: it.name || 'Produto',
+                    size: sizeText,
+                    type: typeText,
+                    color: colorText
+                };
             });
 
-            const itemParagraphs = itemsLines.length > 0 
-                ? itemsLines.map(line => new Paragraph({ 
-                    text: line, 
-                    spacing: { before: 40, after: 40 },
-                    indent: { firstLine: 100 }
-                  }))
-                : [new Paragraph({ text: "(Sem itens desta campanha)", italics: true, spacing: { before: 40, after: 40 } })];
-
-            const sequentialNumber = String(index + 1).padStart(2, '0');
-            
-            let phone = order.customerPhone;
-            if (!phone && order.User && order.User.phone) {
-                phone = order.User.phone;
-            }
-            const phoneText = phone ? phone.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3') : 'Não informado';
-            const emailText = order.customerEmail || 'Não informado';
-            const dateText = new Date(order.createdAt).toLocaleDateString('pt-BR');
-            const paymentText = order.paymentMethod ? order.paymentMethod.toUpperCase() : 'N/A';
-            const valueText = `R$ ${Number(order.finalAmount).toFixed(2)}`;
-
-            // Estrutura uniforme para cada pedido
+            // === CARD PRINCIPAL DO PEDIDO ===
+            // 1. Cabeçalho do card (PEDIDO #XX)
             children.push(
-                // Tabela principal do pedido com bordas grossas
                 new Table({
                     width: { size: 100, type: WidthType.PERCENTAGE },
                     rows: [
-                        // Linha 1: Cabeçalho do pedido
                         new TableRow({
                             children: [
                                 new TableCell({
@@ -1713,183 +1729,18 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                                     children: [
                                         new Paragraph({
                                             children: [
-                                                new TextRun({ text: `PEDIDO #${sequentialNumber}`, bold: true, size: 28, color: "FFFFFF" })
+                                                new TextRun({ text: `PEDIDO #${sequentialNumber}`, bold: true, size: 32, color: "FFFFFF" })
                                             ],
                                             alignment: AlignmentType.CENTER,
-                                            spacing: { before: 100, after: 100 }
+                                            spacing: { before: 160, after: 160 }
                                         })
                                     ],
-                                    shading: { fill: "2E74B5" },
+                                    shading: { fill: "1565C0" },
                                     borders: {
-                                        top: { style: BorderStyle.SINGLE, size: 8, color: "1F4E79" },
-                                        bottom: { style: BorderStyle.SINGLE, size: 4, color: "1F4E79" },
-                                        left: { style: BorderStyle.SINGLE, size: 8, color: "1F4E79" },
-                                        right: { style: BorderStyle.SINGLE, size: 8, color: "1F4E79" }
-                                    }
-                                })
-                            ]
-                        }),
-                        // Linha 2: Dados do cliente e Itens
-                        new TableRow({
-                            children: [
-                                // Coluna 1: Dados do Cliente (40%)
-                                new TableCell({
-                                    width: { size: 40, type: WidthType.PERCENTAGE },
-                                    children: [
-                                        new Paragraph({
-                                            children: [new TextRun({ text: "DADOS DO CLIENTE", bold: true, size: 22, color: "2E74B5" })],
-                                            spacing: { before: 120, after: 160 },
-                                            border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: "E0E0E0" } }
-                                        }),
-                                        new Paragraph({
-                                            children: [
-                                                new TextRun({ text: "Nome: ", bold: true, size: 20, color: "555555" }),
-                                                new TextRun({ text: order.customerName || 'Cliente', size: 20, color: "333333" })
-                                            ],
-                                            spacing: { before: 80, after: 80 }
-                                        }),
-                                        new Paragraph({
-                                            children: [
-                                                new TextRun({ text: "Telefone: ", bold: true, size: 20, color: "555555" }),
-                                                new TextRun({ text: phoneText, size: 20, color: "333333" })
-                                            ],
-                                            spacing: { before: 40, after: 80 }
-                                        }),
-                                        new Paragraph({
-                                            children: [
-                                                new TextRun({ text: "E-mail: ", bold: true, size: 20, color: "555555" }),
-                                                new TextRun({ text: emailText, size: 20, color: "333333" })
-                                            ],
-                                            spacing: { before: 40, after: 120 }
-                                        })
-                                    ],
-                                    shading: { fill: "F8F9FA" },
-                                    borders: {
-                                        top: { style: BorderStyle.NONE },
-                                        bottom: { style: BorderStyle.SINGLE, size: 4, color: "1F4E79" },
-                                        left: { style: BorderStyle.SINGLE, size: 8, color: "1F4E79" },
-                                        right: { style: BorderStyle.SINGLE, size: 4, color: "1F4E79" }
-                                    },
-                                    verticalAlign: AlignmentType.TOP
-                                }),
-                                // Coluna 2: Itens do Pedido (60%)
-                                new TableCell({
-                                    width: { size: 60, type: WidthType.PERCENTAGE },
-                                    children: [
-                                        new Paragraph({
-                                            children: [new TextRun({ text: "ITENS DO PEDIDO", bold: true, size: 22, color: "2E74B5" })],
-                                            spacing: { before: 120, after: 160 },
-                                            border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: "E0E0E0" } }
-                                        }),
-                                        ...itemParagraphs
-                                    ],
-                                    shading: { fill: "FFFFFF" },
-                                    borders: {
-                                        top: { style: BorderStyle.NONE },
-                                        bottom: { style: BorderStyle.SINGLE, size: 4, color: "1F4E79" },
-                                        left: { style: BorderStyle.SINGLE, size: 4, color: "1F4E79" },
-                                        right: { style: BorderStyle.SINGLE, size: 8, color: "1F4E79" }
-                                    },
-                                    verticalAlign: AlignmentType.TOP
-                                })
-                            ]
-                        }),
-                        // Linha 3: Detalhes do Pedido
-                        new TableRow({
-                            children: [
-                                new TableCell({
-                                    width: { size: 100, type: WidthType.PERCENTAGE },
-                                    children: [
-                                        new Table({
-                                            width: { size: 100, type: WidthType.PERCENTAGE },
-                                            rows: [
-                                                new TableRow({
-                                                    children: [
-                                                        new TableCell({
-                                                            width: { size: 33, type: WidthType.PERCENTAGE },
-                                                            children: [
-                                                                new Paragraph({
-                                                                    children: [new TextRun({ text: "DATA", bold: true, size: 18, color: "666666" })],
-                                                                    alignment: AlignmentType.CENTER,
-                                                                    spacing: { before: 80, after: 40 }
-                                                                }),
-                                                                new Paragraph({
-                                                                    children: [new TextRun({ text: dateText, bold: true, size: 22, color: "333333" })],
-                                                                    alignment: AlignmentType.CENTER,
-                                                                    spacing: { after: 80 }
-                                                                })
-                                                            ],
-                                                            shading: { fill: "F1F5F9" },
-                                                            borders: {
-                                                                top: { style: BorderStyle.NONE },
-                                                                bottom: { style: BorderStyle.NONE },
-                                                                left: { style: BorderStyle.NONE },
-                                                                right: { style: BorderStyle.SINGLE, size: 2, color: "CBD5E1" }
-                                                            }
-                                                        }),
-                                                        new TableCell({
-                                                            width: { size: 34, type: WidthType.PERCENTAGE },
-                                                            children: [
-                                                                new Paragraph({
-                                                                    children: [new TextRun({ text: "MÉTODO DE PAGAMENTO", bold: true, size: 18, color: "666666" })],
-                                                                    alignment: AlignmentType.CENTER,
-                                                                    spacing: { before: 80, after: 40 }
-                                                                }),
-                                                                new Paragraph({
-                                                                    children: [new TextRun({ text: paymentText, bold: true, size: 22, color: "333333" })],
-                                                                    alignment: AlignmentType.CENTER,
-                                                                    spacing: { after: 80 }
-                                                                })
-                                                            ],
-                                                            shading: { fill: "F1F5F9" },
-                                                            borders: {
-                                                                top: { style: BorderStyle.NONE },
-                                                                bottom: { style: BorderStyle.NONE },
-                                                                left: { style: BorderStyle.SINGLE, size: 2, color: "CBD5E1" },
-                                                                right: { style: BorderStyle.SINGLE, size: 2, color: "CBD5E1" }
-                                                            }
-                                                        }),
-                                                        new TableCell({
-                                                            width: { size: 33, type: WidthType.PERCENTAGE },
-                                                            children: [
-                                                                new Paragraph({
-                                                                    children: [new TextRun({ text: "VALOR TOTAL", bold: true, size: 18, color: "666666" })],
-                                                                    alignment: AlignmentType.CENTER,
-                                                                    spacing: { before: 80, after: 40 }
-                                                                }),
-                                                                new Paragraph({
-                                                                    children: [new TextRun({ text: valueText, bold: true, size: 26, color: "2E74B5" })],
-                                                                    alignment: AlignmentType.CENTER,
-                                                                    spacing: { after: 80 }
-                                                                })
-                                                            ],
-                                                            shading: { fill: "F1F5F9" },
-                                                            borders: {
-                                                                top: { style: BorderStyle.NONE },
-                                                                bottom: { style: BorderStyle.NONE },
-                                                                left: { style: BorderStyle.SINGLE, size: 2, color: "CBD5E1" },
-                                                                right: { style: BorderStyle.NONE }
-                                                            }
-                                                        })
-                                                    ]
-                                                })
-                                            ],
-                                            borders: {
-                                                top: { style: BorderStyle.NONE },
-                                                bottom: { style: BorderStyle.NONE },
-                                                left: { style: BorderStyle.NONE },
-                                                right: { style: BorderStyle.NONE },
-                                                insideHorizontal: { style: BorderStyle.NONE },
-                                                insideVertical: { style: BorderStyle.NONE }
-                                            }
-                                        })
-                                    ],
-                                    shading: { fill: "FFFFFF" },
-                                    borders: {
-                                        top: { style: BorderStyle.NONE },
-                                        bottom: { style: BorderStyle.SINGLE, size: 8, color: "1F4E79" },
-                                        left: { style: BorderStyle.SINGLE, size: 8, color: "1F4E79" },
-                                        right: { style: BorderStyle.SINGLE, size: 8, color: "1F4E79" }
+                                        top: { style: BorderStyle.SINGLE, size: 6, color: "0D47A1" },
+                                        bottom: { style: BorderStyle.SINGLE, size: 2, color: "0D47A1" },
+                                        left: { style: BorderStyle.SINGLE, size: 6, color: "0D47A1" },
+                                        right: { style: BorderStyle.SINGLE, size: 6, color: "0D47A1" }
                                     }
                                 })
                             ]
@@ -1903,9 +1754,225 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                         insideHorizontal: { style: BorderStyle.NONE },
                         insideVertical: { style: BorderStyle.NONE }
                     }
+                })
+            );
+
+            // 2. Corpo do card (2 colunas: Dados do Cliente + Itens)
+            const clientContent = [
+                new Paragraph({
+                    children: [new TextRun({ text: "DADOS DO CLIENTE", bold: true, size: 24, color: "1565C0" })],
+                    spacing: { before: 160, after: 160 },
+                    border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: "E0E0E0" } }
                 }),
-                // Espaçador entre pedidos
-                new Paragraph({ text: "", spacing: { after: 800 } })
+                new Paragraph({
+                    children: [
+                        new TextRun({ text: "Nome: ", bold: true, size: 22, color: "424242" }),
+                        new TextRun({ text: order.customerName || 'Cliente', size: 22, color: "212121" })
+                    ],
+                    spacing: { before: 120, after: 120 }
+                }),
+                new Paragraph({
+                    children: [
+                        new TextRun({ text: "Telefone: ", bold: true, size: 22, color: "424242" }),
+                        new TextRun({ text: phoneText, size: 22, color: "212121" })
+                    ],
+                    spacing: { before: 80, after: 120 }
+                }),
+                new Paragraph({
+                    children: [
+                        new TextRun({ text: "E-mail: ", bold: true, size: 22, color: "424242" }),
+                        new TextRun({ text: emailText, size: 22, color: "212121" })
+                    ],
+                    spacing: { before: 80, after: 160 }
+                })
+            ];
+
+            const itemsContent = [
+                new Paragraph({
+                    children: [new TextRun({ text: "ITENS DO PEDIDO", bold: true, size: 24, color: "1565C0" })],
+                    spacing: { before: 160, after: 160 },
+                    border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: "E0E0E0" } }
+                })
+            ];
+
+            if (items.length > 0) {
+                items.forEach((item, idx) => {
+                    itemsContent.push(
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: `${item.qty}x `, bold: true, size: 20, color: "1565C0" }),
+                                new TextRun({ text: item.name, bold: true, size: 20, color: "212121" })
+                            ],
+                            spacing: { before: idx > 0 ? 120 : 80, after: 40 }
+                        }),
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: "  Tamanho: ", bold: true, size: 18, color: "616161" }),
+                                new TextRun({ text: item.size, size: 18, color: "424242" }),
+                                new TextRun({ text: "  |  Tipo: ", bold: true, size: 18, color: "616161" }),
+                                new TextRun({ text: item.type, size: 18, color: "424242" }),
+                                item.color ? new TextRun({ text: "  |  Cor: ", bold: true, size: 18, color: "616161" }) : new TextRun({ text: "" }),
+                                item.color ? new TextRun({ text: item.color, size: 18, color: "424242" }) : new TextRun({ text: "" })
+                            ],
+                            spacing: { after: 80 }
+                        })
+                    );
+                    if (idx < items.length - 1) {
+                        itemsContent.push(
+                            new Paragraph({
+                                text: "",
+                                border: { bottom: { style: BorderStyle.SINGLE, size: 1, color: "F0F0F0" } },
+                                spacing: { after: 80 }
+                            })
+                        );
+                    }
+                });
+            } else {
+                itemsContent.push(
+                    new Paragraph({
+                        children: [new TextRun({ text: "(Sem itens desta campanha)", italics: true, size: 20, color: "9E9E9E" })],
+                        spacing: { before: 80, after: 160 }
+                    })
+                );
+            }
+
+            children.push(
+                new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    rows: [
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    width: { size: 45, type: WidthType.PERCENTAGE },
+                                    children: clientContent,
+                                    shading: { fill: "FAFAFA" },
+                                    borders: {
+                                        top: { style: BorderStyle.NONE },
+                                        bottom: { style: BorderStyle.SINGLE, size: 2, color: "E0E0E0" },
+                                        left: { style: BorderStyle.SINGLE, size: 6, color: "0D47A1" },
+                                        right: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" }
+                                    },
+                                    verticalAlign: AlignmentType.TOP
+                                }),
+                                new TableCell({
+                                    width: { size: 55, type: WidthType.PERCENTAGE },
+                                    children: itemsContent,
+                                    shading: { fill: "FFFFFF" },
+                                    borders: {
+                                        top: { style: BorderStyle.NONE },
+                                        bottom: { style: BorderStyle.SINGLE, size: 2, color: "E0E0E0" },
+                                        left: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
+                                        right: { style: BorderStyle.SINGLE, size: 6, color: "0D47A1" }
+                                    },
+                                    verticalAlign: AlignmentType.TOP
+                                })
+                            ]
+                        })
+                    ],
+                    borders: {
+                        top: { style: BorderStyle.NONE },
+                        bottom: { style: BorderStyle.NONE },
+                        left: { style: BorderStyle.NONE },
+                        right: { style: BorderStyle.NONE },
+                        insideHorizontal: { style: BorderStyle.NONE },
+                        insideVertical: { style: BorderStyle.NONE }
+                    }
+                })
+            );
+
+            // 3. Rodapé do card (3 blocos: Data, Método, Valor)
+            children.push(
+                new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    rows: [
+                        new TableRow({
+                            children: [
+                                // Data
+                                new TableCell({
+                                    width: { size: 33, type: WidthType.PERCENTAGE },
+                                    children: [
+                                        new Paragraph({
+                                            children: [new TextRun({ text: "DATA", bold: true, size: 20, color: "616161" })],
+                                            alignment: AlignmentType.CENTER,
+                                            spacing: { before: 160, after: 80 }
+                                        }),
+                                        new Paragraph({
+                                            children: [new TextRun({ text: dateText, bold: true, size: 24, color: "212121" })],
+                                            alignment: AlignmentType.CENTER,
+                                            spacing: { after: 160 }
+                                        })
+                                    ],
+                                    shading: { fill: "F5F5F5" },
+                                    borders: {
+                                        top: { style: BorderStyle.NONE },
+                                        bottom: { style: BorderStyle.SINGLE, size: 6, color: "0D47A1" },
+                                        left: { style: BorderStyle.SINGLE, size: 6, color: "0D47A1" },
+                                        right: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" }
+                                    }
+                                }),
+                                // Método de Pagamento
+                                new TableCell({
+                                    width: { size: 34, type: WidthType.PERCENTAGE },
+                                    children: [
+                                        new Paragraph({
+                                            children: [new TextRun({ text: "MÉTODO", bold: true, size: 20, color: "616161" })],
+                                            alignment: AlignmentType.CENTER,
+                                            spacing: { before: 160, after: 80 }
+                                        }),
+                                        new Paragraph({
+                                            children: [new TextRun({ text: paymentText, bold: true, size: 24, color: "212121" })],
+                                            alignment: AlignmentType.CENTER,
+                                            spacing: { after: 160 }
+                                        })
+                                    ],
+                                    shading: { fill: "F5F5F5" },
+                                    borders: {
+                                        top: { style: BorderStyle.NONE },
+                                        bottom: { style: BorderStyle.SINGLE, size: 6, color: "0D47A1" },
+                                        left: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
+                                        right: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" }
+                                    }
+                                }),
+                                // Valor Total
+                                new TableCell({
+                                    width: { size: 33, type: WidthType.PERCENTAGE },
+                                    children: [
+                                        new Paragraph({
+                                            children: [new TextRun({ text: "VALOR TOTAL", bold: true, size: 20, color: "616161" })],
+                                            alignment: AlignmentType.CENTER,
+                                            spacing: { before: 160, after: 80 }
+                                        }),
+                                        new Paragraph({
+                                            children: [new TextRun({ text: valueText, bold: true, size: 32, color: "1565C0" })],
+                                            alignment: AlignmentType.CENTER,
+                                            spacing: { after: 160 }
+                                        })
+                                    ],
+                                    shading: { fill: "F5F5F5" },
+                                    borders: {
+                                        top: { style: BorderStyle.NONE },
+                                        bottom: { style: BorderStyle.SINGLE, size: 6, color: "0D47A1" },
+                                        left: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
+                                        right: { style: BorderStyle.SINGLE, size: 6, color: "0D47A1" }
+                                    }
+                                })
+                            ]
+                        })
+                    ],
+                    borders: {
+                        top: { style: BorderStyle.NONE },
+                        bottom: { style: BorderStyle.NONE },
+                        left: { style: BorderStyle.NONE },
+                        right: { style: BorderStyle.NONE },
+                        insideHorizontal: { style: BorderStyle.NONE },
+                        insideVertical: { style: BorderStyle.NONE }
+                    }
+                })
+            );
+
+            // Espaçador entre pedidos
+            children.push(
+                new Paragraph({ text: "", spacing: { after: 1000 } })
             );
         });
 
