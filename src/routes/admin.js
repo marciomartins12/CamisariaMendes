@@ -1721,12 +1721,12 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             // 1. CABEÇALHO DO PEDIDO
             children.push(
                 new Table({
-                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    width: { size: 10000, type: WidthType.DXA },
                     rows: [
                         new TableRow({
                             children: [
                                 new TableCell({
-                                    width: { size: 100, type: WidthType.PERCENTAGE },
+                                    width: { size: 10000, type: WidthType.DXA },
                                     children: [
                                         new Paragraph({
                                             children: [new TextRun({ text: `PEDIDO #${sequentialNumber}`, bold: true, size: 28, color: "FFFFFF" })],
@@ -1760,7 +1760,6 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                 }),
                 new Paragraph({
                     children: [
-                        new TextRun({ text: "👤  ", size: 20 }),
                         new TextRun({ text: "Nome: ", bold: true, size: 20, color: "424242" }),
                         new TextRun({ text: order.customerName || 'Cliente', size: 20, color: "212121" })
                     ],
@@ -1768,7 +1767,6 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                 }),
                 new Paragraph({
                     children: [
-                        new TextRun({ text: "📞  ", size: 20 }),
                         new TextRun({ text: "Telefone: ", bold: true, size: 20, color: "424242" }),
                         new TextRun({ text: phoneText, size: 20, color: "212121" })
                     ],
@@ -1776,7 +1774,6 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                 }),
                 new Paragraph({
                     children: [
-                        new TextRun({ text: "✉️  ", size: 20 }),
                         new TextRun({ text: "E-mail: ", bold: true, size: 20, color: "424242" }),
                         new TextRun({ text: emailText, size: 20, color: "212121" })
                     ],
@@ -1806,7 +1803,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                         }),
                         new Paragraph({
                             children: [
-                                new TextRun({ text: "   Tam: ", bold: true, size: 18, color: "757575" }),
+                                new TextRun({ text: "Tam: ", bold: true, size: 18, color: "757575" }),
                                 new TextRun({ text: item.size, size: 18, color: "424242" }),
                                 new TextRun({ text: " | Tipo: ", bold: true, size: 18, color: "757575" }),
                                 new TextRun({ text: item.type, size: 18, color: "424242" }),
@@ -1837,12 +1834,12 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
 
             children.push(
                 new Table({
-                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    width: { size: 10000, type: WidthType.DXA },
                     rows: [
                         new TableRow({
                             children: [
                                 new TableCell({
-                                    width: { size: 30, type: WidthType.PERCENTAGE },
+                                    width: { size: 3000, type: WidthType.DXA },
                                     children: clientContent,
                                     shading: { fill: "FFFFFF" },
                                     borders: {
@@ -1854,7 +1851,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                                     verticalAlign: AlignmentType.TOP
                                 }),
                                 new TableCell({
-                                    width: { size: 70, type: WidthType.PERCENTAGE },
+                                    width: { size: 7000, type: WidthType.DXA },
                                     children: itemsContent,
                                     shading: { fill: "FAFBFC" },
                                     borders: {
@@ -1882,12 +1879,12 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             // 3. RODAPÉ (DATA, MÉTODO, VALOR)
             children.push(
                 new Table({
-                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    width: { size: 10000, type: WidthType.DXA },
                     rows: [
                         new TableRow({
                             children: [
                                 new TableCell({
-                                    width: { size: 33.33, type: WidthType.PERCENTAGE },
+                                    width: { size: 3333, type: WidthType.DXA },
                                     children: [
                                         new Paragraph({
                                             children: [new TextRun({ text: "📅", size: 22 })],
@@ -1915,7 +1912,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                                 }),
                                 
                                 new TableCell({
-                                    width: { size: 33.34, type: WidthType.PERCENTAGE },
+                                    width: { size: 3334, type: WidthType.DXA },
                                     children: [
                                         new Paragraph({
                                             children: [new TextRun({ text: "💳", size: 22 })],
@@ -1943,7 +1940,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                                 }),
                                 
                                 new TableCell({
-                                    width: { size: 33.33, type: WidthType.PERCENTAGE },
+                                    width: { size: 3333, type: WidthType.DXA },
                                     children: [
                                         new Paragraph({
                                             children: [new TextRun({ text: "💰", size: 22 })],
