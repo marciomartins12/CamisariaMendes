@@ -27,6 +27,10 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  instagram: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   role: {
     type: DataTypes.STRING,
     defaultValue: 'customer' // 'customer', 'admin' (though we have separate Admin table, good to have role)

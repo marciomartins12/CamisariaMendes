@@ -59,7 +59,8 @@ module.exports = {
                         id: user.id,
                         name: user.name,
                         email: user.email,
-                        phone: user.phone
+                        phone: user.phone,
+                        instagram: user.instagram
                     };
                     
                     if (campaignCode) {
@@ -92,7 +93,7 @@ module.exports = {
 
     // Handle Register
     register: async (req, res) => {
-        const { name, email, phone, password, confirmPassword, campaignCode } = req.body;
+        const { name, email, phone, instagram, password, confirmPassword, campaignCode } = req.body;
 
         try {
             // Validate email format
@@ -170,6 +171,7 @@ module.exports = {
                 name,
                 email,
                 phone,
+                instagram,
                 password: hashedPassword
             });
 
@@ -178,7 +180,8 @@ module.exports = {
                 id: newUser.id,
                 name: newUser.name,
                 email: newUser.email,
-                phone: newUser.phone
+                phone: newUser.phone,
+                instagram: newUser.instagram
             };
 
             if (campaignCode) {
@@ -277,7 +280,8 @@ module.exports = {
                 id: userPlain.id,
                 name: userPlain.name,
                 email: userPlain.email,
-                phone: userPlain.phone
+                phone: userPlain.phone,
+                instagram: userPlain.instagram
             };
 
             res.render('user/profile', {
@@ -297,7 +301,7 @@ module.exports = {
                 return res.redirect('/auth/login');
             }
 
-            const { name, currentPassword, newPassword, confirmNewPassword } = req.body;
+            const { name, phone, instagram, currentPassword, newPassword, confirmNewPassword } = req.body;
             const userId = req.session.user.id;
 
             const user = await User.findByPk(userId);
@@ -318,6 +322,16 @@ module.exports = {
 
             if (trimmedName !== user.name) {
                 user.name = trimmedName;
+            }
+
+            const trimmedPhone = (phone || '').trim();
+            if (trimmedPhone !== user.phone) {
+                user.phone = trimmedPhone;
+            }
+
+            const trimmedInstagram = (instagram || '').trim();
+            if (trimmedInstagram !== user.instagram) {
+                user.instagram = trimmedInstagram;
             }
 
             const wantsPasswordChange = (newPassword || '').trim().length > 0 || (confirmNewPassword || '').trim().length > 0;
@@ -360,7 +374,8 @@ module.exports = {
                 id: user.id,
                 name: user.name,
                 email: user.email,
-                phone: user.phone
+                phone: user.phone,
+                instagram: user.instagram
             };
 
             res.render('user/profile', {
