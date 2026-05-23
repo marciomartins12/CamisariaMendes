@@ -1645,7 +1645,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             new Paragraph({
                 text: "DETALHAMENTO DE PEDIDOS",
                 heading: HeadingLevel.HEADING_2,
-                spacing: { before: 400, after: 400 },
+                spacing: { before: 400, after: 300 },
                 pageBreakBefore: true,
                 border: { bottom: { style: BorderStyle.SINGLE, size: 12, color: "2E74B5" } }
             })
@@ -1669,154 +1669,227 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                         if (!color) color = shirt.color;
                     }
                 }
-                return `• ${it.qty || 1}x ${it.name} [${it.size}] - ${type || 'Tradicional'}${color ? ' - ' + color : ''}`;
+                const qty = it.qty || 1;
+                const sizeText = it.size || 'N/A';
+                const typeText = type || 'Tradicional';
+                let colorText = '';
+                if (color) {
+                    colorText = Array.isArray(color) ? color.join(' / ') : color;
+                }
+                return `• ${qty}x ${it.name || 'Produto'} | Tam: ${sizeText} | Tipo: ${typeText}${colorText ? ` | Cor: ${colorText}` : ''}`;
             });
 
-            // Add formatting to items with more spacing
-            const itemParagraphs = itemsLines.map(line => new Paragraph({ text: line, spacing: { after: 80 } }));
-            if (itemParagraphs.length === 0) itemParagraphs.push(new Paragraph({ text: "(Sem itens desta campanha)", italics: true }));
+            const itemParagraphs = itemsLines.length > 0 
+                ? itemsLines.map(line => new Paragraph({ 
+                    text: line, 
+                    spacing: { before: 40, after: 40 },
+                    indent: { firstLine: 100 }
+                  }))
+                : [new Paragraph({ text: "(Sem itens desta campanha)", italics: true, spacing: { before: 40, after: 40 } })];
 
             const sequentialNumber = String(index + 1).padStart(2, '0');
             
-            // Resolve Phone (Order > User)
             let phone = order.customerPhone;
             if (!phone && order.User && order.User.phone) {
                 phone = order.User.phone;
             }
-            const phoneText = phone ? phone.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3') : 'Tel não inf.';
+            const phoneText = phone ? phone.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3') : 'Não informado';
+            const emailText = order.customerEmail || 'Não informado';
+            const dateText = new Date(order.createdAt).toLocaleDateString('pt-BR');
+            const paymentText = order.paymentMethod ? order.paymentMethod.toUpperCase() : 'N/A';
+            const valueText = `R$ ${Number(order.finalAmount).toFixed(2)}`;
 
-            // Cada pedido em sua própria estrutura, mais espaçada
+            // Estrutura uniforme para cada pedido
             children.push(
-                // Título do pedido
-                new Paragraph({
-                    children: [
-                        new TextRun({ text: `PEDIDO #${sequentialNumber}`, bold: true, size: 26, color: "2E74B5" })
-                    ],
-                    spacing: { before: 200, after: 150 }
-                }),
-                
-                // Tabela com dados do pedido
+                // Tabela principal do pedido com bordas grossas
                 new Table({
                     width: { size: 100, type: WidthType.PERCENTAGE },
                     rows: [
+                        // Linha 1: Cabeçalho do pedido
                         new TableRow({
                             children: [
+                                new TableCell({
+                                    width: { size: 100, type: WidthType.PERCENTAGE },
+                                    children: [
+                                        new Paragraph({
+                                            children: [
+                                                new TextRun({ text: `PEDIDO #${sequentialNumber}`, bold: true, size: 28, color: "FFFFFF" })
+                                            ],
+                                            alignment: AlignmentType.CENTER,
+                                            spacing: { before: 100, after: 100 }
+                                        })
+                                    ],
+                                    shading: { fill: "2E74B5" },
+                                    borders: {
+                                        top: { style: BorderStyle.SINGLE, size: 8, color: "1F4E79" },
+                                        bottom: { style: BorderStyle.SINGLE, size: 4, color: "1F4E79" },
+                                        left: { style: BorderStyle.SINGLE, size: 8, color: "1F4E79" },
+                                        right: { style: BorderStyle.SINGLE, size: 8, color: "1F4E79" }
+                                    }
+                                })
+                            ]
+                        }),
+                        // Linha 2: Dados do cliente e Itens
+                        new TableRow({
+                            children: [
+                                // Coluna 1: Dados do Cliente (40%)
                                 new TableCell({
                                     width: { size: 40, type: WidthType.PERCENTAGE },
                                     children: [
-                                        new Paragraph({ 
-                                            children: [new TextRun({ text: "CLIENTE:", bold: true, size: 20, color: "555555" })], 
-                                            spacing: { after: 40 } 
+                                        new Paragraph({
+                                            children: [new TextRun({ text: "DADOS DO CLIENTE", bold: true, size: 22, color: "2E74B5" })],
+                                            spacing: { before: 120, after: 160 },
+                                            border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: "E0E0E0" } }
                                         }),
-                                        new Paragraph({ 
-                                            children: [new TextRun({ text: order.customerName, bold: true, size: 24 })] 
+                                        new Paragraph({
+                                            children: [
+                                                new TextRun({ text: "Nome: ", bold: true, size: 20, color: "555555" }),
+                                                new TextRun({ text: order.customerName || 'Cliente', size: 20, color: "333333" })
+                                            ],
+                                            spacing: { before: 80, after: 80 }
                                         }),
-                                        new Paragraph({ 
-                                            children: [new TextRun({ text: phoneText, size: 20, color: "666666" })], 
-                                            spacing: { after: 20 } 
+                                        new Paragraph({
+                                            children: [
+                                                new TextRun({ text: "Telefone: ", bold: true, size: 20, color: "555555" }),
+                                                new TextRun({ text: phoneText, size: 20, color: "333333" })
+                                            ],
+                                            spacing: { before: 40, after: 80 }
                                         }),
-                                        new Paragraph({ 
-                                            children: [new TextRun({ text: order.customerEmail || '', size: 20, color: "666666" })] 
+                                        new Paragraph({
+                                            children: [
+                                                new TextRun({ text: "E-mail: ", bold: true, size: 20, color: "555555" }),
+                                                new TextRun({ text: emailText, size: 20, color: "333333" })
+                                            ],
+                                            spacing: { before: 40, after: 120 }
                                         })
                                     ],
-                                    shading: { fill: "F5F8FA" },
+                                    shading: { fill: "F8F9FA" },
                                     borders: {
-                                        top: { style: BorderStyle.SINGLE, size: 4, color: "2E74B5" },
-                                        bottom: { style: BorderStyle.SINGLE, size: 4, color: "2E74B5" },
-                                        left: { style: BorderStyle.SINGLE, size: 4, color: "2E74B5" },
-                                        right: { style: BorderStyle.NONE }
-                                    }
+                                        top: { style: BorderStyle.NONE },
+                                        bottom: { style: BorderStyle.SINGLE, size: 4, color: "1F4E79" },
+                                        left: { style: BorderStyle.SINGLE, size: 8, color: "1F4E79" },
+                                        right: { style: BorderStyle.SINGLE, size: 4, color: "1F4E79" }
+                                    },
+                                    verticalAlign: AlignmentType.TOP
                                 }),
+                                // Coluna 2: Itens do Pedido (60%)
                                 new TableCell({
                                     width: { size: 60, type: WidthType.PERCENTAGE },
                                     children: [
-                                        new Paragraph({ 
-                                            children: [new TextRun({ text: "ITENS:", bold: true, size: 20, color: "555555" })], 
-                                            spacing: { after: 80 } 
+                                        new Paragraph({
+                                            children: [new TextRun({ text: "ITENS DO PEDIDO", bold: true, size: 22, color: "2E74B5" })],
+                                            spacing: { before: 120, after: 160 },
+                                            border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: "E0E0E0" } }
                                         }),
                                         ...itemParagraphs
                                     ],
-                                    shading: { fill: "F5F8FA" },
+                                    shading: { fill: "FFFFFF" },
                                     borders: {
-                                        top: { style: BorderStyle.SINGLE, size: 4, color: "2E74B5" },
-                                        bottom: { style: BorderStyle.SINGLE, size: 4, color: "2E74B5" },
-                                        left: { style: BorderStyle.NONE },
-                                        right: { style: BorderStyle.SINGLE, size: 4, color: "2E74B5" }
-                                    }
+                                        top: { style: BorderStyle.NONE },
+                                        bottom: { style: BorderStyle.SINGLE, size: 4, color: "1F4E79" },
+                                        left: { style: BorderStyle.SINGLE, size: 4, color: "1F4E79" },
+                                        right: { style: BorderStyle.SINGLE, size: 8, color: "1F4E79" }
+                                    },
+                                    verticalAlign: AlignmentType.TOP
                                 })
                             ]
-                        })
-                    ],
-                    borders: {
-                        top: { style: BorderStyle.NONE },
-                        bottom: { style: BorderStyle.NONE },
-                        left: { style: BorderStyle.NONE },
-                        right: { style: BorderStyle.NONE },
-                        insideHorizontal: { style: BorderStyle.NONE },
-                        insideVertical: { style: BorderStyle.NONE }
-                    }
-                }),
-                
-                // Tabela de detalhes do pedido
-                new Table({
-                    width: { size: 100, type: WidthType.PERCENTAGE },
-                    rows: [
+                        }),
+                        // Linha 3: Detalhes do Pedido
                         new TableRow({
                             children: [
                                 new TableCell({
-                                    width: { size: 33, type: WidthType.PERCENTAGE },
+                                    width: { size: 100, type: WidthType.PERCENTAGE },
                                     children: [
-                                        new Paragraph({ 
-                                            children: [new TextRun({ text: "DATA:", bold: true, size: 20, color: "555555" })] 
-                                        }),
-                                        new Paragraph({ 
-                                            children: [new TextRun({ text: new Date(order.createdAt).toLocaleDateString('pt-BR'), size: 22 })] 
+                                        new Table({
+                                            width: { size: 100, type: WidthType.PERCENTAGE },
+                                            rows: [
+                                                new TableRow({
+                                                    children: [
+                                                        new TableCell({
+                                                            width: { size: 33, type: WidthType.PERCENTAGE },
+                                                            children: [
+                                                                new Paragraph({
+                                                                    children: [new TextRun({ text: "DATA", bold: true, size: 18, color: "666666" })],
+                                                                    alignment: AlignmentType.CENTER,
+                                                                    spacing: { before: 80, after: 40 }
+                                                                }),
+                                                                new Paragraph({
+                                                                    children: [new TextRun({ text: dateText, bold: true, size: 22, color: "333333" })],
+                                                                    alignment: AlignmentType.CENTER,
+                                                                    spacing: { after: 80 }
+                                                                })
+                                                            ],
+                                                            shading: { fill: "F1F5F9" },
+                                                            borders: {
+                                                                top: { style: BorderStyle.NONE },
+                                                                bottom: { style: BorderStyle.NONE },
+                                                                left: { style: BorderStyle.NONE },
+                                                                right: { style: BorderStyle.SINGLE, size: 2, color: "CBD5E1" }
+                                                            }
+                                                        }),
+                                                        new TableCell({
+                                                            width: { size: 34, type: WidthType.PERCENTAGE },
+                                                            children: [
+                                                                new Paragraph({
+                                                                    children: [new TextRun({ text: "MÉTODO DE PAGAMENTO", bold: true, size: 18, color: "666666" })],
+                                                                    alignment: AlignmentType.CENTER,
+                                                                    spacing: { before: 80, after: 40 }
+                                                                }),
+                                                                new Paragraph({
+                                                                    children: [new TextRun({ text: paymentText, bold: true, size: 22, color: "333333" })],
+                                                                    alignment: AlignmentType.CENTER,
+                                                                    spacing: { after: 80 }
+                                                                })
+                                                            ],
+                                                            shading: { fill: "F1F5F9" },
+                                                            borders: {
+                                                                top: { style: BorderStyle.NONE },
+                                                                bottom: { style: BorderStyle.NONE },
+                                                                left: { style: BorderStyle.SINGLE, size: 2, color: "CBD5E1" },
+                                                                right: { style: BorderStyle.SINGLE, size: 2, color: "CBD5E1" }
+                                                            }
+                                                        }),
+                                                        new TableCell({
+                                                            width: { size: 33, type: WidthType.PERCENTAGE },
+                                                            children: [
+                                                                new Paragraph({
+                                                                    children: [new TextRun({ text: "VALOR TOTAL", bold: true, size: 18, color: "666666" })],
+                                                                    alignment: AlignmentType.CENTER,
+                                                                    spacing: { before: 80, after: 40 }
+                                                                }),
+                                                                new Paragraph({
+                                                                    children: [new TextRun({ text: valueText, bold: true, size: 26, color: "2E74B5" })],
+                                                                    alignment: AlignmentType.CENTER,
+                                                                    spacing: { after: 80 }
+                                                                })
+                                                            ],
+                                                            shading: { fill: "F1F5F9" },
+                                                            borders: {
+                                                                top: { style: BorderStyle.NONE },
+                                                                bottom: { style: BorderStyle.NONE },
+                                                                left: { style: BorderStyle.SINGLE, size: 2, color: "CBD5E1" },
+                                                                right: { style: BorderStyle.NONE }
+                                                            }
+                                                        })
+                                                    ]
+                                                })
+                                            ],
+                                            borders: {
+                                                top: { style: BorderStyle.NONE },
+                                                bottom: { style: BorderStyle.NONE },
+                                                left: { style: BorderStyle.NONE },
+                                                right: { style: BorderStyle.NONE },
+                                                insideHorizontal: { style: BorderStyle.NONE },
+                                                insideVertical: { style: BorderStyle.NONE }
+                                            }
                                         })
                                     ],
                                     shading: { fill: "FFFFFF" },
                                     borders: {
                                         top: { style: BorderStyle.NONE },
-                                        bottom: { style: BorderStyle.SINGLE, size: 6, color: "2E74B5" },
-                                        left: { style: BorderStyle.SINGLE, size: 6, color: "2E74B5" },
-                                        right: { style: BorderStyle.NONE }
-                                    }
-                                }),
-                                new TableCell({
-                                    width: { size: 34, type: WidthType.PERCENTAGE },
-                                    children: [
-                                        new Paragraph({ 
-                                            children: [new TextRun({ text: "MÉTODO DE PAGAMENTO:", bold: true, size: 20, color: "555555" })] 
-                                        }),
-                                        new Paragraph({ 
-                                            children: [new TextRun({ text: order.paymentMethod ? order.paymentMethod.toUpperCase() : 'N/A', size: 22 })] 
-                                        })
-                                    ],
-                                    shading: { fill: "FFFFFF" },
-                                    borders: {
-                                        top: { style: BorderStyle.NONE },
-                                        bottom: { style: BorderStyle.SINGLE, size: 6, color: "2E74B5" },
-                                        left: { style: BorderStyle.NONE },
-                                        right: { style: BorderStyle.NONE }
-                                    }
-                                }),
-                                new TableCell({
-                                    width: { size: 33, type: WidthType.PERCENTAGE },
-                                    children: [
-                                        new Paragraph({ 
-                                            children: [new TextRun({ text: "VALOR TOTAL:", bold: true, size: 20, color: "555555" })], 
-                                            alignment: AlignmentType.RIGHT 
-                                        }),
-                                        new Paragraph({ 
-                                            children: [new TextRun({ text: `R$ ${Number(order.finalAmount).toFixed(2)}`, bold: true, size: 26, color: "2E74B5" })], 
-                                            alignment: AlignmentType.RIGHT 
-                                        })
-                                    ],
-                                    shading: { fill: "FFFFFF" },
-                                    borders: {
-                                        top: { style: BorderStyle.NONE },
-                                        bottom: { style: BorderStyle.SINGLE, size: 6, color: "2E74B5" },
-                                        left: { style: BorderStyle.NONE },
-                                        right: { style: BorderStyle.SINGLE, size: 6, color: "2E74B5" }
+                                        bottom: { style: BorderStyle.SINGLE, size: 8, color: "1F4E79" },
+                                        left: { style: BorderStyle.SINGLE, size: 8, color: "1F4E79" },
+                                        right: { style: BorderStyle.SINGLE, size: 8, color: "1F4E79" }
                                     }
                                 })
                             ]
@@ -1831,9 +1904,8 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                         insideVertical: { style: BorderStyle.NONE }
                     }
                 }),
-                
                 // Espaçador entre pedidos
-                new Paragraph({ text: "", spacing: { after: 600 } })
+                new Paragraph({ text: "", spacing: { after: 800 } })
             );
         });
 
