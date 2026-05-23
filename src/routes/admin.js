@@ -1842,7 +1842,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                         new TableRow({
                             children: [
                                 new TableCell({
-                                    width: { size: 35, type: WidthType.PERCENTAGE },
+                                    width: { size: 30, type: WidthType.PERCENTAGE },
                                     children: clientContent,
                                     shading: { fill: "FFFFFF" },
                                     borders: {
@@ -1854,7 +1854,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                                     verticalAlign: AlignmentType.TOP
                                 }),
                                 new TableCell({
-                                    width: { size: 65, type: WidthType.PERCENTAGE },
+                                    width: { size: 70, type: WidthType.PERCENTAGE },
                                     children: itemsContent,
                                     shading: { fill: "FAFBFC" },
                                     borders: {
@@ -1887,7 +1887,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                         new TableRow({
                             children: [
                                 new TableCell({
-                                    width: { size: 3333, type: WidthType.DXA },
+                                    width: { size: 33.33, type: WidthType.PERCENTAGE },
                                     children: [
                                         new Paragraph({
                                             children: [new TextRun({ text: "📅", size: 22 })],
@@ -1915,7 +1915,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                                 }),
                                 
                                 new TableCell({
-                                    width: { size: 3334, type: WidthType.DXA },
+                                    width: { size: 33.34, type: WidthType.PERCENTAGE },
                                     children: [
                                         new Paragraph({
                                             children: [new TextRun({ text: "💳", size: 22 })],
@@ -1943,7 +1943,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                                 }),
                                 
                                 new TableCell({
-                                    width: { size: 3333, type: WidthType.DXA },
+                                    width: { size: 33.33, type: WidthType.PERCENTAGE },
                                     children: [
                                         new Paragraph({
                                             children: [new TextRun({ text: "💰", size: 22 })],
