@@ -1729,18 +1729,18 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                                     children: [
                                         new Paragraph({
                                             children: [
-                                                new TextRun({ text: `PEDIDO #${sequentialNumber}`, bold: true, size: 32, color: "FFFFFF" })
+                                                new TextRun({ text: `PEDIDO #${sequentialNumber}`, bold: true, size: 40, color: "FFFFFF" })
                                             ],
                                             alignment: AlignmentType.CENTER,
-                                            spacing: { before: 160, after: 160 }
+                                            spacing: { before: 240, after: 240 }
                                         })
                                     ],
                                     shading: { fill: "1565C0" },
                                     borders: {
-                                        top: { style: BorderStyle.SINGLE, size: 6, color: "0D47A1" },
-                                        bottom: { style: BorderStyle.SINGLE, size: 2, color: "0D47A1" },
-                                        left: { style: BorderStyle.SINGLE, size: 6, color: "0D47A1" },
-                                        right: { style: BorderStyle.SINGLE, size: 6, color: "0D47A1" }
+                                        top: { style: BorderStyle.SINGLE, size: 12, color: "0D47A1" },
+                                        bottom: { style: BorderStyle.SINGLE, size: 4, color: "0D47A1" },
+                                        left: { style: BorderStyle.SINGLE, size: 12, color: "0D47A1" },
+                                        right: { style: BorderStyle.SINGLE, size: 12, color: "0D47A1" }
                                     }
                                 })
                             ]
@@ -1760,38 +1760,38 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             // 2. Corpo do card (2 colunas: Dados do Cliente + Itens)
             const clientContent = [
                 new Paragraph({
-                    children: [new TextRun({ text: "DADOS DO CLIENTE", bold: true, size: 24, color: "1565C0" })],
-                    spacing: { before: 160, after: 160 },
-                    border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: "E0E0E0" } }
+                    children: [new TextRun({ text: "DADOS DO CLIENTE", bold: true, size: 28, color: "1565C0" })],
+                    spacing: { before: 240, after: 200 },
+                    border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: "E3F2FD" } }
                 }),
                 new Paragraph({
                     children: [
-                        new TextRun({ text: "Nome: ", bold: true, size: 22, color: "424242" }),
-                        new TextRun({ text: order.customerName || 'Cliente', size: 22, color: "212121" })
+                        new TextRun({ text: "Nome: ", bold: true, size: 26, color: "424242" }),
+                        new TextRun({ text: order.customerName || 'Cliente', size: 26, color: "212121" })
                     ],
-                    spacing: { before: 120, after: 120 }
+                    spacing: { before: 160, after: 160 }
                 }),
                 new Paragraph({
                     children: [
-                        new TextRun({ text: "Telefone: ", bold: true, size: 22, color: "424242" }),
-                        new TextRun({ text: phoneText, size: 22, color: "212121" })
-                    ],
-                    spacing: { before: 80, after: 120 }
-                }),
-                new Paragraph({
-                    children: [
-                        new TextRun({ text: "E-mail: ", bold: true, size: 22, color: "424242" }),
-                        new TextRun({ text: emailText, size: 22, color: "212121" })
+                        new TextRun({ text: "Telefone: ", bold: true, size: 26, color: "424242" }),
+                        new TextRun({ text: phoneText, size: 26, color: "212121" })
                     ],
                     spacing: { before: 80, after: 160 }
+                }),
+                new Paragraph({
+                    children: [
+                        new TextRun({ text: "E-mail: ", bold: true, size: 26, color: "424242" }),
+                        new TextRun({ text: emailText, size: 26, color: "212121" })
+                    ],
+                    spacing: { before: 80, after: 240 }
                 })
             ];
 
             const itemsContent = [
                 new Paragraph({
-                    children: [new TextRun({ text: "ITENS DO PEDIDO", bold: true, size: 24, color: "1565C0" })],
-                    spacing: { before: 160, after: 160 },
-                    border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: "E0E0E0" } }
+                    children: [new TextRun({ text: "ITENS DO PEDIDO", bold: true, size: 28, color: "1565C0" })],
+                    spacing: { before: 240, after: 200 },
+                    border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: "E3F2FD" } }
                 })
             ];
 
@@ -1800,21 +1800,21 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                     itemsContent.push(
                         new Paragraph({
                             children: [
-                                new TextRun({ text: `${item.qty}x `, bold: true, size: 20, color: "1565C0" }),
-                                new TextRun({ text: item.name, bold: true, size: 20, color: "212121" })
+                                new TextRun({ text: `${item.qty}x `, bold: true, size: 24, color: "1565C0" }),
+                                new TextRun({ text: item.name, bold: true, size: 24, color: "212121" })
                             ],
-                            spacing: { before: idx > 0 ? 120 : 80, after: 40 }
+                            spacing: { before: idx > 0 ? 160 : 120, after: 80 }
                         }),
                         new Paragraph({
                             children: [
-                                new TextRun({ text: "  Tamanho: ", bold: true, size: 18, color: "616161" }),
-                                new TextRun({ text: item.size, size: 18, color: "424242" }),
-                                new TextRun({ text: "  |  Tipo: ", bold: true, size: 18, color: "616161" }),
-                                new TextRun({ text: item.type, size: 18, color: "424242" }),
-                                item.color ? new TextRun({ text: "  |  Cor: ", bold: true, size: 18, color: "616161" }) : new TextRun({ text: "" }),
-                                item.color ? new TextRun({ text: item.color, size: 18, color: "424242" }) : new TextRun({ text: "" })
+                                new TextRun({ text: "  Tam: ", bold: true, size: 20, color: "757575" }),
+                                new TextRun({ text: item.size, size: 20, color: "424242" }),
+                                new TextRun({ text: "  |  Tipo: ", bold: true, size: 20, color: "757575" }),
+                                new TextRun({ text: item.type, size: 20, color: "424242" }),
+                                item.color ? new TextRun({ text: "  |  Cor: ", bold: true, size: 20, color: "757575" }) : new TextRun({ text: "" }),
+                                item.color ? new TextRun({ text: item.color, size: 20, color: "424242" }) : new TextRun({ text: "" })
                             ],
-                            spacing: { after: 80 }
+                            spacing: { after: 120 }
                         })
                     );
                     if (idx < items.length - 1) {
@@ -1830,8 +1830,8 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             } else {
                 itemsContent.push(
                     new Paragraph({
-                        children: [new TextRun({ text: "(Sem itens desta campanha)", italics: true, size: 20, color: "9E9E9E" })],
-                        spacing: { before: 80, after: 160 }
+                        children: [new TextRun({ text: "(Sem itens desta campanha)", italics: true, size: 22, color: "9E9E9E" })],
+                        spacing: { before: 120, after: 240 }
                     })
                 );
             }
@@ -1843,26 +1843,26 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                         new TableRow({
                             children: [
                                 new TableCell({
-                                    width: { size: 45, type: WidthType.PERCENTAGE },
+                                    width: { size: 6000, type: WidthType.DXA },
                                     children: clientContent,
                                     shading: { fill: "FAFAFA" },
                                     borders: {
                                         top: { style: BorderStyle.NONE },
-                                        bottom: { style: BorderStyle.SINGLE, size: 2, color: "E0E0E0" },
-                                        left: { style: BorderStyle.SINGLE, size: 6, color: "0D47A1" },
-                                        right: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" }
+                                        bottom: { style: BorderStyle.SINGLE, size: 4, color: "E0E0E0" },
+                                        left: { style: BorderStyle.SINGLE, size: 12, color: "0D47A1" },
+                                        right: { style: BorderStyle.SINGLE, size: 2, color: "E0E0E0" }
                                     },
                                     verticalAlign: AlignmentType.TOP
                                 }),
                                 new TableCell({
-                                    width: { size: 55, type: WidthType.PERCENTAGE },
+                                    width: { size: 4000, type: WidthType.DXA },
                                     children: itemsContent,
                                     shading: { fill: "FFFFFF" },
                                     borders: {
                                         top: { style: BorderStyle.NONE },
-                                        bottom: { style: BorderStyle.SINGLE, size: 2, color: "E0E0E0" },
-                                        left: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
-                                        right: { style: BorderStyle.SINGLE, size: 6, color: "0D47A1" }
+                                        bottom: { style: BorderStyle.SINGLE, size: 4, color: "E0E0E0" },
+                                        left: { style: BorderStyle.SINGLE, size: 2, color: "E0E0E0" },
+                                        right: { style: BorderStyle.SINGLE, size: 12, color: "0D47A1" }
                                     },
                                     verticalAlign: AlignmentType.TOP
                                 })
@@ -1889,71 +1889,71 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                             children: [
                                 // Data
                                 new TableCell({
-                                    width: { size: 33, type: WidthType.PERCENTAGE },
+                                    width: { size: 3333, type: WidthType.DXA },
                                     children: [
                                         new Paragraph({
-                                            children: [new TextRun({ text: "DATA", bold: true, size: 20, color: "616161" })],
+                                            children: [new TextRun({ text: "DATA", bold: true, size: 22, color: "616161" })],
                                             alignment: AlignmentType.CENTER,
-                                            spacing: { before: 160, after: 80 }
+                                            spacing: { before: 240, after: 120 }
                                         }),
                                         new Paragraph({
-                                            children: [new TextRun({ text: dateText, bold: true, size: 24, color: "212121" })],
+                                            children: [new TextRun({ text: dateText, bold: true, size: 28, color: "212121" })],
                                             alignment: AlignmentType.CENTER,
-                                            spacing: { after: 160 }
+                                            spacing: { after: 240 }
                                         })
                                     ],
                                     shading: { fill: "F5F5F5" },
                                     borders: {
                                         top: { style: BorderStyle.NONE },
-                                        bottom: { style: BorderStyle.SINGLE, size: 6, color: "0D47A1" },
-                                        left: { style: BorderStyle.SINGLE, size: 6, color: "0D47A1" },
-                                        right: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" }
+                                        bottom: { style: BorderStyle.SINGLE, size: 12, color: "0D47A1" },
+                                        left: { style: BorderStyle.SINGLE, size: 12, color: "0D47A1" },
+                                        right: { style: BorderStyle.SINGLE, size: 2, color: "E0E0E0" }
                                     }
                                 }),
                                 // Método de Pagamento
                                 new TableCell({
-                                    width: { size: 34, type: WidthType.PERCENTAGE },
+                                    width: { size: 3334, type: WidthType.DXA },
                                     children: [
                                         new Paragraph({
-                                            children: [new TextRun({ text: "MÉTODO", bold: true, size: 20, color: "616161" })],
+                                            children: [new TextRun({ text: "MÉTODO", bold: true, size: 22, color: "616161" })],
                                             alignment: AlignmentType.CENTER,
-                                            spacing: { before: 160, after: 80 }
+                                            spacing: { before: 240, after: 120 }
                                         }),
                                         new Paragraph({
-                                            children: [new TextRun({ text: paymentText, bold: true, size: 24, color: "212121" })],
+                                            children: [new TextRun({ text: paymentText, bold: true, size: 28, color: "212121" })],
                                             alignment: AlignmentType.CENTER,
-                                            spacing: { after: 160 }
+                                            spacing: { after: 240 }
                                         })
                                     ],
                                     shading: { fill: "F5F5F5" },
                                     borders: {
                                         top: { style: BorderStyle.NONE },
-                                        bottom: { style: BorderStyle.SINGLE, size: 6, color: "0D47A1" },
-                                        left: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
-                                        right: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" }
+                                        bottom: { style: BorderStyle.SINGLE, size: 12, color: "0D47A1" },
+                                        left: { style: BorderStyle.SINGLE, size: 2, color: "E0E0E0" },
+                                        right: { style: BorderStyle.SINGLE, size: 2, color: "E0E0E0" }
                                     }
                                 }),
                                 // Valor Total
                                 new TableCell({
-                                    width: { size: 33, type: WidthType.PERCENTAGE },
+                                    width: { size: 3333, type: WidthType.DXA },
                                     children: [
                                         new Paragraph({
-                                            children: [new TextRun({ text: "VALOR TOTAL", bold: true, size: 20, color: "616161" })],
+                                            children: [new TextRun({ text: "VALOR TOTAL", bold: true, size: 22, color: "616161" })],
                                             alignment: AlignmentType.CENTER,
-                                            spacing: { before: 160, after: 80 }
+                                            spacing: { before: 240, after: 120 }
                                         }),
                                         new Paragraph({
-                                            children: [new TextRun({ text: valueText, bold: true, size: 32, color: "1565C0" })],
+                                            children: [new TextRun({ text: valueText, bold: true, size: 36, color: "1565C0" })],
                                             alignment: AlignmentType.CENTER,
-                                            spacing: { after: 160 }
+                                            spacing: { after: 240 }
                                         })
                                     ],
                                     shading: { fill: "F5F5F5" },
                                     borders: {
                                         top: { style: BorderStyle.NONE },
-                                        bottom: { style: BorderStyle.SINGLE, size: 6, color: "0D47A1" },
-                                        left: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
-                                        right: { style: BorderStyle.SINGLE, size: 6, color: "0D47A1" }
+                                        bottom: { style: BorderStyle.SINGLE, size: 12, color: "0D47A1" },
+                                        left: { style: BorderStyle.SINGLE, size: 2, color: "E0E0E0" },
+                                        right: { style: BorderStyle.SINGLE, size: 12, color: "0D47A1" }
                                     }
                                 })
                             ]
@@ -1972,7 +1972,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
 
             // Espaçador entre pedidos
             children.push(
-                new Paragraph({ text: "", spacing: { after: 1000 } })
+                new Paragraph({ text: "", spacing: { after: 1200 } })
             );
         });
 
