@@ -966,7 +966,7 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
                 const allOrders = await Order.findAll({
                     where: { status: 'approved' },
                     attributes: ['id', 'status', 'finalAmount', 'items', 'customerName', 'customerEmail', 'customerPhone', 'paymentMethod', 'createdAt', 'userId'],
-                    include: [{ model: User, attributes: ['phone', 'name'] }]
+                    include: [{ model: User, attributes: ['phone', 'name', 'instagram'] }]
                 });
 
                 ordersForCampaign = allOrders
@@ -1003,12 +1003,17 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
                         if (!customerPhone && plain.User && plain.User.phone) {
                             customerPhone = plain.User.phone;
                         }
+                        let customerInstagram = '';
+                        if (plain.User && plain.User.instagram) {
+                            customerInstagram = plain.User.instagram;
+                        }
 
                         return {
                             ...plain,
                             customerName,
                             customerEmail,
-                            customerPhone
+                            customerPhone,
+                            customerInstagram
                         };
                     })
                     .filter(o => o !== null);
@@ -1236,7 +1241,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
         const allOrders = await Order.findAll({
             where: { status: 'approved' },
             attributes: ['id', 'status', 'finalAmount', 'items', 'customerName', 'customerEmail', 'customerPhone', 'createdAt', 'paymentMethod', 'userId'],
-            include: [{ model: User, attributes: ['phone', 'name'] }] 
+            include: [{ model: User, attributes: ['phone', 'name', 'instagram'] }] 
         });
         
         // Filter orders for this campaign
@@ -1665,8 +1670,10 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
             if (!phone && order.User && order.User.phone) {
                 phone = order.User.phone;
             }
+            let instagram = order.User && order.User.instagram ? order.User.instagram : null;
             const phoneText = phone ? phone.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3') : 'Não informado';
             const emailText = order.customerEmail || 'Não informado';
+            const instagramText = instagram ? `@${instagram}` : 'Não informado';
             const dateText = new Date(order.createdAt).toLocaleDateString('pt-BR');
             
             // Processar método de pagamento
@@ -1776,6 +1783,13 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                     children: [
                         new TextRun({ text: "E-mail: ", bold: true, size: 20, color: "424242" }),
                         new TextRun({ text: emailText, size: 20, color: "212121" })
+                    ],
+                    spacing: { before: 40, after: 80 }
+                }),
+                new Paragraph({
+                    children: [
+                        new TextRun({ text: "Instagram: ", bold: true, size: 20, color: "424242" }),
+                        new TextRun({ text: instagramText, size: 20, color: "212121" })
                     ],
                     spacing: { before: 40, after: 160 }
                 })
