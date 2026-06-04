@@ -1838,7 +1838,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                             shading: { fill: index % 2 === 0 ? "FFFFFF" : "FAFBFC" },
                             borders: {
                                 top: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
-                                bottom: { style: BorderStyle.SINGLE, size: 24, color: "1565C0" },
+                                bottom: { style: BorderStyle.SINGLE, size: 48, color: "1565C0" },
                                 left: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
                                 right: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" }
                             }
@@ -1849,7 +1849,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                             shading: { fill: index % 2 === 0 ? "FFFFFF" : "FAFBFC" },
                             borders: {
                                 top: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
-                                bottom: { style: BorderStyle.SINGLE, size: 24, color: "1565C0" },
+                                bottom: { style: BorderStyle.SINGLE, size: 48, color: "1565C0" },
                                 left: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
                                 right: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" }
                             }
@@ -1860,7 +1860,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                             shading: { fill: index % 2 === 0 ? "FFFFFF" : "FAFBFC" },
                             borders: {
                                 top: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
-                                bottom: { style: BorderStyle.SINGLE, size: 24, color: "1565C0" },
+                                bottom: { style: BorderStyle.SINGLE, size: 48, color: "1565C0" },
                                 left: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
                                 right: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" }
                             }
@@ -1871,7 +1871,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                             shading: { fill: index % 2 === 0 ? "FFFFFF" : "FAFBFC" },
                             borders: {
                                 top: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
-                                bottom: { style: BorderStyle.SINGLE, size: 24, color: "1565C0" },
+                                bottom: { style: BorderStyle.SINGLE, size: 48, color: "1565C0" },
                                 left: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
                                 right: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" }
                             }
@@ -1882,7 +1882,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                             shading: { fill: index % 2 === 0 ? "FFFFFF" : "FAFBFC" },
                             borders: {
                                 top: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
-                                bottom: { style: BorderStyle.SINGLE, size: 24, color: "1565C0" },
+                                bottom: { style: BorderStyle.SINGLE, size: 48, color: "1565C0" },
                                 left: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
                                 right: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" }
                             }
@@ -1893,7 +1893,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                             shading: { fill: index % 2 === 0 ? "FFFFFF" : "FAFBFC" },
                             borders: {
                                 top: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
-                                bottom: { style: BorderStyle.SINGLE, size: 24, color: "1565C0" },
+                                bottom: { style: BorderStyle.SINGLE, size: 48, color: "1565C0" },
                                 left: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
                                 right: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" }
                             }
@@ -1904,7 +1904,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                             shading: { fill: index % 2 === 0 ? "FFFFFF" : "FAFBFC" },
                             borders: {
                                 top: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
-                                bottom: { style: BorderStyle.SINGLE, size: 24, color: "1565C0" },
+                                bottom: { style: BorderStyle.SINGLE, size: 48, color: "1565C0" },
                                 left: { style: BorderStyle.SINGLE, size: 1, color: "E0E0E0" },
                                 right: { style: BorderStyle.SINGLE, size: 2, color: "1565C0" }
                             }
