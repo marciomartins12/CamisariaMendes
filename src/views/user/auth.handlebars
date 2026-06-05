@@ -103,6 +103,12 @@
                 {{#if campaignCode}}
                 <input type="hidden" name="campaignCode" value="{{campaignCode}}">
                 {{/if}}
+                <!-- Honeypot field - hidden from users -->
+                <div style="position: absolute; left: -9999px;">
+                    <input type="text" name="website" tabindex="-1" autocomplete="off" placeholder="Leave this field empty">
+                </div>
+                <!-- Timestamp for bot detection -->
+                <input type="hidden" name="formTimestamp" id="register-form-timestamp">
 
                 {{#if error}}
                 {{#if (eq activeTab 'register')}}
@@ -179,6 +185,8 @@
             forgotForm.classList.add('hidden');
             tabs[0].classList.remove('active');
             tabs[1].classList.add('active');
+            // Set timestamp when register tab is opened
+            document.getElementById('register-form-timestamp').value = Date.now();
         } else if (tab === 'forgot') {
             loginForm.classList.add('hidden');
             registerForm.classList.add('hidden');
@@ -192,6 +200,10 @@
     document.addEventListener('DOMContentLoaded', function() {
         const urlParams = new URLSearchParams(window.location.search);
         const activeTab = '{{activeTab}}';
+        // Set timestamp immediately if register tab is active on page load
+        if (activeTab === 'register' || !activeTab) {
+            document.getElementById('register-form-timestamp').value = Date.now();
+        }
         if (activeTab === 'forgot') {
             switchTab('forgot');
         }

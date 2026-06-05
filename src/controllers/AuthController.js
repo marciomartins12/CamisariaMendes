@@ -2,6 +2,54 @@ const bcrypt = require('bcrypt');
 const { User, Campaign, Shirt, Admin } = require('../models');
 const EmailService = require('../services/EmailService');
 
+// Rate limiting storage (in-memory)
+const rateLimitStore = {
+    forgotPassword: new Map(),
+    login: new Map()
+};
+
+// Cleanup old entries every hour
+setInterval(() => {
+    const now = Date.now();
+    const ONE_HOUR = 3600000;
+    for (const [key, entries] of Object.entries(rateLimitStore)) {
+        for (const [id, data] of entries) {
+            if (now - data.timestamp > ONE_HOUR) {
+                entries.delete(id);
+            }
+        }
+    }
+}, 3600000);
+
+// Rate limiting helper function
+function checkRateLimit(type, identifier, limit = 5, windowMs = 3600000) {
+    const store = rateLimitStore[type];
+    const now = Date.now();
+    
+    if (!store.has(identifier)) {
+        store.set(identifier, { count: 1, timestamp: now });
+        return { allowed: true };
+    }
+    
+    const data = store.get(identifier);
+    
+    if (now - data.timestamp > windowMs) {
+        store.set(identifier, { count: 1, timestamp: now });
+        return { allowed: true };
+    }
+    
+    if (data.count >= limit) {
+        return { 
+            allowed: false, 
+            retryAfter: Math.ceil((windowMs - (now - data.timestamp)) / 60000) // in minutes
+        };
+    }
+    
+    data.count++;
+    store.set(identifier, data);
+    return { allowed: true };
+}
+
 module.exports = {
     // Show Login/Register Page
     loginPage: async (req, res) => {
@@ -32,6 +80,29 @@ module.exports = {
         const { email, password, campaignCode } = req.body;
 
         try {
+            // Rate limiting by email and IP
+            const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+            const emailLimit = checkRateLimit('login', `email:${email}`, 10, 3600000);
+            const ipLimit = checkRateLimit('login', `ip:${clientIP}`, 20, 3600000);
+
+            if (!emailLimit.allowed) {
+                return res.render('user/auth', {
+                    title: 'Identifique-se - Camisaria Mendes',
+                    campaignCode,
+                    error: `Muitas tentativas. Tente novamente em ${emailLimit.retryAfter} minutos.`,
+                    activeTab: 'login'
+                });
+            }
+
+            if (!ipLimit.allowed) {
+                return res.render('user/auth', {
+                    title: 'Identifique-se - Camisaria Mendes',
+                    campaignCode,
+                    error: `Muitas tentativas. Tente novamente em ${ipLimit.retryAfter} minutos.`,
+                    activeTab: 'login'
+                });
+            }
+
             // 1) Tentar autenticar como Admin (email)
             const admin = await Admin.findOne({ where: { email } });
             if (admin) {
@@ -93,9 +164,36 @@ module.exports = {
 
     // Handle Register
     register: async (req, res) => {
-        const { name, email, phone, instagram, password, confirmPassword, campaignCode } = req.body;
+        const { name, email, phone, instagram, password, confirmPassword, campaignCode, website, formTimestamp } = req.body;
 
         try {
+            // 1. Honeypot check - if this field is filled, it's a bot!
+            if (website && website.trim().length > 0) {
+                console.log('Bot detected: honeypot field filled');
+                // Silently reject, pretend it worked
+                return res.render('user/auth', {
+                    title: 'Identifique-se - Camisaria Mendes',
+                    campaignCode,
+                    success: 'Conta criada com sucesso!',
+                    activeTab: 'login'
+                });
+            }
+
+            // 2. Time-based check - bots fill forms too quickly! (at least 3 seconds)
+            const MIN_FORM_TIME = 3000; // 3 seconds
+            if (formTimestamp) {
+                const timeToFill = Date.now() - parseInt(formTimestamp);
+                if (timeToFill < MIN_FORM_TIME) {
+                    console.log(`Bot detected: form filled in ${timeToFill}ms`);
+                    return res.render('user/auth', {
+                        title: 'Identifique-se - Camisaria Mendes',
+                        campaignCode,
+                        success: 'Conta criada com sucesso!',
+                        activeTab: 'login'
+                    });
+                }
+            }
+
             // Validate email format
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!email || !emailRegex.test(email)) {
@@ -206,6 +304,29 @@ module.exports = {
         const { email, campaignCode } = req.body;
 
         try {
+            // Rate limiting by email and IP
+            const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+            const emailLimit = checkRateLimit('forgotPassword', `email:${email}`, 3, 3600000);
+            const ipLimit = checkRateLimit('forgotPassword', `ip:${clientIP}`, 5, 3600000);
+
+            if (!emailLimit.allowed) {
+                return res.render('user/auth', {
+                    title: 'Identifique-se - Camisaria Mendes',
+                    campaignCode,
+                    error: `Muitas tentativas. Tente novamente em ${emailLimit.retryAfter} minutos.`,
+                    activeTab: 'forgot'
+                });
+            }
+
+            if (!ipLimit.allowed) {
+                return res.render('user/auth', {
+                    title: 'Identifique-se - Camisaria Mendes',
+                    campaignCode,
+                    error: `Muitas tentativas. Tente novamente em ${ipLimit.retryAfter} minutos.`,
+                    activeTab: 'forgot'
+                });
+            }
+
             const user = await User.findOne({ where: { email } });
 
             if (!user) {
