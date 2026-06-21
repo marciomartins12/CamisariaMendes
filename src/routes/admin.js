@@ -1059,13 +1059,36 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
         ordersForCampaign.forEach(order => {
             const items = order.items || [];
             items.forEach(item => {
-                const pid = Number(item.id || item.productId || item.shirtId);
+                let pid = Number(item.id || item.productId || item.shirtId);
                 const name = (item.name || '').trim();
                 
                 // Check if this item belongs to campaign
                 if (shirtIds.includes(pid) || shirtNames.includes(name)) {
-                    const productColor = item.color || 'N/A';
-                    // Use ID + Color as the unique key to handle same names but different products
+                    // First: try to find matching shirt to get consistent id/color from campaign
+                    let matchingShirt = null;
+                    
+                    if (shirtIds.includes(pid)) {
+                        matchingShirt = (campaignPlain.shirts || []).find(s => Number(s.id) === pid);
+                    } else {
+                        // Find shirt by name if no id
+                        matchingShirt = (campaignPlain.shirts || []).find(s => (s.name || '').trim() === name);
+                        if (matchingShirt) {
+                            pid = matchingShirt.id;
+                        }
+                    }
+                    
+                    let productColor;
+                    if (matchingShirt && matchingShirt.color) {
+                        // Normalize color from campaign shirt (primary source)
+                        productColor = Array.isArray(matchingShirt.color) 
+                            ? matchingShirt.color.join(' / ') 
+                            : matchingShirt.color;
+                    } else {
+                        productColor = item.color || 'N/A';
+                    }
+                    productColor = productColor.trim().toUpperCase();
+                    
+                    // Now use the key is consistent
                     const key = `${pid}_${productColor}`;
                     
                     if (!salesSummary[key]) {
@@ -1074,7 +1097,6 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
                         let productType = item.type || 'Padrão';
                         let productName = name;
                         
-                        const matchingShirt = (campaignPlain.shirts || []).find(s => Number(s.id) === pid);
                         if (matchingShirt) {
                             productType = matchingShirt.type;
                             productName = matchingShirt.name;
@@ -1097,7 +1119,7 @@ router.get('/campanhas/detalhes/:id', requireAdmin, async (req, res) => {
                     const qty = Number(item.qty || item.quantity || 1);
                     salesSummary[key].total += qty;
                     
-                    const size = item.size || 'N/A';
+                    const size = (item.size || 'N/A').trim();
                     if (!salesSummary[key].sizes[size]) salesSummary[key].sizes[size] = 0;
                     salesSummary[key].sizes[size] += qty;
                 }
@@ -1267,9 +1289,9 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
         const shirtsByName = new Map((campaign.shirts || []).map(s => [String(s.name || '').trim(), s]));
 
         const normalizeColor = (raw) => {
-            if (Array.isArray(raw)) return raw.map(v => String(v || '').trim()).filter(Boolean).join(' / ') || 'Sem cor';
-            const c = String(raw || '').trim();
-            return c || 'Sem cor';
+            if (Array.isArray(raw)) return raw.map(v => String(v || '').trim()).filter(Boolean).join(' / ').toUpperCase() || 'SEM COR';
+            const c = String(raw || '').trim().toUpperCase();
+            return c || 'SEM COR';
         };
 
         const normalizeNormalSize = (raw) => {
@@ -1299,7 +1321,7 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
 
         campaignOrders.forEach(order => {
             order.parsedItems.forEach(item => {
-                const pid = Number(item.id || item.productId || item.shirtId);
+                let pid = Number(item.id || item.productId || item.shirtId);
                 const name = (item.name || '').trim();
 
                 if (!(shirtIds.includes(pid) || shirtNames.includes(name))) return;
@@ -1310,7 +1332,9 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                 const orderIndex = matchingShirt
                     ? (shirtOrderById.get(Number(matchingShirt.id)) ?? shirtOrderByName.get(String(matchingShirt.name || '').trim()))
                     : (shirtOrderByName.get(productName) ?? Infinity);
-                const productKey = String(pid || productName || name || '').trim() || String(productName || name || '').trim();
+                
+                // Use consistent product key: if we have a matching shirt, use its ID, otherwise use name
+                const productKey = matchingShirt ? String(matchingShirt.id) : String(productName || name || '').trim();
 
                 if (!summaryByProduct.has(productKey)) {
                     summaryByProduct.set(productKey, { name: productName, type: productType, orderIndex, colors: new Map() });
@@ -1325,7 +1349,16 @@ router.get('/campanhas/:id/exportar-word', requireAdmin, async (req, res) => {
                 }
 
                 const product = summaryByProduct.get(productKey);
-                const colorLabel = normalizeColor(item.color);
+                
+                // Normalize color: use the shirt's color if available for consistency
+                let productColor;
+                if (matchingShirt && matchingShirt.color) {
+                    productColor = normalizeColor(matchingShirt.color);
+                } else {
+                    productColor = normalizeColor(item.color);
+                }
+                productColor = productColor.toUpperCase();
+                const colorLabel = productColor;
 
                 if (!product.colors.has(colorLabel)) {
                     product.colors.set(colorLabel, { color: colorLabel, total: 0, normalSizes: {}, babySizes: {} });
